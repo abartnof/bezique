@@ -90,6 +90,8 @@ pub struct Hand {
     won: [CardSet; 2],
     /// Sevens of trumps that have scored, so that none scores twice.
     sevens_scored: CardSet,
+    /// Concealed cards each seat has let the other see.
+    seen: [CardSet; 2],
     log: Vec<Scored>,
 }
 
@@ -127,6 +129,7 @@ impl Hand {
             taken: tricks_taken,
             won: [CardSet::EMPTY; 2],
             sevens_scored: CardSet::EMPTY,
+            seen: [CardSet::EMPTY; 2],
             log: Vec::new(),
         }
     }
@@ -183,6 +186,17 @@ impl Hand {
 
     pub fn log(&self) -> &[Scored] {
         &self.log
+    }
+
+    /// The cards in `seat`'s hand that the other player has seen: those on
+    /// the table, and concealed ones shown or taken in view (by the dix, the
+    /// second seven shown, the turn-up taken at the last stock trick, and
+    /// table cards taken back into the hand).
+    pub fn known(&self, seat: Seat) -> CardSet {
+        let holdings = &self.holdings[seat.index()];
+        self.seen[seat.index()]
+            .union(holdings.shown)
+            .intersect(holdings.cards())
     }
 
     /// A seat's points this hand.
@@ -260,12 +274,16 @@ impl Hand {
                     .stock
                     .turn_up()
                     .expect("the turn-up is there while declaring lasts");
-                if !is_seven_of(turned, self.trump) {
+                let in_view = if is_seven_of(turned, self.trump) {
+                    seven
+                } else {
                     let taken = self.stock.exchange(seven);
                     let holdings = &mut self.holdings[seat.index()];
                     holdings.play(seven);
                     holdings.receive(taken);
-                }
+                    taken
+                };
+                self.seen[seat.index()] = self.seen[seat.index()].with(in_view);
                 self.score_to(seat, 10, Source::Dix);
                 self.draw();
             }
@@ -356,14 +374,20 @@ impl Hand {
     /// cards on the table go back into the hands for the last eight tricks.
     fn draw(&mut self) {
         for seat in [self.leader, self.leader.other()] {
+            let face_up = self.stock.face_down() == 0;
             let card = self
                 .stock
                 .draw()
                 .expect("the stock holds an even number of cards");
             self.holdings[seat.index()].receive(card);
+            if face_up {
+                self.seen[seat.index()] = self.seen[seat.index()].with(card);
+            }
         }
         if self.stock.is_empty() {
-            for holdings in &mut self.holdings {
+            for seat in Seat::BOTH {
+                let holdings = &mut self.holdings[seat.index()];
+                self.seen[seat.index()] = self.seen[seat.index()].union(holdings.shown);
                 holdings.take_up();
             }
         }
@@ -724,6 +748,48 @@ mod tests {
             Phase::Lead,
             "no declaring once the stock is gone"
         );
+    }
+
+    #[test]
+    fn nothing_concealed_is_known_at_the_deal() {
+        let h = hand(PONE, DEALER, "KH", "");
+        assert!(h.known(Seat::Dealer).is_empty());
+        assert!(h.known(Seat::Pone).is_empty());
+    }
+
+    #[test]
+    fn the_card_taken_by_the_dix_is_known_until_played() {
+        let mut h = hand(PONE, "TS 7S 8S 9S JS 8H 7H KC", "KH", "");
+        play(&mut h, "AS");
+        play(&mut h, "8H");
+        h.apply(Action::Dix(c("7H", 0))).unwrap();
+        assert_eq!(h.known(Seat::Dealer), CardSet::of(&[c("KH", 0)]));
+        play(&mut h, "KH");
+        assert!(
+            h.known(Seat::Dealer).is_empty(),
+            "played, so no longer in the hand"
+        );
+    }
+
+    #[test]
+    fn the_second_seven_shown_is_known() {
+        let mut h = hand("7H AS 7C 8C 9C 7D 8D 9D", DEALER, "7H", "");
+        play(&mut h, "AS");
+        play(&mut h, "7S");
+        h.apply(Action::Dix(c("7H", 0))).unwrap();
+        assert_eq!(h.known(Seat::Pone), CardSet::of(&[c("7H", 0)]));
+    }
+
+    #[test]
+    fn table_cards_count_as_known_and_stay_known_when_taken_up() {
+        let mut h = at_the_last_stock_trick();
+        assert_eq!(h.known(Seat::Dealer), h.holdings(Seat::Dealer).shown);
+        play(&mut h, "9S");
+        play(&mut h, "KS");
+        h.apply(Action::Pass).unwrap();
+        // KH KD KC QS JD were on the table; the turn-up went to the pone.
+        assert_eq!(h.known(Seat::Dealer), set("KH KD KC QS JD"));
+        assert_eq!(h.known(Seat::Pone), CardSet::of(&[c("9H", 0)]));
     }
 
     #[test]
