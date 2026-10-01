@@ -25,6 +25,25 @@ day:
 - `analysis/bezique_stats.py`: the literature review's exact-odds script,
   checked; its figures are the targets for the deal-and-draw tests.
 
+## Unattended session, night of 2026-10-01
+
+Approved by the maintainer: work autonomously on this VM (no other compute),
+commit and push each change, leave design decisions (the 3D table, the
+score display) for discussion. The queue, in order; each entry is marked as
+it lands, with what was found.
+
+1. Triage the background code review of the engine and fix confirmed
+   defects, test first.
+2. The mirrored-pair harness (`src/bin/` measurement programs) and first
+   measurements: hands per game, where the points come from, the first
+   lead, the worth of carried scores and of the last stock trick.
+3. Rungs 3–5: card memory, reading the table, the exact endgame solver;
+   each kept only if it measurably beats the rung below.
+4. The session layer: undo, replay, aids, hints; the JSON protocol, its
+   document and the wasm crate.
+
+Morning summary: (written at the end of the session).
+
 ## Decisions
 
 ### Settled
