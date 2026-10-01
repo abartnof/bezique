@@ -42,7 +42,7 @@ day:
 | Working method | TDD; atomic commits to `main` | `DESIGN.md` §2 |
 | Rule authority | **Foster (1897)**, Cady where he is silent; pagat as the modern cross-check (confirmed 2026-10-01) | `RULES.md` "Authority" |
 | Variants | **One rule set, no switches**; Rubicon, six-pack and Polish bezique only ever as separate games (confirmed 2026-10-01) | `RULES.md` "Authority" |
-| Repository and licence | **Public** at `github.com/abartnof/bezique`; **MIT**, revisable later (2026-10-01) | `LICENSE` |
+| Repository and licence | **Private** at `github.com/abartnof/bezique` (made private 2026-10-01; to be opened later); every commit pushed. **MIT**, revisable later | `LICENSE` |
 | Unit of play | **One game to 1,000**, doubled if the loser is under 500. Foster's partie (best of five) is possible later as a longer format | `RULES.md` §7 |
 | Generator | xoshiro256\*\* seeded by SplitMix64, pinned to the authors' C (`tools/prng-reference/`) | `crates/bezique-core/src/rng.rs` |
 
