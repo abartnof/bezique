@@ -69,23 +69,48 @@ pub struct Style {
     pub take_to_declare: i32,
     /// plus this much for every hundred points the declaration would score.
     pub urgency: i32,
+    /// How much readier it is to lead a plain-suit ace or ten while the stock
+    /// lasts, to bring the brisque home (Foster: the lead is worth having
+    /// when "you can bring home a plain-suit ten").
+    pub lead_brisques: i32,
+    /// Which of several cards of nearly equal worth it plays: a temperament,
+    /// free in points by construction.
+    pub leaning: Leaning,
+}
+
+/// Among cards within a point of the cheapest, which to play. Only near-ties
+/// are touched, so a leaning changes how an opponent looks, not how well it
+/// plays (`docs/DESIGN.md` §10.1).
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub enum Leaning {
+    /// The cheapest, the lowest-numbered of equals.
+    #[default]
+    Plain,
+    /// From its shortest suit, to be void of it (Foster: pick one or two
+    /// suits and discard the rest).
+    Concentrate,
+    /// A card already on the table, showing nothing new (Pardon: play a
+    /// declared card so as not to expose the hand).
+    Close,
 }
 
 impl Default for Style {
     fn default() -> Style {
         Style {
-            trump: 5,
-            bezique: 14,
-            marriage: 4,
+            trump: 8,
+            bezique: 20,
+            marriage: 7,
             royal: 6,
             sequence: 5,
-            four: 4,
+            four: 8,
             dix: 4,
             carried: 4,
             shown: 2,
             take_brisque: 20,
-            take_to_declare: 7,
+            take_to_declare: 20,
             urgency: 16,
+            lead_brisques: 0,
+            leaning: Leaning::Plain,
         }
     }
 }
@@ -138,7 +163,7 @@ impl Agent for Maxims {
             (Phase::Declare, _) => return declaration(view, legal, true),
             (Phase::Follow, Some(led)) => follow(&think, legal, led),
             _ if in_endgame => endgame_lead(view, legal),
-            _ => cheapest(&think, cards(legal)),
+            _ => lead(&think, cards(legal)),
         };
         Action::Play(card)
     }
@@ -217,11 +242,45 @@ fn cards(legal: &[Action]) -> impl Iterator<Item = Card> + '_ {
     })
 }
 
-/// The card least worth keeping.
-fn cheapest(think: &Think, cards: impl Iterator<Item = Card>) -> Card {
-    cards
-        .min_by_key(|&c| (keep_value(c, think), c.0))
-        .expect("a card to play")
+/// The card to lead while the stock lasts: the least worth keeping, plain
+/// aces and tens counted cheaper by the style's `lead_brisques`.
+fn lead(think: &Think, cards: impl Iterator<Item = Card>) -> Card {
+    let trump = think.view.trump;
+    let valued = cards.map(|c| {
+        let pull = if c.is_brisque() && c.suit() != trump {
+            think.style.lead_brisques
+        } else {
+            0
+        };
+        (c, keep_value(c, think) - pull)
+    });
+    pick(think, valued.collect())
+}
+
+/// The card to play of these, by value: the cheapest, or among those within
+/// a point of it, the one the style leans to.
+fn pick(think: &Think, valued: Vec<(Card, i32)>) -> Card {
+    let cheapest = valued
+        .iter()
+        .map(|&(_, v)| v)
+        .min()
+        .expect("a card to play");
+    // How near counts as a tie, by measurement: shedding a short suit costs
+    // points unless the cards are of exactly equal worth.
+    let slack = match think.style.leaning {
+        Leaning::Concentrate => 0,
+        _ => 1,
+    };
+    let near = valued.iter().filter(|&&(_, v)| v <= cheapest + slack);
+    let mine = &think.view.mine;
+    let held_in = |c: Card| mine.cards().in_suit(c.suit()).len();
+    match think.style.leaning {
+        Leaning::Plain => valued.iter().min_by_key(|&&(c, v)| (v, c.0)),
+        Leaning::Concentrate => near.min_by_key(|&&(c, v)| (held_in(c), v, c.0)),
+        Leaning::Close => near.min_by_key(|&&(c, v)| (!mine.shown.contains(c), v, c.0)),
+    }
+    .expect("a card to play")
+    .0
 }
 
 /// How much a card is worth keeping in hand: its rank, more for a trump, and
@@ -360,14 +419,16 @@ fn follow(think: &Think, legal: &[Action], led: Card) -> Card {
     } else {
         losers
     };
-    pool.into_iter()
-        .min_by_key(|&c| {
+    let valued = pool
+        .into_iter()
+        .map(|c| {
             (
+                c,
                 keep_value(c, think) + if c.is_brisque() { 20 } else { 0 },
-                c.0,
             )
         })
-        .expect("a card to play")
+        .collect();
+    pick(think, valued)
 }
 
 /// Leading to the last eight tricks: a plain-suit ace, which can only be

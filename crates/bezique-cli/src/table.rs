@@ -4,20 +4,25 @@
 
 use std::io::{self, BufRead, Write};
 
-use bezique_core::agents::{Legal, Maxims};
+use bezique_core::agents;
 use bezique_core::cards::{Card, CardSet, Rank, Suit};
 use bezique_core::deal::Seat;
 use bezique_core::game::{cut_for_deal, Game, Outcome, Side};
 use bezique_core::hand::{Action, Hand, Phase, Source};
 use bezique_core::observation::{Agent, View};
+use bezique_core::opponent::{self, Erratic, Persona};
 use bezique_core::rng::{purpose, Rng};
 use bezique_core::words;
 
 #[derive(Clone, Debug)]
 pub struct Options {
     pub seed: u64,
-    /// The opponent's rung: 1 plays legally, 2 plays the period maxims.
+    /// The opponent's rung, 1 to `agents::TOP`.
     pub level: u8,
+    /// The opponent's persona by key, or `None` to draw one from the seed.
+    pub persona: Option<String>,
+    /// How often the opponent slips below its level, 0 to 1.
+    pub erraticism: f64,
     /// Two computer players, no person.
     pub watch: bool,
     /// When watching, show both hands.
@@ -61,11 +66,12 @@ impl<R: BufRead, W: Write> Table<R, W> {
             "Bezique: two packs, 1,000 up. Seed {}. Type a card as AS or 10D (or its number); q quits.",
             self.options.seed
         )?;
+        self.introduce()?;
         let Some(first_dealer) = self.cut()? else {
             return Ok(End::Quit);
         };
         let mut game = Game::new(self.options.seed, first_dealer);
-        let mut agents: [Box<dyn Agent>; 2] = [self.agent(), self.agent()];
+        let mut agents: [Box<dyn Agent>; 2] = [self.agent(Side::A), self.agent(Side::B)];
         self.hand_begins(&game)?;
         while let Some(side) = game.to_move() {
             if self.options.watch && game.hand().phase() == Phase::Lead {
@@ -97,11 +103,53 @@ impl<R: BufRead, W: Write> Table<R, W> {
         Ok(End::Finished(outcome))
     }
 
-    fn agent(&self) -> Box<dyn Agent> {
-        match self.options.level {
-            1 => Box::new(Legal),
-            _ => Box::new(Maxims::default()),
+    /// The persona `side` plays: the one chosen, or one drawn from the seed
+    /// (each side its own, when watching).
+    fn persona(&self, side: Side) -> Persona {
+        if let Some(key) = &self.options.persona {
+            if let Some(p) = opponent::persona(key) {
+                return p;
+            }
         }
+        let all = opponent::personas();
+        let mut rng = Rng::stream(
+            self.options.seed,
+            purpose::PERSONA + 100 * side.index() as u64,
+        );
+        all[rng.below(all.len() as u64) as usize].clone()
+    }
+
+    fn agent(&self, side: Side) -> Box<dyn Agent> {
+        let rng = Rng::stream(self.options.seed, purpose::agent(side.index()));
+        Box::new(Erratic::new(
+            self.options.level,
+            &self.persona(side),
+            self.options.erraticism,
+            rng,
+        ))
+    }
+
+    /// Who the person is playing, in a sentence.
+    fn introduce(&mut self) -> io::Result<()> {
+        for side in Side::BOTH {
+            if Some(side) == self.human {
+                continue;
+            }
+            let p = self.persona(side);
+            let level = self.options.level.min(agents::TOP);
+            writeln!(self.out, "{} {}.", self.who(side), agents::describe(level))?;
+            if p.key != "balanced" {
+                writeln!(self.out, "Its style: it {}.", p.described)?;
+            }
+            if self.options.erraticism > 0.0 {
+                writeln!(
+                    self.out,
+                    "{} does not always play its best.",
+                    self.who(side)
+                )?;
+            }
+        }
+        Ok(())
     }
 
     // ---- names and cards ---------------------------------------------------
@@ -701,6 +749,8 @@ mod tests {
         Options {
             seed: 7,
             level: 2,
+            persona: None,
+            erraticism: 0.0,
             watch,
             reveal: watch,
             pause: false,
@@ -755,6 +805,21 @@ mod tests {
         assert!(matches!(end, End::Finished(_)));
         assert!(said.contains("A leads") || said.contains("B leads"));
         assert!(said.contains("The stock is exhausted."));
+    }
+
+    #[test]
+    fn the_opponent_is_described_at_the_start() {
+        let mut o = options(false);
+        o.level = 4;
+        o.persona = Some("bezique".to_string());
+        o.erraticism = 0.2;
+        let (_, said) = sit("q\n", o);
+        assert!(
+            said.contains("Your opponent remembers every card"),
+            "{said}"
+        );
+        assert!(said.contains("double bezique"), "{said}");
+        assert!(said.contains("does not always play its best"), "{said}");
     }
 
     #[test]

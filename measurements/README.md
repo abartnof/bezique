@@ -35,3 +35,38 @@ variant against the default, with standard errors.
 | `take_to_declare` (with urgency 16) | 7 → 0, 12, 20: −17.4, +1.4, +0.5 | 7 (unchanged) | – |
 | (run, not kept) `last-stock-trick 2000`; confirmed with `MEASURE_SEED=90000000 … 3000` | | Rung 3 winning the last stock trick whenever it can, against rung 3: +2.49 (se 0.43); confirmed on fresh seeds +1.82 (se 0.38). It became rung 4. |
 
+## Tuning rung 2 further, and the personas (2026-10-02)
+
+Calibrating personas against the default exposed weights the default had
+never been tuned on: a persona that measured *better* than balanced was
+improved play, not a style, and went into the default instead. Confirmed
+each on fresh seeds (`MEASURE_SEED`), points a hand for the new value
+against the old, at rung 2:
+
+| Weight | Change | Confirmed |
+|---|---|---|
+| `four` | 4 → 8 | +7.14 (se 0.79), 10,000 pairs |
+| `marriage` | 4 → 7 | +1.32 (se 0.49), 10,000 pairs |
+| `trump` | 5 → 8 | +1.35 (se 0.61), 20,000 pairs |
+| `take_to_declare` | 7 → 20 | +1.41 (se 0.43), 20,000 pairs |
+| `bezique` | 14 → 20 | +1.33 (se 0.24), 20,000 pairs |
+
+The bezique weight is lumpy above 20 (26: −0.1; 32: +3.7; 40: +0.4, each
+5,000 pairs, se ≈ 0.3–0.9): a threshold effect, not a smooth optimum, so it
+was left at 20 rather than chased.
+
+**Personas** (`personas.txt`, `MEASURE_LEVEL=2 measure personas 20000`): a
+persona must cost no more than about two points a hand against balanced and
+play visibly differently. Weight shifts mostly failed one test or the other
+on a tuned default: they either cost points or were simply better play. A
+"brisque hunter" was dropped: no lever moved brisques (a player's share is
+set by the cards), and leading brisques home lost them (74 against 80 a
+hand). What passed:
+
+| Persona | How | Cost a hand | Combinations / brisques a hand |
+|---|---|---|---|
+| balanced | the default | – | 139.1 / 80.0 |
+| concentrates | of cards exactly equal in worth, throws from its shortest suit (Foster) | −1.24 (se 0.48) | 140.0 / 79.7 |
+| close | of cards within a point, plays from the table first (Pardon) | −0.69 (se 0.43) | 138.9 / 80.2 |
+| bezique | bezique cards valued at 40, not 20 (Pardon) | −0.45 (se 0.44) | 144.8 / 76.9 |
+

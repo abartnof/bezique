@@ -13,7 +13,7 @@
 //!
 //! The opponent is never given a name: it is described by how it plays.
 
-use crate::agents::{rung_with, Style};
+use crate::agents::{rung_with, Leaning, Style};
 use crate::hand::Action;
 use crate::observation::{Agent, View};
 use crate::rng::Rng;
@@ -41,44 +41,30 @@ pub fn personas() -> Vec<Persona> {
             style: base.clone(),
         },
         Persona {
-            key: "collector",
-            described: "collects combinations: holds on to its marriages, fours and sequence, and lets brisques go to keep them",
-            after: "Hoffmann and Pardon: hold the sequence and bezique cards",
+            key: "concentrates",
+            described: "throws from its shortest suits, to be void of them",
+            after: "Foster: pick one or two suits and discard the rest",
             style: Style {
-                marriage: base.marriage + 4,
-                royal: base.royal + 4,
-                sequence: base.sequence + 6,
-                four: base.four + 4,
-                take_brisque: base.take_brisque - 6,
+                leaning: Leaning::Concentrate,
                 ..base.clone()
             },
         },
         Persona {
-            key: "brisques",
-            described: "plays for the aces and tens, taking every brisque it can",
-            after: "the American Hoyle of 1864: take aces and tens as brisques when you can",
+            key: "close",
+            described: "plays from the table first, showing you as little as it can",
+            after: "Pardon: play a declared card so as not to expose the hand",
             style: Style {
-                take_brisque: base.take_brisque + 10,
-                marriage: base.marriage - 2,
-                four: base.four - 2,
-                ..base.clone()
-            },
-        },
-        Persona {
-            key: "trumps",
-            described: "keeps its trumps for the last eight tricks",
-            after: "the American Hoyle of 1864: keep aces and tens of trumps for the last eight tricks",
-            style: Style {
-                trump: base.trump + 6,
+                leaning: Leaning::Close,
                 ..base.clone()
             },
         },
         Persona {
             key: "bezique",
             described: "will give almost anything for double bezique",
-            after: "Pardon: keep the bezique cards until near the end, even after declaring bezique",
+            after:
+                "Pardon: keep the bezique cards until near the end, even after declaring bezique",
             style: Style {
-                bezique: base.bezique + 12,
+                bezique: base.bezique + 20,
                 ..base
             },
         },

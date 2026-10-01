@@ -18,6 +18,8 @@ pub mod purpose {
     /// The deals after a game arranged part-way through, which must not
     /// repeat the seed's own.
     pub const ARRANGED_DEALS: u64 = 2;
+    /// The opponent's persona, when it is drawn rather than chosen.
+    pub const PERSONA: u64 = 3;
     /// The opponent's own choices, by side (0 or 1).
     pub const fn agent(side: usize) -> u64 {
         16 + side as u64

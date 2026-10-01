@@ -125,10 +125,12 @@ fn tune(args: &[String]) {
             "shown" => &mut style.shown,
             "take_brisque" => &mut style.take_brisque,
             "take_to_declare" => &mut style.take_to_declare,
+            "lead_brisques" => &mut style.lead_brisques,
             "urgency" => &mut style.urgency,
             other => panic!("no field {other}"),
         };
         *slot = value;
+        let profile_style = style.clone();
         let variant = move |_: u64| -> Box<dyn Agent> {
             Box::new(Maxims {
                 style: style.clone(),
@@ -139,6 +141,8 @@ fn tune(args: &[String]) {
             &format!("{field} = {value}"),
             &tournament::hands(seed_base(), pairs, &variant, &maxims),
         );
+        let (melds, brisques) = profile(&profile_style, &Style::default(), 2, pairs.min(4000));
+        println!("    scores {melds:.1} in combinations and {brisques:.1} in brisques a hand (balanced: about 124 and 80)");
     }
 }
 
@@ -197,7 +201,12 @@ fn last_stock_trick(pairs: u64) {
 /// Each persona at the top rung against the balanced one: what it costs in
 /// mirrored hands, and how it plays (where its points come from, per hand).
 fn personas(pairs: u64) {
-    let top = bezique_core::agents::TOP;
+    // Personas change only play before the stock runs out, which rung 2
+    // plays as the top rung does and far faster: MEASURE_LEVEL=2 calibrates.
+    let top = std::env::var("MEASURE_LEVEL")
+        .ok()
+        .and_then(|s| s.parse().ok())
+        .unwrap_or(bezique_core::agents::TOP);
     let balanced = opponent::persona("balanced").unwrap();
     for p in opponent::personas() {
         let style = p.style.clone();
@@ -205,7 +214,7 @@ fn personas(pairs: u64) {
         let base_style = balanced.style.clone();
         let theirs = move |_: u64| rung_with(top, &base_style);
         let h = tournament::hands(9_000_000, pairs, &mine, &theirs);
-        let (melds, brisques) = profile(&p.style, &balanced.style, top, pairs.min(500));
+        let (melds, brisques) = profile(&p.style, &balanced.style, top, pairs.min(4000));
         println!(
             "{:<10} {:+6.2} a hand (se {:.2}); scores {:.1} in combinations and {:.1} in brisques a hand",
             p.key,
