@@ -126,7 +126,7 @@ pub struct Skills {
     /// longer be made (alone, +1.9 points a hand over rung 2).
     pub memory: bool,
     /// Plays the last eight tricks exactly, which needs the memory to know
-    /// the opponent's hand (with memory, +19.9 points a hand over rung 2).
+    /// the opponent's hand (without it, the skill does nothing) (with memory, +19.9 points a hand over rung 2).
     pub endgame: bool,
     /// Wins the last trick before the stock runs out whenever it can: the
     /// winner makes the last declaration and leads into the endgame (+2.5
@@ -146,8 +146,10 @@ impl Agent for Maxims {
     fn choose(&mut self, view: &View, legal: &[Action]) -> Action {
         let style = &self.style;
         let in_endgame = view.stock == 0 && view.turn_up.is_none();
-        if self.skills.endgame && in_endgame && view.phase != Phase::Declare {
-            return Action::Play(solve(view));
+        if self.skills.endgame && self.skills.memory && in_endgame && view.phase != Phase::Declare {
+            if let Some(card) = solve(view) {
+                return Action::Play(card);
+            }
         }
         let mut gone = CardSet::EMPTY;
         if self.skills.memory {
@@ -223,15 +225,21 @@ pub fn describe(level: u8) -> &'static str {
 }
 
 /// The best card in the last eight tricks, where both hands are known to a
-/// player who has counted: its own, and every card not yet seen.
-fn solve(view: &View) -> Card {
+/// player who has counted: its own, and every card not yet seen. `None` if
+/// the count does not come out, as in a position arranged part-way through
+/// a hand, whose earlier tricks the view does not have.
+fn solve(view: &View) -> Option<Card> {
     let theirs = view.theirs.cards().union(view.unseen());
+    let answering = u32::from(view.led.is_some());
+    if theirs.len() + answering != view.mine.cards().len() {
+        return None;
+    }
     let position = Endgame {
         mover: view.mine.cards(),
         other: theirs,
         led: view.led,
     };
-    Solver::new(view.trump).best(position).0
+    Some(Solver::new(view.trump).best(position).0)
 }
 
 /// The cards among the legal moves.
@@ -621,5 +629,122 @@ mod tests {
         // Deterministic agents on mirrored deals: every pair is one win each.
         let (a, b) = games_won(0..10, &mut Maxims::default(), &mut Maxims::default());
         assert_eq!((a, b), (10, 10));
+    }
+
+    /// A position arranged in the last tricks has no record of the tricks
+    /// before it, so the count of unseen cards does not come out: the
+    /// endgame skill stands aside rather than solve a wrong position.
+    #[test]
+    fn an_arranged_endgame_is_played_without_the_solver_not_panicked_on() {
+        use crate::deal::{Seat, Stock};
+        use crate::hand::Hand;
+        use crate::melds::Holdings;
+        let hand = Hand::arranged(
+            Suit::HEARTS,
+            Stock::new(&[], None),
+            [
+                Holdings::new(CardSet::parse("AS 7D").unwrap()),
+                Holdings::new(CardSet::parse("TS AD").unwrap()),
+            ],
+            Seat::Dealer,
+            30,
+        )
+        .unwrap();
+        let game = Game::arranged(1, [0, 0], Side::A, hand).unwrap();
+        let view = View::of(&game, Side::A);
+        for level in 3..=TOP {
+            let action = rung(level).choose(&view, &game.legal());
+            assert!(game.legal().contains(&action));
+        }
+    }
+
+    /// The endgame skill needs the memory: without it, the last eight tricks
+    /// are played by the maxims, as at rung 2.
+    #[test]
+    fn without_memory_the_endgame_skill_does_nothing() {
+        let mut forgetful = Maxims {
+            skills: Skills {
+                memory: false,
+                endgame: true,
+                last_stock_trick: false,
+            },
+            ..Maxims::default()
+        };
+        let mut two = Maxims::default();
+        let mut checked = 0;
+        for seed in 0..10 {
+            let mut game = Game::new(600 + seed, Side::A);
+            let mut agents = [rung(4), rung(4)];
+            while let Some(side) = game.to_move() {
+                let view = View::of(&game, side);
+                let legal = game.legal();
+                if view.stock == 0 && view.turn_up.is_none() {
+                    assert_eq!(forgetful.choose(&view, &legal), two.choose(&view, &legal));
+                    checked += 1;
+                }
+                let action = agents[side.index()].choose(&view, &legal);
+                game.apply(action).unwrap();
+            }
+        }
+        assert!(checked > 100, "{checked}");
+    }
+
+    /// At the first lead of the last eight tricks, between two rung-3
+    /// players: the opponent's hand as counted from the view is the true one,
+    /// type for type, and the solver's value is the margin the engine then
+    /// scores with both playing on. Checks the solver's scoring against the
+    /// engine's own, which `solver::reference_value` cannot (it shares the
+    /// solver's step).
+    #[test]
+    fn the_counted_hand_is_true_and_the_solver_scores_as_the_engine_does() {
+        use crate::hand::Phase;
+        let types = |cards: CardSet| -> Vec<u8> { cards.cards().map(|c| c.card_type().0).collect() };
+        let mut checked = 0;
+        for seed in 0..150u64 {
+            let mut game = Game::new(seed, Side::A);
+            let mut agents = [rung(3), rung(3)];
+            let mut step = |game: &mut Game| {
+                let side = game.to_move().unwrap();
+                let view = View::of(game, side);
+                let action = agents[side.index()].choose(&view, &game.legal());
+                game.apply(action).unwrap();
+            };
+            while game.to_move().is_some()
+                && game.hand_number() == 1
+                && !(game.hand().in_endgame() && game.hand().phase() == Phase::Lead)
+            {
+                step(&mut game);
+            }
+            if game.hand_number() != 1 || game.to_move().is_none() {
+                continue;
+            }
+            let side = game.to_move().unwrap();
+            let seat = game.seat_of(side);
+            let view = View::of(&game, side);
+            let theirs = view.theirs.cards().union(view.unseen());
+            let truth = game.hand().holdings(seat.other()).cards();
+            assert_eq!(types(theirs), types(truth), "seed {seed}");
+            let value = Solver::new(view.trump).value(Endgame {
+                mover: view.mine.cards(),
+                other: theirs,
+                led: None,
+            });
+            let margin = |h: &crate::hand::Hand| h.score(seat) as i32 - h.score(seat.other()) as i32;
+            let before = margin(game.hand());
+            while game.to_move().is_some() && game.hand_number() == 1 {
+                step(&mut game);
+            }
+            if game.hand_number() == 1 && game.hand().phase() != Phase::Over {
+                continue; // the game was won during the endgame
+            }
+            let hand = if game.hand_number() > 1 {
+                game.previous_hand().unwrap()
+            } else {
+                game.hand()
+            };
+            assert_eq!(margin(hand) - before, value, "seed {seed}");
+            checked += 1;
+        }
+        assert!(checked > 50, "{checked}");
     }
 }
