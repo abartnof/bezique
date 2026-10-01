@@ -30,9 +30,10 @@ use crate::words;
 /// How the opponent is set up.
 #[derive(Clone, Debug, PartialEq)]
 pub struct Settings {
-    /// The rung, 1 to `agents::TOP`.
+    /// The rung, 1 to `agents::TOP`; others are clamped into that range.
     pub level: u8,
-    /// A persona by key, or `None` to draw one from the seed.
+    /// A persona by key, or `None` to draw one from the seed. A key that
+    /// names no persona is drawn from the seed too.
     pub persona: Option<String>,
     /// How often it slips below its level, 0 to 1.
     pub erraticism: f64,

@@ -13,7 +13,7 @@
 //!
 //! The opponent is never given a name: it is described by how it plays.
 
-use crate::agents::{rung_with, Leaning, Style};
+use crate::agents::{rung_with, Leaning, Style, TOP};
 use crate::hand::Action;
 use crate::observation::{Agent, View};
 use crate::rng::Rng;
@@ -87,8 +87,11 @@ pub struct Erratic {
 
 impl Erratic {
     pub fn new(level: u8, persona: &Persona, erraticism: f64, rng: Rng) -> Erratic {
+        // Levels above the top would only repeat it, and its slips would
+        // land on rungs no weaker.
+        let level = level.clamp(1, TOP);
         Erratic {
-            rungs: (1..=level.max(1))
+            rungs: (1..=level)
                 .map(|r| rung_with(r, &persona.style))
                 .collect(),
             erraticism: erraticism.clamp(0.0, 1.0),
@@ -119,6 +122,14 @@ mod tests {
     use super::*;
     use crate::game::{Game, Side};
     use crate::rng::purpose;
+
+    #[test]
+    fn a_level_past_the_top_is_the_top() {
+        let p = persona("balanced").unwrap();
+        let high = Erratic::new(9, &p, 0.5, Rng::seeded(1));
+        assert_eq!(high.rungs.len(), usize::from(TOP));
+        assert_eq!(Erratic::new(0, &p, 0.5, Rng::seeded(1)).rungs.len(), 1);
+    }
 
     #[test]
     fn the_personas_are_distinct_and_described() {
