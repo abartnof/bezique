@@ -11,6 +11,7 @@ pub mod hand;
 pub mod melds;
 pub mod observation;
 pub mod rng;
+pub mod solver;
 pub mod tournament;
 pub mod tricks;
 pub mod words;
