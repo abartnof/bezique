@@ -39,14 +39,9 @@
 | Working method | TDD; atomic commits to `main` | `DESIGN.md` §2 |
 | Rule authority | **Foster (1897)**, Cady where he is silent; pagat as the modern cross-check (confirmed 2026-10-01) | `RULES.md` "Authority" |
 | Variants | **One rule set, no switches**; Rubicon, six-pack and Polish bezique only ever as separate games (confirmed 2026-10-01) | `RULES.md` "Authority" |
+| Repository and licence | **Public** at `github.com/abartnof/bezique`; **MIT**, revisable later (2026-10-01) | `LICENSE` |
+| Unit of play | **One game to 1,000**, doubled if the loser is under 500. Foster's partie (best of five) is possible later as a longer format | `RULES.md` §7 |
 
-### Awaiting the maintainer
-
-1. **A GitHub repository** (private, as piquet began) **and a licence**
-   (piquet is MIT).
-2. **Unit of play.** Proposed: one game to 1,000. Foster also describes a
-   *partie*, the best of five games with a double counting two, which is
-   possible later as a longer format.
 
 ## Milestones
 

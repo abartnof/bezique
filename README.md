@@ -49,3 +49,9 @@ project, a version of piquet.
 - **John McLeod's pagat.com** and **Howard Fosdick's** bezique rules archived
   there.
 - The **Internet Archive** and **Wikisource**, which hold the texts.
+
+## Licence
+
+© 2026 Andrew Bartnof, under the MIT License (`LICENSE`). The period texts in
+`docs/sources/` are in the public domain. Third-party pieces will keep their own
+licences, listed in `CREDITS.md` as they arrive.
