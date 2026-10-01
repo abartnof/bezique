@@ -33,4 +33,5 @@ variant against the default, with standard errors.
 | `urgency` | 0 → 2, 4, 8, 16, 24, 32, 64, 200: +10.8, +15.7, +33.2, +37.1, +37.6, +38.8, +38.2, +38.3 | 16 (the knee) | +37.7 (se 1.0) |
 | `take_brisque` (with urgency 16) | 12 → 15, 20, 30: +7.7, +8.4, +8.7 | 20 | +10.8 (se 0.6) |
 | `take_to_declare` (with urgency 16) | 7 → 0, 12, 20: −17.4, +1.4, +0.5 | 7 (unchanged) | – |
+| (run, not kept) `last-stock-trick 2000`; confirmed with `MEASURE_SEED=90000000 … 3000` | | Rung 3 winning the last stock trick whenever it can, against rung 3: +2.49 (se 0.43); confirmed on fresh seeds +1.82 (se 0.38). It became rung 4. |
 

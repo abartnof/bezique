@@ -104,7 +104,8 @@ pub struct Skills {
     /// the opponent's hand (with memory, +19.9 points a hand over rung 2).
     pub endgame: bool,
     /// Wins the last trick before the stock runs out whenever it can: the
-    /// winner makes the last declaration and leads into the endgame.
+    /// winner makes the last declaration and leads into the endgame (+2.5
+    /// points a hand over rung 3, se 0.4; confirmed +1.8, se 0.4).
     pub last_stock_trick: bool,
 }
 
@@ -154,19 +155,24 @@ struct Think<'a> {
 }
 
 /// The highest rung built so far. Levels above it play as it does.
-pub const TOP: u8 = 3;
+pub const TOP: u8 = 4;
 
 /// The opponent at a level of the ladder.
 pub fn rung(level: u8) -> Box<dyn Agent> {
+    let skills = |last_stock_trick| Skills {
+        memory: true,
+        endgame: true,
+        last_stock_trick,
+    };
     match level {
         0 | 1 => Box::new(Legal),
         2 => Box::new(Maxims::default()),
+        3 => Box::new(Maxims {
+            skills: skills(false),
+            ..Maxims::default()
+        }),
         _ => Box::new(Maxims {
-            skills: Skills {
-                memory: true,
-                endgame: true,
-                last_stock_trick: false,
-            },
+            skills: skills(true),
             ..Maxims::default()
         }),
     }
@@ -177,7 +183,8 @@ pub fn describe(level: u8) -> &'static str {
     match level {
         0 | 1 => "plays any legal card, and declares whatever scores most",
         2 => "plays by the maxims of the old books",
-        _ => "plays by the maxims, remembers every card, and so plays the last eight tricks perfectly",
+        3 => "plays by the maxims, remembers every card, and so plays the last eight tricks perfectly",
+        _ => "remembers every card, plays the last eight tricks perfectly, and fights for the last trick before the stock runs out",
     }
 }
 
