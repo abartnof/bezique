@@ -1,0 +1,2 @@
+rung 2 with memory, against rung 2: +1.79 points a hand for the first (2000 mirrored pairs, standard error 0.58)
+rung 2 with memory and the exact endgame, against rung 2: +18.59 points a hand for the first (2000 mirrored pairs, standard error 0.64)

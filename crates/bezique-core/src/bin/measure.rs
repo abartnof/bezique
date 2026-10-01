@@ -201,8 +201,10 @@ fn last_stock_trick(pairs: u64) {
 /// Each persona at the top rung against the balanced one: what it costs in
 /// mirrored hands, and how it plays (where its points come from, per hand).
 fn personas(pairs: u64) {
-    // Personas change only play before the stock runs out, which rung 2
-    // plays as the top rung does and far faster: MEASURE_LEVEL=2 calibrates.
+    // Personas change only play before the stock runs out. Rung 2 plays
+    // that part much as the top rung does (they differ in about 1.5% of
+    // those decisions: memory, and the last stock trick) and far faster, so
+    // MEASURE_LEVEL=2 calibrates; the costs at the top are checked after.
     let top = std::env::var("MEASURE_LEVEL")
         .ok()
         .and_then(|s| s.parse().ok())

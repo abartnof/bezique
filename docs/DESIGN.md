@@ -409,10 +409,12 @@ most instructive measurement of the night:
 - Brisques resist style altogether: a player's share of the 160 is set by
   the cards and the trick rules, and no lever moved it.
 - What works is piquet's own definition: a style chooses among options of
-  nearly equal worth. A `Leaning` breaks near-ties only, so it is free by
-  construction; how near is set by measurement.
+  nearly equal worth. A `Leaning` breaks near-ties only, so it costs
+  little; how near, and what it costs, are measured.
 
-The personas, each within 1.24 points a hand of balanced: **balanced**;
+The personas, each within 1.24 points a hand of balanced (measured at rung
+2, which plays the stock as the top rung does in all but about 1.5% of
+decisions): **balanced**;
 **concentrates** (of cards exactly equal in worth, throws from its shortest
 suit: Foster's "pick one or two suits and discard the rest"); **close**
 (plays from the table first, after Pardon: show the opponent as little as
@@ -433,8 +435,15 @@ to one or two.
 Once the stock is exhausted both hands are known (§8), the follower's choices
 are forced down hard by follow-and-win, and only brisques and the last trick
 remain to score. An exact alpha-beta search over at most eight tricks is
-small, and a memo on the canonical position makes it trivially fast. It is
-checked against unmemoised minimax on random endgames. The search extends
+small, and a table of bounds on the canonical position (twins merged) makes
+it fast: about a millisecond for a full endgame. It is checked against
+unmemoised minimax on random short endgames, against unpruned minimax on
+full ones (value and card chosen), and against the engine's own scoring in
+real games. "Exact" is for the hand's points: the solver maximises the
+margin over the rest of the hand, which is not always the same as winning
+the game when a player is close to 1,000 (§10.4). The review of 2026-10-02
+checked 4,294 endgame decisions taken within 170 points of the game's end
+against a search for the race and found none where it mattered. The search extends
 naturally backwards into the last stock tricks: there, the hidden cards are
 the opponent's concealed few plus a couple of stock cards, so few enough worlds
 remain to enumerate exactly.

@@ -74,7 +74,7 @@ pub struct Style {
     /// when "you can bring home a plain-suit ten").
     pub lead_brisques: i32,
     /// Which of several cards of nearly equal worth it plays: a temperament,
-    /// free in points by construction.
+    /// nearly free in points, as measured (`measurements/README.md`).
     pub leaning: Leaning,
 }
 
@@ -123,10 +123,12 @@ impl Default for Style {
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub struct Skills {
     /// Remembers every card played, and so knows when a combination can no
-    /// longer be made (alone, +1.9 points a hand over rung 2).
+    /// longer be made (alone, +1.8 points a hand over rung 2, se 0.6;
+    /// `measurements/skills-final-style.txt`).
     pub memory: bool,
     /// Plays the last eight tricks exactly, which needs the memory to know
-    /// the opponent's hand (without it, the skill does nothing) (with memory, +19.9 points a hand over rung 2).
+    /// the opponent's hand; without it, the skill does nothing (with memory,
+    /// +18.6 points a hand over rung 2, se 0.6).
     pub endgame: bool,
     /// Wins the last trick before the stock runs out whenever it can: the
     /// winner makes the last declaration and leads into the endgame (+2.5
