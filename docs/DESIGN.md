@@ -350,19 +350,27 @@ decisions, keeps a replayable record, and supports undo and aids. Differences:
 
 - **Cards carry ids.** Every card the human may see is `{ "id", "card" }`, and
   commands that name a card use the id (`play 23`). The terminal client
-  accepts codes and asks when two of the player's cards differ only in where
-  they lie or what they have been declared in.
-- **Prompts**: `cut`, `choose_dealer`, `play` (lead or follow, with the legal
-  ids), `declare` (the curated options of §6.2, with the dix and "nothing"),
-  `next_hand`, `over`.
-- **Events**, enough to animate every intermediate state: `dealt`, `turned_up`,
-  `played`, `took_trick`, `scored`, `announced` (laid on the table, with
-  what is carried), `dix`, `drew` (the human's own card; the opponent's as a
-  count), `last_card` (who took the last card and who the turn-up), `stock_out`
-  (table cards return to hand), `hand_ends`, `game_ends`.
-- **Nothing in the state names a card the human could not know.** The
-  protocol test walks every string in every state of many whole games, the
-  narration included, and fails on any concealed card.
+  accepts codes, and marks with `*` a card that lies on the table rather
+  than in the hand.
+- **Prompts**: `choose_dealer` (when the person cut higher), `play` (lead or
+  follow, with the legal ids), `declare` (the curated options of §6.2, with
+  the dix and "nothing"), `over`. The cut is told as an event; hands follow
+  one another without a prompt.
+- **Events**, enough to animate every intermediate state: `cut`,
+  `first_dealer`, `dealt` (with the turn-up), `played`, `took_trick`,
+  `declared` (what was laid, and the points), `dix`, `drew` (the person's
+  own card; the opponent's draw is not told), `stock_out` (who took the last
+  card and the turn-up; table cards return to hand), `hand_ends`,
+  `game_ends`. `docs/PROTOCOL.md` gives their fields.
+- **Nothing in the state names a card the human could not know.** Every
+  field is drawn from the view (§8), whose twins are relabelled (§5). The
+  protocol tests check, in every state of whole games, that no card object
+  shows more copies of a type than the person could know of, and that a
+  type whose two copies are both hidden is named nowhere in the hand's
+  state, narration and error included; a test shows these checks catching
+  planted leaks. The stronger guarantee is upstream, in the view: swapping
+  a type's twins everywhere leaves the view of a player who never held that
+  type unchanged (`tests/twin_symmetry.rs`).
 
 The protocol document is written when the session is built (milestone 7),
 from the engine that exists rather than ahead of it.

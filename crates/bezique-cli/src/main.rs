@@ -95,7 +95,10 @@ fn help() {
         println!("               {:<10} (after {})", "", p.after);
     }
     println!("  --erratic  how often it slips below its level, from 0 (never, the default) to 1");
-    println!("  --watch    two computer players; Enter after each trick (--fast: no pauses)");
+    println!("  --seed     deals the same cards again (the seed is printed at the top)");
+    println!("  --watch    two computer players; Enter after each trick (--fast: no pauses,");
+    println!("             --reveal: both hands face up)");
+    println!("  --no-colour  plain text, for terminals without colour");
 }
 
 fn number(value: Option<String>, flag: &str) -> u64 {
