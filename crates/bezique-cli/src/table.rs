@@ -12,6 +12,7 @@ use bezique_core::hand::{Action, Hand, Phase, Source};
 use bezique_core::observation::{Agent, View};
 use bezique_core::opponent::{self, Erratic, Persona};
 use bezique_core::rng::{purpose, Rng};
+use bezique_core::session::{DeclareOption, EventKind, Prompt, Session, Settings};
 use bezique_core::words;
 
 #[derive(Clone, Debug)]
@@ -61,9 +62,256 @@ impl<R: BufRead, W: Write> Table<R, W> {
 
     /// Sits down, cuts, and plays a game to its end.
     pub fn play(&mut self) -> io::Result<End> {
+        if self.options.watch {
+            self.watch()
+        } else {
+            self.sit_at_session()
+        }
+    }
+
+    /// The person's game, as a client of the engine's session: the session
+    /// holds the rules, the opponent, the record and undo; this draws the
+    /// person's view and reads their answers.
+    fn sit_at_session(&mut self) -> io::Result<End> {
         writeln!(
             self.out,
-            "Bezique: two packs, 1,000 up. Seed {}. Type a card as AS or 10D (or its number); q quits.",
+            "Bezique: two packs, 1,000 up. Seed {}. Type a card as AS or 10D (or its number); u undoes, h turns hints on and off, t shows every trick of the hand, q quits.",
+            self.options.seed
+        )?;
+        let settings = Settings {
+            level: self.options.level,
+            persona: self.options.persona.clone(),
+            erraticism: self.options.erraticism,
+        };
+        let mut session = Session::new(self.options.seed, settings);
+        session.send("set play_forced on");
+        writeln!(self.out, "{}", session.opponent())?;
+        let mut told = 0;
+        loop {
+            for event in &session.events()[told..] {
+                if matches!(
+                    event.kind,
+                    EventKind::Dealt { .. } | EventKind::GameEnds { .. }
+                ) {
+                    writeln!(self.out)?;
+                }
+                writeln!(self.out, "{}", event.text)?;
+            }
+            told = session.events().len();
+            let answer = match session.prompt() {
+                Prompt::Over => {
+                    let outcome = session.outcome().expect("the game is over");
+                    return Ok(End::Finished(outcome));
+                }
+                Prompt::ChooseDealer => {
+                    write!(self.out, "You cut higher. Will you deal? [y/n] ")?;
+                    self.out.flush()?;
+                    match self.line()?.as_deref() {
+                        None | Some("q") | Some("quit") => None,
+                        Some("y") | Some("yes") => Some("dealer you".to_string()),
+                        Some("n") | Some("no") => Some("dealer them".to_string()),
+                        _ => continue,
+                    }
+                }
+                Prompt::Play { legal } => self.ask_play(&session, legal)?,
+                Prompt::Declare { options } => self.ask_option(&session, &options)?,
+            };
+            let Some(answer) = answer else {
+                writeln!(self.out, "You leave the table.")?;
+                return Ok(End::Quit);
+            };
+            match answer.as_str() {
+                "undo" => {
+                    if session.send("undo") {
+                        told = session.events().len();
+                        writeln!(self.out, "Taken back to your last decision.")?;
+                    } else {
+                        writeln!(
+                            self.out,
+                            "{}.",
+                            session.error().unwrap_or("nothing to undo")
+                        )?;
+                    }
+                }
+                "hints" | "tracker" => {
+                    let on = if answer == "hints" {
+                        session.aids().hints
+                    } else {
+                        session.aids().tracker
+                    };
+                    session.send(&format!("set {answer} {}", if on { "off" } else { "on" }));
+                }
+                command => {
+                    if !session.send(command) {
+                        writeln!(
+                            self.out,
+                            "Not allowed: {}.",
+                            session.error().unwrap_or("refused")
+                        )?;
+                    }
+                }
+            }
+        }
+    }
+
+    /// Reads a card to play, or one of the other answers (u, h, t, q).
+    fn ask_play(&mut self, session: &Session, mut plays: Vec<Card>) -> io::Result<Option<String>> {
+        let view = session.view().expect("a game in progress");
+        self.show_view(session, &view)?;
+        plays.sort_by_key(|c| (c.suit(), std::cmp::Reverse(c.0)));
+        let shown = view.mine.shown;
+        let listing: Vec<String> = plays
+            .iter()
+            .enumerate()
+            .map(|(i, &c)| {
+                format!(
+                    "{} {}{}",
+                    i + 1,
+                    self.card(c),
+                    if shown.contains(c) { "*" } else { "" }
+                )
+            })
+            .collect();
+        loop {
+            write!(
+                self.out,
+                "Play ({}; * is on the table): ",
+                listing.join("  ")
+            )?;
+            self.out.flush()?;
+            let Some(answer) = self.line()? else {
+                return Ok(None);
+            };
+            match answer.as_str() {
+                "q" | "quit" => return Ok(None),
+                "u" | "undo" => return Ok(Some("undo".to_string())),
+                "h" | "hint" => return Ok(Some("hints".to_string())),
+                "t" | "tricks" => return Ok(Some("tracker".to_string())),
+                _ => {}
+            }
+            match pick_card(&answer, &plays, shown, view.mine.cards()) {
+                Ok(card) => return Ok(Some(format!("play {}", card.0))),
+                // Held but not allowed: sent anyway, so that the engine's
+                // reason is shown.
+                Err(Some(held)) => return Ok(Some(format!("play {}", held.0))),
+                Err(None) => writeln!(self.out, "{answer:?} is not one of your cards.")?,
+            }
+        }
+    }
+
+    /// Reads a choice in the turn of declaring.
+    fn ask_option(
+        &mut self,
+        session: &Session,
+        options: &[DeclareOption],
+    ) -> io::Result<Option<String>> {
+        if let Some((_, said)) = session.hint() {
+            writeln!(self.out, "Hint: {said}")?;
+        }
+        writeln!(self.out, "You took the trick. Declare before you draw:")?;
+        for (i, option) in options.iter().enumerate() {
+            writeln!(self.out, "  {i}  {}", option.text)?;
+        }
+        loop {
+            write!(self.out, "Choose [0-{}]: ", options.len() - 1)?;
+            self.out.flush()?;
+            let Some(answer) = self.line()? else {
+                return Ok(None);
+            };
+            match answer.as_str() {
+                "q" | "quit" => return Ok(None),
+                "u" | "undo" => return Ok(Some("undo".to_string())),
+                "h" | "hint" => return Ok(Some("hints".to_string())),
+                _ => {}
+            }
+            match answer.parse::<usize>() {
+                Ok(n) if n < options.len() => return Ok(Some(format!("declare {n}"))),
+                _ => writeln!(self.out, "Choose a number from 0 to {}.", options.len() - 1)?,
+            }
+        }
+    }
+
+    /// The table as the person sees it.
+    fn show_view(&mut self, session: &Session, v: &View) -> io::Result<()> {
+        let turn_up = v.turn_up.map_or("taken".to_string(), |c| self.card(c));
+        writeln!(self.out)?;
+        writeln!(
+            self.out,
+            "Hand {} · trumps {} {} · turn-up {} · stock {}",
+            v.hand_number,
+            v.trump.symbol(),
+            v.trump.name(),
+            turn_up,
+            v.stock
+        )?;
+        writeln!(
+            self.out,
+            "Score: you {} · your opponent {}",
+            v.totals.0, v.totals.1
+        )?;
+        let mut theirs = format!(
+            "Your opponent: {} in hand",
+            v.theirs.concealed.len() + v.their_hidden
+        );
+        if !v.theirs.concealed.is_empty() {
+            theirs.push_str(&format!(" (among them {})", self.cards(v.theirs.concealed)));
+        }
+        self.describe_table(&mut theirs, &v.theirs, v.trump);
+        writeln!(self.out, "{theirs}")?;
+        let mut mine = format!("You: in hand {}", self.cards(v.mine.concealed));
+        self.describe_table(&mut mine, &v.mine, v.trump);
+        writeln!(self.out, "{mine}")?;
+        if session.aids().tracker {
+            let tricks: Vec<String> = v
+                .tricks
+                .iter()
+                .map(|t| {
+                    let mark = if t.winner == v.seat { "you" } else { "them" };
+                    format!("{} {} ({mark})", self.card(t.led), self.card(t.second))
+                })
+                .collect();
+            if !tricks.is_empty() {
+                writeln!(self.out, "Tricks this hand: {}", tricks.join(" | "))?;
+            }
+        }
+        if let Some(led) = v.led {
+            let who = if v.leader == v.seat {
+                "You"
+            } else {
+                "Your opponent"
+            };
+            writeln!(self.out, "{who} led the {}.", self.card(led))?;
+        }
+        if let Some((_, said)) = session.hint() {
+            writeln!(self.out, "Hint: {said}")?;
+        }
+        Ok(())
+    }
+
+    fn describe_table(
+        &self,
+        line: &mut String,
+        holdings: &bezique_core::melds::Holdings,
+        trump: bezique_core::cards::Suit,
+    ) {
+        if !holdings.shown.is_empty() {
+            line.push_str(&format!("; on the table {}", self.cards(holdings.shown)));
+        }
+        let carried = holdings.carried();
+        if !carried.is_empty() {
+            let said: Vec<String> = carried
+                .iter()
+                .map(|d| words::points(d.meld.points(trump)))
+                .collect();
+            line.push_str(&format!("; {} to score", said.join(" and ")));
+        }
+    }
+
+    /// Two computer players, watched.
+    fn watch(&mut self) -> io::Result<End> {
+        writeln!(
+            self.out,
+            "Bezique: two packs, 1,000 up. Seed {}. Two computer players; q stops.",
             self.options.seed
         )?;
         self.introduce()?;
@@ -74,24 +322,14 @@ impl<R: BufRead, W: Write> Table<R, W> {
         let mut agents: [Box<dyn Agent>; 2] = [self.agent(Side::A), self.agent(Side::B)];
         self.hand_begins(&game)?;
         while let Some(side) = game.to_move() {
-            if self.options.watch && game.hand().phase() == Phase::Lead {
+            if game.hand().phase() == Phase::Lead {
                 self.show(&game, side)?;
                 if self.options.pause && !self.wait()? {
                     return Ok(End::Quit);
                 }
             }
-            let action = if Some(side) == self.human {
-                match self.ask(&game, side)? {
-                    Some(action) => action,
-                    None => {
-                        writeln!(self.out, "You leave the table.")?;
-                        return Ok(End::Quit);
-                    }
-                }
-            } else {
-                let view = View::of(&game, side);
-                agents[side.index()].choose(&view, &game.legal())
-            };
+            let view = View::of(&game, side);
+            let action = agents[side.index()].choose(&view, &game.legal());
             let before = game.hand().clone();
             let number = game.hand_number();
             game.apply(action.clone())
@@ -247,130 +485,6 @@ impl<R: BufRead, W: Write> Table<R, W> {
             self.line()?.as_deref(),
             None | Some("q") | Some("quit")
         ))
-    }
-
-    /// The person's move, or `None` if they leave.
-    fn ask(&mut self, game: &Game, side: Side) -> io::Result<Option<Action>> {
-        let legal = game.legal();
-        if game.hand().phase() == Phase::Declare {
-            return self.ask_declare(game, side, &legal);
-        }
-        let mut plays: Vec<Card> = legal
-            .iter()
-            .filter_map(|a| match a {
-                Action::Play(c) => Some(*c),
-                _ => None,
-            })
-            .collect();
-        // Numbered in the order the hand is shown: by suit, high to low.
-        plays.sort_by_key(|c| (c.suit(), std::cmp::Reverse(c.0)));
-        if plays.len() == 1 {
-            writeln!(self.out, "You must play the {}.", self.card(plays[0]))?;
-            return Ok(Some(Action::Play(plays[0])));
-        }
-        self.show(game, side)?;
-        let shown = game.hand().holdings(game.seat_of(side)).shown;
-        let listing: Vec<String> = plays
-            .iter()
-            .enumerate()
-            .map(|(i, &c)| {
-                format!(
-                    "{} {}{}",
-                    i + 1,
-                    self.card(c),
-                    if shown.contains(c) { "*" } else { "" }
-                )
-            })
-            .collect();
-        loop {
-            write!(
-                self.out,
-                "Play ({}; * is on the table): ",
-                listing.join("  ")
-            )?;
-            self.out.flush()?;
-            let Some(answer) = self.line()? else {
-                return Ok(None);
-            };
-            if answer == "q" || answer == "quit" {
-                return Ok(None);
-            }
-            match pick_card(
-                &answer,
-                &plays,
-                shown,
-                game.hand().holdings(game.seat_of(side)).cards(),
-            ) {
-                Ok(card) => return Ok(Some(Action::Play(card))),
-                Err(Some(held)) => {
-                    // Held but not allowed: the engine's reason is the lesson.
-                    let refusal = game.clone().apply(Action::Play(held)).unwrap_err();
-                    writeln!(self.out, "Not allowed: {refusal}.")?;
-                }
-                Err(None) => writeln!(self.out, "{answer:?} is not one of your cards.")?,
-            }
-        }
-    }
-
-    fn ask_declare(
-        &mut self,
-        game: &Game,
-        side: Side,
-        legal: &[Action],
-    ) -> io::Result<Option<Action>> {
-        let options: Vec<&Action> = legal.iter().filter(|a| **a != Action::Pass).collect();
-        if options.is_empty() {
-            return Ok(Some(Action::Pass));
-        }
-        writeln!(self.out, "You took the trick. Declare before you draw:")?;
-        writeln!(self.out, "  0  Nothing: draw.")?;
-        for (i, option) in options.iter().enumerate() {
-            writeln!(
-                self.out,
-                "  {}  {}",
-                i + 1,
-                self.describe(game.hand(), game.seat_of(side), option)
-            )?;
-        }
-        loop {
-            write!(self.out, "Choose [0-{}]: ", options.len())?;
-            self.out.flush()?;
-            let Some(answer) = self.line()? else {
-                return Ok(None);
-            };
-            if answer == "q" || answer == "quit" {
-                return Ok(None);
-            }
-            match answer.parse::<usize>() {
-                Ok(0) => return Ok(Some(Action::Pass)),
-                Ok(n) if n <= options.len() => return Ok(Some(options[n - 1].clone())),
-                _ => writeln!(self.out, "Choose a number from 0 to {}.", options.len())?,
-            }
-        }
-    }
-
-    /// An option of the turn of declaring, in words.
-    fn describe(&self, hand: &Hand, seat: Seat, action: &Action) -> String {
-        let trump = hand.trump();
-        match action {
-            Action::Declare(a) => {
-                let mut after = hand.holdings(seat).clone();
-                after.apply(trump, a).expect("offered, so legal");
-                words::announcement(a, trump, &after.carried())
-            }
-            Action::Dix(_) => match hand.stock().turn_up() {
-                Some(t) if t.rank() == Rank::SEVEN && t.suit() == trump => {
-                    "Show the other seven of trumps: ten.".to_string()
-                }
-                Some(t) => format!(
-                    "Exchange the seven of trumps for the {}: ten.",
-                    self.card(t)
-                ),
-                None => "The seven of trumps: ten.".to_string(),
-            },
-            Action::Pass => "Nothing: draw.".to_string(),
-            Action::Play(c) => format!("Play the {}.", self.card(*c)),
-        }
     }
 
     // ---- showing the table ---------------------------------------------------
@@ -820,6 +934,12 @@ mod tests {
         );
         assert!(said.contains("double bezique"), "{said}");
         assert!(said.contains("does not always play its best"), "{said}");
+    }
+
+    #[test]
+    fn a_decision_can_be_taken_back() {
+        let (_, said) = sit(&format!("y\n1\nu\n{}", "1\n".repeat(3000)), options(false));
+        assert!(said.contains("Taken back to your last decision."), "{said}");
     }
 
     #[test]

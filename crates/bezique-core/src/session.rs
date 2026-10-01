@@ -556,9 +556,13 @@ impl Session {
         let turn_up = hand.stock().turn_up().expect("a fresh stock");
         let shown = self.named(turn_up, hand, game.seat_of(Side::A));
         let mut text = format!(
-            "Hand {}. {} deal. The {} is turned up: {} are trumps.",
+            "Hand {}. {}. The {} is turned up: {} are trumps.",
             game.hand_number(),
-            if you_deal { "You" } else { "Your opponent" },
+            if you_deal {
+                "You deal"
+            } else {
+                "Your opponent deals"
+            },
             turn_up.code(),
             hand.trump().name()
         );
@@ -887,6 +891,26 @@ mod tests {
                 }
                 None => break,
             }
+        }
+    }
+
+    #[test]
+    fn the_deal_is_told_in_good_english() {
+        for seed in 0..10 {
+            let mut s = Session::new(seed, Settings::default());
+            if s.prompt() == Prompt::ChooseDealer {
+                s.send("dealer you");
+            }
+            let dealt = s
+                .events()
+                .iter()
+                .find(|e| matches!(e.kind, EventKind::Dealt { .. }))
+                .unwrap();
+            assert!(
+                dealt.text.contains("You deal.") || dealt.text.contains("Your opponent deals."),
+                "{}",
+                dealt.text
+            );
         }
     }
 
