@@ -4,13 +4,14 @@
 //! cargo run --release -p bezique-core --bin measure -- anatomy [games]
 //! cargo run --release -p bezique-core --bin measure -- riders [pairs]
 //! cargo run --release -p bezique-core --bin measure -- ladder [pairs]
+//! cargo run --release -p bezique-core --bin measure -- tune <field> <pairs> <value>...
 //! ```
 //!
 //! Each prints a short report; the reports kept are in `measurements/`.
 
 use std::collections::BTreeMap;
 
-use bezique_core::agents::{Legal, Maxims};
+use bezique_core::agents::{Legal, Maxims, Style};
 use bezique_core::cards::Suit;
 use bezique_core::deal::Seat;
 use bezique_core::game::{Game, Side};
@@ -26,12 +27,13 @@ fn main() {
         Some("anatomy") => anatomy(n(2000)),
         Some("riders") => riders(n(2000)),
         Some("ladder") => ladder(n(1000)),
-        _ => eprintln!("measure anatomy|riders|ladder [n]"),
+        Some("tune") => tune(&args[1..]),
+        _ => eprintln!("measure anatomy|riders|ladder [n] | tune <field> <pairs> <value>..."),
     }
 }
 
 fn maxims(_: u64) -> Box<dyn Agent> {
-    Box::new(Maxims)
+    Box::new(Maxims::default())
 }
 
 fn legal(_: u64) -> Box<dyn Agent> {
@@ -63,7 +65,7 @@ impl Agent for NoRiders {
 }
 
 fn no_riders(_: u64) -> Box<dyn Agent> {
-    Box::new(NoRiders(Maxims))
+    Box::new(NoRiders(Maxims::default()))
 }
 
 fn report_hands(name: &str, h: &tournament::Hands) {
@@ -89,6 +91,54 @@ fn report_games(name: &str, g: &tournament::Games) {
         g.doubles[1],
         f64::from(g.hands) / f64::from(g.wins[0] + g.wins[1])
     );
+}
+
+/// The first seed of a tuning run: `MEASURE_SEED` if set, so that a value
+/// chosen on one run can be confirmed on fresh deals.
+fn seed_base() -> u64 {
+    std::env::var("MEASURE_SEED")
+        .ok()
+        .and_then(|s| s.parse().ok())
+        .unwrap_or(4_000_000)
+}
+
+/// Rung 2 with one weight of its style changed, against the default, in
+/// mirrored hands: a positive margin means the change plays better.
+fn tune(args: &[String]) {
+    let field = args.first().expect("a field of Style");
+    let pairs: u64 = args
+        .get(1)
+        .and_then(|s| s.parse().ok())
+        .expect("a number of pairs");
+    for value in &args[2..] {
+        let value: i32 = value.parse().expect("a whole number");
+        let mut style = Style::default();
+        let slot = match field.as_str() {
+            "trump" => &mut style.trump,
+            "bezique" => &mut style.bezique,
+            "marriage" => &mut style.marriage,
+            "royal" => &mut style.royal,
+            "sequence" => &mut style.sequence,
+            "four" => &mut style.four,
+            "dix" => &mut style.dix,
+            "carried" => &mut style.carried,
+            "shown" => &mut style.shown,
+            "take_brisque" => &mut style.take_brisque,
+            "take_to_declare" => &mut style.take_to_declare,
+            "urgency" => &mut style.urgency,
+            other => panic!("no field {other}"),
+        };
+        *slot = value;
+        let variant = move |_: u64| -> Box<dyn Agent> {
+            Box::new(Maxims {
+                style: style.clone(),
+            })
+        };
+        report_hands(
+            &format!("{field} = {value}"),
+            &tournament::hands(seed_base(), pairs, &variant, &maxims),
+        );
+    }
 }
 
 fn ladder(pairs: u64) {
@@ -121,7 +171,8 @@ fn anatomy(games: u64) {
     let (mut last_stock_margin, mut last_stock_won_hand) = (0i64, 0u64);
     for seed in 0..games {
         let mut game = Game::new(10_000_000 + seed, Side::A);
-        let mut agents: [Box<dyn Agent>; 2] = [Box::new(Maxims), Box::new(Maxims)];
+        let mut agents: [Box<dyn Agent>; 2] =
+            [Box::new(Maxims::default()), Box::new(Maxims::default())];
         while let Some(side) = game.to_move() {
             let view = View::of(&game, side);
             let action = agents[side.index()].choose(&view, &game.legal());

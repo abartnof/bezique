@@ -14,7 +14,7 @@
 use crate::cards::{Card, CardSet, CardType, Rank, Suit};
 use crate::game::Game;
 use crate::hand::{Action, Phase};
-use crate::melds::Meld;
+use crate::melds::{Class, Meld};
 use crate::observation::{Agent, View};
 use crate::tricks;
 
@@ -34,17 +34,75 @@ impl Agent for Legal {
     }
 }
 
-/// Rung 2: the maxims of the period books.
+/// What rung 2 and above decide by: how much a card is worth keeping, and
+/// how much it may be worth for it to be spent taking a trick. The default
+/// is calibrated by mirrored measurement; a persona is a different set.
+#[derive(Clone, Debug, PartialEq)]
+pub struct Style {
+    /// Extra worth of a trump.
+    pub trump: i32,
+    /// A bezique card (Q♠ or J♦) while the single or double can still be
+    /// made with it.
+    pub bezique: i32,
+    /// A king or queen whose partner is held, before they are married:
+    /// plain suit, and trumps.
+    pub marriage: i32,
+    pub royal: i32,
+    /// A trump ace, ten, king, queen or jack while three of the five are held
+    /// and the sequence is not yet declared.
+    pub sequence: i32,
+    /// An ace, king, queen or jack while three of the rank are held and no
+    /// four of it declared.
+    pub four: i32,
+    /// The seven of trumps, while declaring lasts.
+    pub dix: i32,
+    /// A card carried "to score", until it scores.
+    pub carried: i32,
+    /// How much cheaper a card on the table is once it has no work left
+    /// (Foster: of two cards alike, play the one already shown).
+    pub shown: i32,
+    /// The most a card may be worth for it to be spent taking a brisque.
+    pub take_brisque: i32,
+    /// The most a card may be worth for it to be spent winning the lead in
+    /// order to declare,
+    pub take_to_declare: i32,
+    /// plus this much for every hundred points the declaration would score.
+    pub urgency: i32,
+}
+
+impl Default for Style {
+    fn default() -> Style {
+        Style {
+            trump: 5,
+            bezique: 14,
+            marriage: 4,
+            royal: 6,
+            sequence: 5,
+            four: 4,
+            dix: 4,
+            carried: 4,
+            shown: 2,
+            take_brisque: 20,
+            take_to_declare: 7,
+            urgency: 16,
+        }
+    }
+}
+
+/// Rung 2: the maxims of the period books, weighed by a [`Style`].
 #[derive(Clone, Debug, Default)]
-pub struct Maxims;
+pub struct Maxims {
+    pub style: Style,
+}
 
 impl Agent for Maxims {
     fn choose(&mut self, view: &View, legal: &[Action]) -> Action {
+        let style = &self.style;
         let card = match (view.phase, view.led) {
             (Phase::Declare, _) => return declaration(view, legal, true),
-            (Phase::Follow, Some(led)) => follow(view, legal, led),
+            (Phase::Follow, Some(led)) => follow(view, legal, led, style),
             _ if view.stock == 0 && view.turn_up.is_none() => endgame_lead(view, legal),
-            _ => cheapest(view, cards(legal)),
+            _ => cheapest(view, cards(legal), style),
         };
         Action::Play(card)
     }
@@ -59,18 +117,21 @@ fn cards(legal: &[Action]) -> impl Iterator<Item = Card> + '_ {
 }
 
 /// The card least worth keeping.
-fn cheapest(view: &View, cards: impl Iterator<Item = Card>) -> Card {
+fn cheapest(view: &View, cards: impl Iterator<Item = Card>, style: &Style) -> Card {
     cards
-        .min_by_key(|&c| (keep_value(c, view), c.0))
+        .min_by_key(|&c| (keep_value(c, view, style), c.0))
         .expect("a card to play")
 }
 
 /// How much a card is worth keeping in hand: its rank, more for a trump, and
-/// while declaring lasts, more for its part in combinations to come.
-fn keep_value(card: Card, view: &View) -> i32 {
+/// while declaring lasts, more for each combination it can still serve in.
+/// A card on the table with no such work left is cheaper, so that of two
+/// alike the shown one goes first.
+fn keep_value(card: Card, view: &View, style: &Style) -> i32 {
     let rank = card.rank();
     let trump = view.trump;
-    let mine = view.mine.cards();
+    let mine = &view.mine;
+    let held = mine.cards();
     let mut value = match rank {
         Rank::SEVEN => 0,
         Rank::EIGHT => 1,
@@ -82,48 +143,61 @@ fn keep_value(card: Card, view: &View) -> i32 {
         _ => 11,
     };
     if card.suit() == trump {
-        value += 5;
+        value += style.trump;
     }
     let declaring = view.stock > 0;
     if !declaring {
         return value;
     }
-    let held = |rank: Rank, suit: Suit| mine.count_of(CardType::new(rank, suit)) > 0;
+    let holds = |rank: Rank, suit: Suit| held.count_of(CardType::new(rank, suit)) > 0;
+    let level = |class| mine.level(card, class);
+    let mut work = false;
     let card_type = card.card_type();
-    if card_type == CardType::new(Rank::QUEEN, Suit::SPADES)
-        || card_type == CardType::new(Rank::JACK, Suit::DIAMONDS)
-    {
-        value += 6;
+    let bezique_card = card_type == CardType::new(Rank::QUEEN, Suit::SPADES)
+        || card_type == CardType::new(Rank::JACK, Suit::DIAMONDS);
+    if bezique_card && level(Class::Bezique) < 2 {
+        value += style.bezique;
+        work = true;
     }
     let partner = match rank {
         Rank::KING => Some(Rank::QUEEN),
         Rank::QUEEN => Some(Rank::KING),
         _ => None,
     };
-    if partner.is_some_and(|p| held(p, card.suit())) {
-        value += if card.suit() == trump { 6 } else { 4 };
+    if partner.is_some_and(|p| holds(p, card.suit())) && level(Class::Marriages) == 0 {
+        value += if card.suit() == trump {
+            style.royal
+        } else {
+            style.marriage
+        };
+        work = true;
     }
     let sequence = [Rank::ACE, Rank::TEN, Rank::KING, Rank::QUEEN, Rank::JACK];
     if card.suit() == trump
         && sequence.contains(&rank)
-        && sequence.iter().filter(|&&r| held(r, trump)).count() >= 3
+        && level(Class::Marriages) < 2
+        && sequence.iter().filter(|&&r| holds(r, trump)).count() >= 3
     {
-        value += 5;
+        value += style.sequence;
+        work = true;
     }
     if [Rank::ACE, Rank::KING, Rank::QUEEN, Rank::JACK].contains(&rank)
-        && mine.cards().filter(|c| c.rank() == rank).count() >= 3
+        && level(Class::Fours) == 0
+        && held.cards().filter(|c| c.rank() == rank).count() >= 3
     {
-        value += 4;
+        value += style.four;
+        work = true;
     }
     if rank == Rank::SEVEN && card.suit() == trump {
-        value += 4;
+        value += style.dix;
+        work = true;
     }
-    if view.mine.carried().iter().any(|d| d.cards.contains(card)) {
-        value += 4;
-    } else if view.mine.shown.contains(card) {
-        // Foster: of two cards alike, play the one already on the table; it
-        // tells the opponent nothing new.
-        value -= 2;
+    if mine.carried().iter().any(|d| d.cards.contains(card)) {
+        value += style.carried;
+        work = true;
+    }
+    if !work && mine.shown.contains(card) {
+        value -= style.shown;
     }
     value
 }
@@ -132,17 +206,34 @@ fn keep_value(card: Card, view: &View) -> i32 {
 /// which leaves fewer choices): take a brisque, or the lead when there is
 /// something to declare, if it can be done cheaply; otherwise throw the least
 /// valuable card, sparing brisques.
-fn follow(view: &View, legal: &[Action], led: Card) -> Card {
+fn follow(view: &View, legal: &[Action], led: Card, style: &Style) -> Card {
     let trump = view.trump;
     let winners: Vec<Card> = cards(legal)
         .filter(|&c| tricks::second_wins(led, c, trump))
         .collect();
-    if let Some(&winner) = winners.iter().min_by_key(|&&c| (keep_value(c, view), c.0)) {
-        let cost = keep_value(winner, view);
-        let something_to_declare = view.stock > 0
-            && (!view.mine.candidates(trump).is_empty() || !view.mine.carried().is_empty());
+    if let Some(&winner) = winners
+        .iter()
+        .min_by_key(|&&c| (keep_value(c, view, style), c.0))
+    {
+        let cost = keep_value(winner, view, style);
+        // What winning would let it declare: the more, the more it may spend.
+        let waiting = if view.stock > 0 {
+            view.mine
+                .candidates(trump)
+                .into_iter()
+                .chain(view.mine.carried())
+                .map(|d| d.meld.points(trump) as i32)
+                .max()
+                .unwrap_or(0)
+        } else {
+            0
+        };
+        let worth_declaring = style.take_to_declare + waiting * style.urgency / 100;
         let in_endgame = view.stock == 0 && view.turn_up.is_none();
-        if in_endgame || (led.is_brisque() && cost <= 12) || (something_to_declare && cost <= 7) {
+        if in_endgame
+            || (led.is_brisque() && cost <= style.take_brisque)
+            || (waiting > 0 && cost <= worth_declaring)
+        {
             return winner;
         }
     }
@@ -155,7 +246,7 @@ fn follow(view: &View, legal: &[Action], led: Card) -> Card {
     pool.into_iter()
         .min_by_key(|&c| {
             (
-                keep_value(c, view) + if c.is_brisque() { 20 } else { 0 },
+                keep_value(c, view, style) + if c.is_brisque() { 20 } else { 0 },
                 c.0,
             )
         })
@@ -280,24 +371,76 @@ mod tests {
     fn both_rungs_play_whole_games_legally() {
         for seed in 0..10 {
             let mut game = Game::new(seed, Side::A);
-            play_out(&mut game, &mut [&mut Legal, &mut Maxims]);
+            play_out(&mut game, &mut [&mut Legal, &mut Maxims::default()]);
             assert!(game.outcome().is_some());
         }
     }
 
     #[test]
     fn the_maxims_beat_bare_legality() {
-        let (maxims, legal) = games_won(0..40, &mut Maxims, &mut Legal);
+        let (maxims, legal) = games_won(0..40, &mut Maxims::default(), &mut Legal);
         assert!(
             maxims >= 56,
             "the maxims won {maxims} of 80 mirrored games, the baseline {legal}"
         );
     }
 
+    /// Pardon: keep the bezique cards until near the end, even after
+    /// declaring bezique; the double may yet come.
+    #[test]
+    fn a_declared_bezique_is_kept_for_the_double() {
+        use crate::cards::CardSet;
+        use crate::deal::{Seat, Stock};
+        use crate::hand::Hand;
+        use crate::melds::{Announcement, Holdings};
+        let trump = Suit::HEARTS;
+        let mut dealer = Holdings::new(CardSet::parse("QS JD AS TC TD AC AD TS").unwrap());
+        let bezique = dealer
+            .candidates(trump)
+            .into_iter()
+            .find(|d| d.meld == Meld::Bezique)
+            .unwrap();
+        dealer
+            .apply(
+                trump,
+                &Announcement {
+                    melds: vec![bezique],
+                    score: bezique,
+                },
+            )
+            .unwrap();
+        let pone = Holdings::new(CardSet::parse("7C 8C 9C 7D 8D 9D 7S 8S").unwrap());
+        let stock: Vec<Card> = CardSet::parse("9S 9H JC QC KC JS KS JH QH KH")
+            .unwrap()
+            .cards()
+            .collect();
+        let hand = Hand::arranged(
+            trump,
+            Stock::new(
+                &stock,
+                Some(CardSet::parse("7H").unwrap().cards().next().unwrap()),
+            ),
+            [dealer, pone],
+            Seat::Dealer,
+            4,
+        );
+        let game = Game::arranged(1, [0, 0], Side::A, hand);
+        let view = View::of(&game, Side::A);
+        let lead = Maxims::default().choose(&view, &game.legal());
+        let Action::Play(card) = lead else {
+            panic!("a lead")
+        };
+        assert!(
+            card.card_type() != CardType::new(Rank::QUEEN, Suit::SPADES)
+                && card.card_type() != CardType::new(Rank::JACK, Suit::DIAMONDS),
+            "led the {card:?}, a card the double needs"
+        );
+    }
+
     #[test]
     fn identical_agents_split_mirrored_games_evenly() {
         // Deterministic agents on mirrored deals: every pair is one win each.
-        let (a, b) = games_won(0..10, &mut Maxims, &mut Maxims);
+        let (a, b) = games_won(0..10, &mut Maxims::default(), &mut Maxims::default());
         assert_eq!((a, b), (10, 10));
     }
 }
