@@ -12,6 +12,7 @@ pub mod melds;
 pub mod observation;
 pub mod opponent;
 pub mod rng;
+pub mod session;
 pub mod solver;
 pub mod tournament;
 pub mod tricks;
