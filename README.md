@@ -11,8 +11,8 @@ queen of spades with the jack of diamonds: bezique.
 This project is building a version you can play against the computer, and
 learn as you play, as one self-contained web page.
 
-**Status:** in development. The rules and design are written; the engine is
-next.
+**Status:** in development. The rules engine is written and tested (cargo
+test runs it in about a second); the computer opponent and the table are next.
 
 ## Learning the game
 
