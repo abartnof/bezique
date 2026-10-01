@@ -3,6 +3,7 @@
 //! The rules are those of `docs/RULES.md` (Foster, 1897); the reasoning behind
 //! the structure is in `docs/DESIGN.md`.
 
+pub mod agents;
 pub mod cards;
 pub mod deal;
 pub mod game;
