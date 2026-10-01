@@ -7,9 +7,11 @@
 
 ## Where we are
 
-**2026-10-01: milestones 1–5 done: the rules engine is complete.** The pack,
-the generator, the deal, the trick rules, declaring, a whole hand and a whole
-game, in 95 tests that run in about a second. Planning was completed the same
+**2026-10-01: the game is playable in a terminal.** Milestones 1–5 (the rules
+engine) are done; milestone 6 is done but for the measuring harness (the
+view, rungs 1 and 2); milestone 7 is done but for the session layer (the
+terminal client exists; undo, replay, the protocol and wasm do not). Rung 2
+beats rung 1 in 721 of 1,000 mirrored games. Planning was completed the same
 day:
 
 - `docs/LITERATURE.md`: the literature review (68 sources, the conflict
@@ -66,11 +68,14 @@ day:
       waits for the terminal client, which needs one (milestone 7).
 - [x] **5. The game**: the cut, alternating deals, the race to 1,000, the
       double game.
-- [ ] **6. Observation and the first rungs**: the view; rungs 1–2; the
-      mirrored-pair harness and the measurement binaries.
-- [ ] **7. Playable**: the session (undo, replay, aids, hints), the protocol
-      and its document, the wasm crate, the terminal client. Play-test the
-      declaring interface here, before the 3D table is built around it.
+- [ ] **6. Observation and the first rungs**: ~~the view~~ (done; checked
+      for leaks on every position of 25 games); ~~rungs 1–2~~ (done); the
+      mirrored-pair harness and the measurement binaries (to do).
+- [ ] **7. Playable**: ~~the terminal client~~ (done: `cargo run --release
+      -p bezique-cli`, with `--watch` for two computer players); the session
+      (undo, replay, aids, hints), the protocol and its document, the wasm
+      crate (to do). Play-test the declaring interface here, before the 3D
+      table is built around it.
 - [ ] **8. Rungs 3–5**: memory, watching the table, the exact endgame.
 - [ ] **9. The 3D table**, adapted from piquet's (`DESIGN.md` §11).
 - [ ] **10. Rungs 6–7, and the finish**: search, the game-level objective,
@@ -78,20 +83,16 @@ day:
 
 ## Next action
 
-**Milestone 6: observation and the first rungs.**
-
-- `observation.rs`, test first: a seat's view of a hand (`DESIGN.md` §8).
-  Its own concealed cards; both players' table cards with their histories
-  and carried scores; the turn-up and the stock's size; cards known to be in
-  the opponent's hand (taken by the dix, shown as the second seven, the
-  turn-up taken at the last stock trick); every card played. Each field is
-  asked *when was this shown or said, and to whom?*, and a test asserts that
-  no view ever holds a card its seat could not know.
-- Agents read only views. Rung 1 (legal, lowest lead, declare the most) and
-  rung 2 (the period maxims, `DESIGN.md` §10.1).
-- The mirrored-pair harness and a first measurement binary, then the first
-  questions from "To measure" that rung 2 can answer: hands per game, where
-  the points come from, the first lead.
+1. **Triage the code review** of the engine (run 2026-10-01): verify each
+   finding, label it (defect, interpretation, lead, preference), and fix the
+   confirmed ones test first. Already known: `best_riders` silently caps at
+   16 riders (unreachable in measured play, but unguarded); DESIGN §6.2 does
+   not say that options vary which combination is scored; RULES.md does not
+   say that a carried combination may be scored while new ones are
+   announced.
+2. **The maintainer's first play-test** in the terminal, and what it finds.
+3. **The mirrored-pair harness** and the first measurements from "To
+   measure" below.
 
 ## To measure, once the engine plays
 
