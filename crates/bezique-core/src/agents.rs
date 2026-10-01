@@ -157,23 +157,32 @@ struct Think<'a> {
 /// The highest rung built so far. Levels above it play as it does.
 pub const TOP: u8 = 4;
 
-/// The opponent at a level of the ladder.
+/// The opponent at a level of the ladder, in the balanced style.
 pub fn rung(level: u8) -> Box<dyn Agent> {
+    rung_with(level, &Style::default())
+}
+
+/// Rung `level` playing in `style` (rung 1 has no style to play in).
+pub fn rung_with(level: u8, style: &Style) -> Box<dyn Agent> {
     let skills = |last_stock_trick| Skills {
         memory: true,
         endgame: true,
         last_stock_trick,
     };
+    let style = style.clone();
     match level {
         0 | 1 => Box::new(Legal),
-        2 => Box::new(Maxims::default()),
-        3 => Box::new(Maxims {
-            skills: skills(false),
+        2 => Box::new(Maxims {
+            style,
             ..Maxims::default()
         }),
+        3 => Box::new(Maxims {
+            style,
+            skills: skills(false),
+        }),
         _ => Box::new(Maxims {
+            style,
             skills: skills(true),
-            ..Maxims::default()
         }),
     }
 }

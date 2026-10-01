@@ -11,13 +11,14 @@
 
 use std::collections::BTreeMap;
 
-use bezique_core::agents::{rung, Maxims, Skills, Style};
+use bezique_core::agents::{rung, rung_with, Maxims, Skills, Style};
 use bezique_core::cards::Suit;
 use bezique_core::deal::Seat;
 use bezique_core::game::{Game, Side};
 use bezique_core::hand::{Action, Hand, Phase, Source};
 use bezique_core::melds::{self, Announcement, Meld};
 use bezique_core::observation::{Agent, View};
+use bezique_core::opponent;
 use bezique_core::tournament;
 
 fn main() {
@@ -30,6 +31,7 @@ fn main() {
         Some("tune") => tune(&args[1..]),
         Some("skills") => skills(n(2000)),
         Some("last-stock-trick") => last_stock_trick(n(2000)),
+        Some("personas") => personas(n(1000)),
         _ => eprintln!("measure anatomy|riders|ladder [n] | tune <field> <pairs> <value>..."),
     }
 }
@@ -190,6 +192,62 @@ fn last_stock_trick(pairs: u64) {
             &three,
         ),
     );
+}
+
+/// Each persona at the top rung against the balanced one: what it costs in
+/// mirrored hands, and how it plays (where its points come from, per hand).
+fn personas(pairs: u64) {
+    let top = bezique_core::agents::TOP;
+    let balanced = opponent::persona("balanced").unwrap();
+    for p in opponent::personas() {
+        let style = p.style.clone();
+        let mine = move |_: u64| rung_with(top, &style);
+        let base_style = balanced.style.clone();
+        let theirs = move |_: u64| rung_with(top, &base_style);
+        let h = tournament::hands(9_000_000, pairs, &mine, &theirs);
+        let (melds, brisques) = profile(&p.style, &balanced.style, top, pairs.min(500));
+        println!(
+            "{:<10} {:+6.2} a hand (se {:.2}); scores {:.1} in combinations and {:.1} in brisques a hand",
+            p.key,
+            h.mean(),
+            h.standard_error(),
+            melds,
+            brisques
+        );
+    }
+}
+
+/// The points a hand that `style` scores in combinations and in brisques,
+/// playing first hands against `against`, both seatings.
+fn profile(style: &Style, against: &Style, level: u8, pairs: u64) -> (f64, f64) {
+    let (mut melds, mut brisques, mut hands) = (0u64, 0u64, 0u64);
+    for seed in 0..pairs {
+        for swap in [false, true] {
+            let mut agents = if swap {
+                [rung_with(level, against), rung_with(level, style)]
+            } else {
+                [rung_with(level, style), rung_with(level, against)]
+            };
+            let mut game = Game::new(9_500_000 + seed, Side::A);
+            tournament::play(&mut game, &mut agents, |g| g.hand_number() > 1);
+            let hand = if game.hand_number() > 1 {
+                game.previous_hand().unwrap()
+            } else {
+                game.hand()
+            };
+            // Side A dealt; the persona is side A unless swapped.
+            let seat = if swap { Seat::Pone } else { Seat::Dealer };
+            for s in hand.log().iter().filter(|s| s.seat == seat) {
+                match s.source {
+                    Source::Meld(_) => melds += u64::from(s.points),
+                    Source::Brisques => brisques += u64::from(s.points),
+                    _ => {}
+                }
+            }
+            hands += 1;
+        }
+    }
+    (melds as f64 / hands as f64, brisques as f64 / hands as f64)
 }
 
 /// Each rung against the one below it, in mirrored hands and games.
