@@ -198,12 +198,15 @@ the full ladder run. Levels run 1 to 5.
    game; looking ahead in declarations (measured worse, not kept); the
    solver 2.5 times faster again. Still open: rung 6, play for the game
    rather than the hand (the race to 1,000 and the double at 500, DESIGN
-   §10.4). It changes only a game's last hand, about one in four, so a gain
-   in games won would be small: telling a 1–2% gain from noise needs on
-   the order of 10,000 mirrored pairs of games, about three hours on this
-   machine. To agree with the maintainer before running. Also open: 32
-   worlds rather than 16 at rung 5 measured +2.4 points a hand (se 1.3),
-   not yet significant; about 6,000 pairs (some two hours) would settle it.
+   §10.4). Approved by the maintainer, after a full code review (done
+   2026-10-02, `docs/reviews/2026-10-02-full.md`). Its first draft was
+   found unsound (the endgame race judged from final totals; decided and
+   undecided worlds mixed on one scale); it is to be rebuilt on a measured
+   table of the chance of winning from any score, and measured in games by
+   game points (a double counting two), sequentially. Also approved: 32
+   worlds rather than 16 at rung 5 (+2.4, se 1.3 so far), settled
+   sequentially. Every run follows the project's policy: a rule fixed in
+   advance, stopping as soon as the answer is clear (DESIGN §10.5).
 
 ## To measure, once the engine plays
 

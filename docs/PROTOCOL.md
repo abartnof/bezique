@@ -26,7 +26,10 @@ The person is always side A. `level` is 1 to 5 (`agents::TOP`); `persona` is
 same arguments always give the same sitting. Out-of-range arguments are not
 refused: the level is clamped to 1–5, erraticism to 0–1,000, and a persona
 number past the list is drawn from the seed as 0 is. Before `bezique_new`
-the state is empty (`bezique_state_len()` is 0).
+the state is empty (`bezique_state_len()` is 0), and a command sent then
+leaves it as `null`. Until the dealer is chosen the state has no table: the
+fields from `hand_number` to `tricks_played` are absent. The `cut` event
+belongs to no hand (`hand: 0`).
 
 ## Commands
 

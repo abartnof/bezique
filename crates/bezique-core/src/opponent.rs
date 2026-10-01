@@ -8,8 +8,8 @@
 //!   cost no more than about two points a hand against the balanced default
 //!   (`measurements/README.md`).
 //! - **Erraticism** is how consistently it plays to its level: on each
-//!   decision it may slip a rung or two, as people do, rather than playing
-//!   uniformly worse.
+//!   decision it may slip a rung, and each further rung with the same
+//!   probability again, as people do, rather than playing uniformly worse.
 //!
 //! The opponent is never given a name: it is described by how it plays.
 

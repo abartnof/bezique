@@ -127,7 +127,6 @@ pub enum EventKind {
     GameEnds { you_won: bool, double: bool },
 }
 
-/// A sitting.
 /// The version of the engine's play that a record replays against. A record
 /// is a list of commands, and replays faithfully only while the cards dealt,
 /// the opponent's choices and the order of the declaring options are the
@@ -137,6 +136,8 @@ pub enum EventKind {
 /// changes, as the reminder to bump it.
 pub const RECORD_VERSION: u32 = 2;
 
+/// A sitting: one person against the opponent, from the cut to the end of
+/// the game, advanced one human decision at a time.
 pub struct Session {
     seed: u64,
     settings: Settings,

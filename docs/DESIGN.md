@@ -416,7 +416,9 @@ play for the game rather than the hand, remain proposals for rungs 6 and
 up.
 
 **Erraticism** (`opponent.rs`): on each decision the opponent may slip a
-rung, and another, with the set probability, drawn from its own stream, so
+rung, and each further rung with the set probability again (at 0.5, a
+level-5 opponent plays as rung 1 about one decision in sixteen), drawn from
+its own stream, so
 a sitting replays exactly. Real players are inconsistent, not uniformly bad.
 
 **Personas** (`opponent.rs`): a style must be close to EV-neutral, or it is
@@ -520,7 +522,17 @@ measured there:
 ### 10.5 Measurement
 
 **Mirrored pairs, always**: each deal is played twice with the seats swapped,
-and only the difference counts. Piquet's ad-hoc unmirrored harness disagreed
+and only the difference counts.
+
+**Sequential, always** (the project's policy since 2026-10-02): a run is
+sized by power, not by habit. Pairs are played in batches under a rule fixed
+before the run (`tournament::Sequential`): no look before a sensible
+minimum; stop as soon as the effect is clear (|z| at a bound high enough to
+allow for the repeated looks, 3 by default), or as soon as it is clear the
+effect is smaller than any worth having; a cap otherwise. Mirrored pairs of
+games often split, so the variance is far below a naive estimate; a pilot
+measures it before a long run is sized. Every report prints its seeds, its
+rule and why it stopped. Piquet's ad-hoc unmirrored harness disagreed
 with itself by five sigma. Runs are sized by the smallest design that can
 answer the question, with the stopping rule fixed in advance; any long or
 paid compute run is agreed with the maintainer first, with a runtime and cost

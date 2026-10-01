@@ -29,7 +29,7 @@ Options (all listed by `--help`):
 
 ## Play it
 
-- Type a card as shown (`AS`, `10D`) or by its number in the list.
+- Type a card as shown (`AS`, `TD`; `10D` works too) or by its number in the list.
 - `*` marks a card on the table; type `QS*` for the table copy when you hold
   both.
 - After winning a trick, you are offered a numbered list of declarations, but

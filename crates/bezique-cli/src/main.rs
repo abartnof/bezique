@@ -1,7 +1,7 @@
 //! `bezique`: play bezique in the terminal.
 //!
 //! ```text
-//! bezique [--seed N] [--level 1-4] [--persona KEY|random] [--erratic 0-1]
+//! bezique [--seed N] [--level 1-5] [--persona KEY|random] [--erratic 0-1]
 //!         [--watch [--reveal] [--fast]] [--no-colour]
 //! ```
 
