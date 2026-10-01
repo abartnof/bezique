@@ -6,6 +6,7 @@
 //! cargo run --release -p bezique-core --bin measure -- ladder [pairs]
 //! cargo run --release -p bezique-core --bin measure -- tune <field> <pairs> <value>...
 //! cargo run --release -p bezique-core --bin measure -- lookahead [pairs] [horizon] [worlds]
+//! cargo run --release -p bezique-core --bin measure -- lookahead-declarations [pairs]
 //! ```
 //!
 //! Each prints a short report; the reports kept are in `measurements/`.
@@ -35,6 +36,7 @@ fn main() {
         Some("last-stock-trick") => last_stock_trick(n(2000)),
         Some("personas") => personas(n(1000)),
         Some("lookahead") => lookahead(n(200), &args[2..]),
+        Some("lookahead-declarations") => lookahead_declarations(n(500)),
         _ => eprintln!("measure anatomy|riders|ladder [n] | tune <field> <pairs> <value>..."),
     }
 }
@@ -222,6 +224,21 @@ fn lookahead(pairs: u64, rest: &[String]) {
     println!(
         "    {:.2} s a hand",
         start.elapsed().as_secs_f64() / (2 * pairs) as f64
+    );
+}
+
+/// Rung 5 looking ahead in the turn of declaring too, against rung 5.
+fn lookahead_declarations(pairs: u64) {
+    let declaring = |_: u64| -> Box<dyn Agent> {
+        Box::new(Lookahead {
+            declarations: true,
+            ..Lookahead::default()
+        })
+    };
+    let five = |_: u64| rung(5);
+    report_hands(
+        "rung 5 looking ahead in declaring too, against rung 5",
+        &tournament::hands(seed_base() + 8_000_000, pairs, &declaring, &five),
     );
 }
 
