@@ -7,8 +7,9 @@
 
 ## Where we are
 
-**2026-10-01: milestone 1 done: the pack, the generator and the deal,
-32 tests.** Planning was completed the same day:
+**2026-10-01: milestones 1–3 done: the pack, the generator, the deal, the
+trick rules and declaring; 69 tests, under a second.** Planning was completed
+the same day:
 
 - `docs/LITERATURE.md`: the literature review (68 sources, the conflict
   matrix, strategy, computed odds), as delivered.
@@ -51,11 +52,13 @@
       seeded generator and shuffle, the deal (3-2-3) and the turn-up. A
       statistical test of the deal and draw against the exact odds, shown
       to catch an unshuffled pack and a naive shuffle.
-- [ ] **2. Tricks**: who wins a trick; the follow-and-win rule of the last
-      eight tricks.
-- [ ] **3. Declarations**: combinations, class levels, the new-card rule,
+- [x] **2. Tricks**: who wins a trick; the follow-and-win rule of the last
+      eight tricks, checked against Foster's sentence on random endgames.
+- [x] **3. Declarations**: combinations, class levels, the new-card rule,
       announcements and carried scores, the curated options. Every worked
-      example in `RULES.md` as a test first; the brute-force reference.
+      example in `RULES.md` as a test; references for candidates and for
+      `check` on random positions; planted defects used to find untested
+      rules (one was found, and covered).
 - [ ] **4. The hand**: the phase machine end to end (drawing, the dix, the
       last stock trick, the endgame), the event log, a text notation for
       positions, invariants over random self-play.
@@ -73,15 +76,24 @@
 
 ## Next action
 
-**Milestone 2, test first: `tricks.rs`.**
+**Milestone 4, test first: `hand.rs`, one hand played from the deal to the
+last trick.**
 
-- While the stock lasts: the higher card of the suit led wins; a trump beats
-  a plain-suit lead; an off-suit plain card loses; identical cards go to the
-  leader.
-- The last eight tricks: the legal replies to a lead. Follow suit and beat
-  it if possible; holding the suit but unable to beat it, any card of the
-  suit; void, a trump if held; otherwise anything. A trump lead must be
-  overtrumped if possible. An identical card does not beat.
+- The state: trumps, the stock, each seat's `Holdings`, the leader, the
+  trick in progress, the cards each seat has won, and an ordered log of
+  scores (`DESIGN.md` §7).
+- The actions, generated per phase: play a card (from hand or table); after
+  winning a trick while the stock lasts, declare (an option from
+  `Holdings::options`), the dix, or nothing; then the draws happen by
+  themselves, the winner first.
+- The scores: the dealer's turned seven, brisques as taken, combinations,
+  the dix (exchanging it moves the turn-up), the last trick of all.
+- The last stock trick: the winner may declare, then takes the last card and
+  the loser the turn-up; carried scores lapse; table cards return to hand;
+  the follow-and-win rule takes over.
+- A text notation for positions, so that any situation can be a fixture.
+- Invariants over random self-play: 32 tricks, 64 cards conserved, brisques
+  totalling 160, the log reconciling with the totals.
 
 ## To measure, once the engine plays
 
@@ -99,10 +111,22 @@ measurement at the smallest size that answers it.
 - Where the points come from (the crude bot: melds 60%, brisques 36%).
 - Whether declaring at once or holding back to hide the hand matters.
 
+## To discuss with the maintainer, when the table is built
+
+- **A score display in homage to the period's bezique markers** (requested
+  2026-10-01). Tony Hall's survey, "Bezique Markers, 1860–1960" (World of
+  Playing Cards, https://www.wopc.co.uk/games/bezique-markers-1860-1960;
+  literature review S6), shows dials to 1,000, Goodall's "Register" and
+  three-circle markers, and De La Rue's two-circle 0–90 / 0–900 dials. Foster
+  adds counters (button 500, blue 100, red 50, white 10) and the pull-up
+  cribbage board. The point is to find what those devices *afforded* (the
+  score read at a glance, the 500 mark that decides a double, the turning
+  dial as the score ticks) and make a digital piece that does the same. D3 is
+  an acceptable fallback. This replaces, or reshapes, piquet's broadcast-style
+  score bug (`DESIGN.md` §11).
+
 ## Ideas, not owed
 
-- A score display that nods to the period's dial markers, or Foster's
-  counters (button 500, blue 100, red 50, white 10).
 - An "About bezique" page from the literature review: the 1869 craze,
   Churchill, Caillebotte's *La Partie de bésigue* (1880), the invented
   "Gustave Flaker" and how it was traced.
