@@ -22,21 +22,33 @@ cargo run --release -p bezique-core --bin measure -- <report> [n]
 | `skills-final-style.txt` | `skills 2000` | The same with the final style (2026-10-02): memory +1.8 (se 0.6); memory with the exact endgame +18.6 (se 0.6). |
 | `ladder-tuned-style.txt` | `ladder 2000` | The ladder with the final style (2026-10-02): rung 2 over 1 +98.6 (se 2.5), 92.0% of games; rung 3 over 2 +18.7 (se 0.7), 58.2%; rung 4 over 3 +2.3 (se 0.4), 51.4%. |
 | `anatomy-rung2-final.txt` | `anatomy 2000` | Rung 2 with the final style: 4.25 hands a game, 12.4% doubles, 95.2% ended mid-hand, the first dealer winning 50.0%; double bezique scored in 2.5% of player-hands (0.2% before the night's fixes). |
-| `lookahead-sweep.txt` | `lookahead 500 <horizon> <worlds>` | Rung 5 (rung 4 looking ahead near the end of the stock) against rung 4, swept over the horizon (face-down cards left when it starts looking) and the worlds sampled. Gains grow with worlds (8: +27.2, 16: +32.8, 32: +35.3 at horizon 9) and with the horizon up to 9–13, then fall (21: +19.5, se 4.5). Times a hand are rough: other work shared the machine. |
+| `lookahead-sweep.txt` | `lookahead 500 <horizon> <worlds>` | Rung 5 (rung 4 looking ahead near the end of the stock) against rung 4, swept over the horizon (face-down cards left when it starts looking) and the worlds sampled. Gains seemed to grow with worlds (8: +27.2, 16: +32.8, 32: +35.3 at horizon 9) and with the horizon up to 9–13, then to fall (21: +19.5, se 4.5). Each point is one run of 500 pairs, so these are suggestions, not findings. Times a hand are rough: other work shared the machine. |
 | `lookahead-confirm.txt` | `MEASURE_SEED=60000000 lookahead 2000 9 16` | The chosen setting, horizon 9 and 16 worlds (the knee, not the maximum), confirmed on fresh seeds: +30.05 points a hand over rung 4 (se 1.29). It became rung 5. |
 | `personas-rung4.txt` | `MEASURE_LEVEL=4 personas 5000` | The personas at rung 4, where they had only been calibrated at rung 2: concentrates −0.36 (se 0.96), close −0.32 (se 0.84), bezique −1.35 (se 0.89) points a hand against balanced. All within the two-point limit. |
 | `lookahead-declarations.txt` | `lookahead-declarations 1000` | Rung 5 looking ahead in the turn of declaring too (each option valued in the same worlds), against rung 5: −0.94 points a hand (se 0.41). Not kept: rung 4's declaring stands. Declaring lays cards open, and determinised rollouts cannot value what is hidden (DESIGN §10.4, strategy fusion). |
+| `anatomy-rung2-counted.txt` | `anatomy 2000` (after the full review of 2026-10-02) | The final rung 2 again, combinations now counted from the finished hands tallied: double bezique 1.0% of player-hands (not 2.5%), the sequence 5.7% (not 7.8%); every other figure identical to `anatomy-rung2-final.txt`. |
 | `anatomy-rung5.txt` | `MEASURE_LEVEL=5 anatomy 1000` (at `bba7edc`) | Rung 5 against itself: 4.19 hands a game, 13.1% doubles, 94.5% ended mid-hand, the first dealer winning 51.0% (se 1.6); the sequence 7.8% of points (6.4% at rung 2), the dix 3.1%; the winner of the last stock trick out-scores the loser by 8.7 points over the hand (17.5 at rung 2), both sides now fighting for it. |
 | `lookahead-32-worlds.txt` | `MEASURE_SEED=70000000 lookahead-vs-five 1500 9 32` | Rung 5 with 32 worlds against rung 5 (16): +2.44 points a hand (se 1.27). Under two standard errors, at twice the cost a decision: not adopted. A run of about 6,000 pairs would settle it. |
 | `ladder-rung5.txt` | `ladder 2000` | The five-rung ladder (2026-10-02, after the solver's speed-up): rungs 2–4 exactly as in `ladder-tuned-style.txt`, so the faster solver plays as before; rung 5 over rung 4 +30.5 points a hand (se 1.3), 62.4% of games (se 0.8). |
 | `ladder.txt` | `ladder 2000` | The ladder as rebuilt: rung 2 over rung 1 +79.0 (se 2.4), 87.5% of games; rung 3 (memory and the exact endgame) over rung 2 +19.2 (se 0.8), 58.0% of games. |
+
+**A correction (full review of 2026-10-02).** The anatomy reports made
+before `anatomy-rung2-counted.txt` counted combinations announced in every
+hand, the unfinished last hand of each game included, but divided by the
+finished hands only. Their rates per player-hand are inflated (double
+bezique about 2.5 times, the sequence about 1.35 times), so the figures
+quoted for them above (0.2%, 0.8%, 1.7%, 2.5%; the sequence 7.8%) overstate
+the level, though not the direction of the changes. Points per hand and
+their shares come from the hands' logs and are unaffected.
 
 ## Tuning rung 2 (2026-10-02)
 
 Each weight was swept with `tune` against the then default (3,000 mirrored
 pairs), a value chosen at the knee of the curve or on principle rather than
 at the maximum (to avoid the optimizer's curse), and confirmed on fresh
-seeds (`MEASURE_SEED`, 10,000 pairs). Margins are points a hand for the
+seeds (`MEASURE_SEED`, 10,000 pairs; the values used were not recorded, so
+these rows cannot be reproduced exactly, and since 2026-10-02 every report
+prints its seeds). Margins are points a hand for the
 variant against the default, with standard errors.
 
 | Weight | Swept | Chosen | Confirmed on fresh seeds |
@@ -52,7 +64,7 @@ variant against the default, with standard errors.
 Calibrating personas against the default exposed weights the default had
 never been tuned on: a persona that measured *better* than balanced was
 improved play, not a style, and went into the default instead. Confirmed
-each on fresh seeds (`MEASURE_SEED`), points a hand for the new value
+each on fresh seeds (`MEASURE_SEED`, values not recorded), points a hand for the new value
 against the old, at rung 2:
 
 | Weight | Change | Confirmed |

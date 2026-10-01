@@ -10,7 +10,11 @@
 //! cargo run --release -p bezique-core --bin measure -- lookahead-vs-five [pairs] [horizon] [worlds]
 //! ```
 //!
-//! Each prints a short report; the reports kept are in `measurements/`.
+//! Each prints a short report, with the seeds it used; the reports kept are
+//! in `measurements/`. Each report deals from its own default seeds;
+//! `MEASURE_SEED=<n>` moves them all on by n, for confirming a choice on fresh
+//! deals. `MEASURE_THREADS` sets the threads (every core by default); the
+//! results do not depend on it.
 
 use std::collections::BTreeMap;
 
@@ -27,7 +31,12 @@ use bezique_core::tournament;
 
 fn main() {
     let args: Vec<String> = std::env::args().skip(1).collect();
-    let n = |default: u64| args.get(1).and_then(|s| s.parse().ok()).unwrap_or(default);
+    let n = |default: u64| match args.get(1) {
+        None => default,
+        Some(s) => s
+            .parse()
+            .unwrap_or_else(|_| panic!("{s:?} is not a number of pairs or games")),
+    };
     match args.first().map(String::as_str) {
         Some("anatomy") => anatomy(n(2000)),
         Some("riders") => riders(n(2000)),
@@ -39,7 +48,10 @@ fn main() {
         Some("lookahead") => lookahead(n(200), &args[2..]),
         Some("lookahead-declarations") => lookahead_declarations(n(500)),
         Some("lookahead-vs-five") => lookahead_vs_five(n(500), &args[2..]),
-        _ => eprintln!("measure anatomy|riders|ladder [n] | tune <field> <pairs> <value>..."),
+        _ => {
+            eprintln!("measure: no such report; see the list at the top of measure.rs");
+            std::process::exit(2);
+        }
     }
 }
 
@@ -77,36 +89,49 @@ fn no_riders(_: u64) -> Box<dyn Agent> {
 
 fn report_hands(name: &str, h: &tournament::Hands) {
     println!(
-        "{name}: {:+.2} points a hand for the first ({} mirrored pairs, standard error {:.2})",
+        "{name}: {:+.2} points a hand for the first ({} mirrored pairs, standard error {:.2}; seeds {}-{})",
         h.mean(),
         h.pairs,
-        h.standard_error()
+        h.standard_error(),
+        h.first_seed,
+        h.first_seed + u64::from(h.pairs) - 1
     );
 }
 
 fn report_games(name: &str, g: &tournament::Games) {
     println!(
-        "{name}: the first won {} of {} games, {:.1}% (standard error {:.1}); pairs swept {}-{}, split {}; doubles {}-{}; {:.2} hands a game",
+        "{name}: the first won {} of {} games, {:.1}% (standard error {:.1}); game points {:+.3} a game (se {:.3}, a double counting two); pairs swept {}-{}, split {}; doubles {}-{}; {:.2} hands a game; seeds {}-{}",
         g.wins[0],
         g.wins[0] + g.wins[1],
         100.0 * g.share(),
         100.0 * g.standard_error(),
+        g.points_a_game(),
+        g.points_standard_error(),
         g.swept[0],
         g.swept[1],
         g.split,
         g.doubles[0],
         g.doubles[1],
-        f64::from(g.hands) / f64::from(g.wins[0] + g.wins[1])
+        f64::from(g.hands) / f64::from(g.wins[0] + g.wins[1]),
+        g.first_seed,
+        g.first_seed + u64::from(g.pairs()) - 1
     );
 }
 
-/// The first seed of a tuning run: `MEASURE_SEED` if set, so that a value
-/// chosen on one run can be confirmed on fresh deals.
-fn seed_base() -> u64 {
-    std::env::var("MEASURE_SEED")
-        .ok()
-        .and_then(|s| s.parse().ok())
-        .unwrap_or(4_000_000)
+/// The first seed of a report: its own default, moved on by `MEASURE_SEED`
+/// if set, so that a choice made on one run can be confirmed on fresh deals.
+/// Every report prints the seeds it used. A value that is not a plain
+/// number is refused, not ignored: ignoring it would rerun the same deals.
+fn seeds(default: u64) -> u64 {
+    match std::env::var("MEASURE_SEED") {
+        Err(_) => default,
+        Ok(s) => {
+            let shift: u64 = s
+                .parse()
+                .unwrap_or_else(|_| panic!("MEASURE_SEED={s:?} is not a plain number"));
+            default + shift
+        }
+    }
 }
 
 /// Rung 2 with one weight of its style changed, against the default, in
@@ -146,10 +171,10 @@ fn tune(args: &[String]) {
         };
         report_hands(
             &format!("{field} = {value}"),
-            &tournament::hands(seed_base(), pairs, &variant, &maxims),
+            &tournament::hands(seeds(4_000_000), pairs, &variant, &maxims),
         );
         let (melds, brisques) = profile(&profile_style, &Style::default(), 2, pairs.min(4000));
-        println!("    scores {melds:.1} in combinations and {brisques:.1} in brisques a hand (balanced: about 124 and 80)");
+        println!("    scores {melds:.1} in combinations and {brisques:.1} in brisques a hand (balanced: about 140 and 80)");
     }
 }
 
@@ -173,7 +198,7 @@ fn skills(pairs: u64) {
     ] {
         report_hands(
             &format!("rung 2 with {name}, against rung 2"),
-            &tournament::hands(7_000_000, pairs, &make, &maxims),
+            &tournament::hands(seeds(7_000_000), pairs, &make, &maxims),
         );
     }
 }
@@ -194,10 +219,7 @@ fn last_stock_trick(pairs: u64) {
     report_hands(
         "rung 3 fighting for the last stock trick, against rung 3",
         &tournament::hands(
-            std::env::var("MEASURE_SEED")
-                .ok()
-                .and_then(|s| s.parse().ok())
-                .unwrap_or(8_000_000),
+            seeds(8_000_000),
             pairs,
             &fighting,
             &three,
@@ -208,8 +230,8 @@ fn last_stock_trick(pairs: u64) {
 /// Rung 4 looking ahead near the end of the stock, against rung 4:
 /// `lookahead <pairs> [horizon] [worlds]`.
 fn lookahead(pairs: u64, rest: &[String]) {
-    let horizon = rest.first().and_then(|s| s.parse().ok()).unwrap_or(5);
-    let worlds = rest.get(1).and_then(|s| s.parse().ok()).unwrap_or(8);
+    let horizon = rest.first().map_or(9, |s| s.parse().expect("a horizon"));
+    let worlds = rest.get(1).map_or(16, |s| s.parse().expect("a number of worlds"));
     let ahead = move |_: u64| -> Box<dyn Agent> {
         Box::new(Lookahead {
             horizon,
@@ -221,7 +243,7 @@ fn lookahead(pairs: u64, rest: &[String]) {
     let start = std::time::Instant::now();
     report_hands(
         &format!("rung 4 looking ahead (horizon {horizon}, {worlds} worlds), against rung 4"),
-        &tournament::hands(seed_base() + 7_000_000, pairs, &ahead, &four),
+        &tournament::hands(seeds(11_000_000), pairs, &ahead, &four),
     );
     println!(
         "    {:.2} s a hand",
@@ -232,8 +254,8 @@ fn lookahead(pairs: u64, rest: &[String]) {
 /// Rung 5 with another horizon and number of worlds, against rung 5 as it
 /// stands: `lookahead-vs-five <pairs> <horizon> <worlds>`.
 fn lookahead_vs_five(pairs: u64, rest: &[String]) {
-    let horizon = rest.first().and_then(|s| s.parse().ok()).unwrap_or(9);
-    let worlds = rest.get(1).and_then(|s| s.parse().ok()).unwrap_or(32);
+    let horizon = rest.first().map_or(9, |s| s.parse().expect("a horizon"));
+    let worlds = rest.get(1).map_or(32, |s| s.parse().expect("a number of worlds"));
     let variant = move |_: u64| -> Box<dyn Agent> {
         Box::new(Lookahead {
             horizon,
@@ -244,7 +266,7 @@ fn lookahead_vs_five(pairs: u64, rest: &[String]) {
     let five = |_: u64| rung(5);
     report_hands(
         &format!("rung 5 with horizon {horizon} and {worlds} worlds, against rung 5"),
-        &tournament::hands(seed_base() + 9_000_000, pairs, &variant, &five),
+        &tournament::hands(seeds(13_000_000), pairs, &variant, &five),
     );
 }
 
@@ -259,7 +281,7 @@ fn lookahead_declarations(pairs: u64) {
     let five = |_: u64| rung(5);
     report_hands(
         "rung 5 looking ahead in declaring too, against rung 5",
-        &tournament::hands(seed_base() + 8_000_000, pairs, &declaring, &five),
+        &tournament::hands(seeds(12_000_000), pairs, &declaring, &five),
     );
 }
 
@@ -280,7 +302,7 @@ fn personas(pairs: u64) {
         let mine = move |_: u64| rung_with(top, &style);
         let base_style = balanced.style.clone();
         let theirs = move |_: u64| rung_with(top, &base_style);
-        let h = tournament::hands(9_000_000, pairs, &mine, &theirs);
+        let h = tournament::hands(seeds(9_000_000), pairs, &mine, &theirs);
         let (melds, brisques) = profile(&p.style, &balanced.style, top, pairs.min(4000));
         println!(
             "{:<10} {:+6.2} a hand (se {:.2}); scores {:.1} in combinations and {:.1} in brisques a hand",
@@ -304,7 +326,7 @@ fn profile(style: &Style, against: &Style, level: u8, pairs: u64) -> (f64, f64) 
             } else {
                 [rung_with(level, style), rung_with(level, against)]
             };
-            let mut game = Game::new(9_500_000 + seed, Side::A);
+            let mut game = Game::new(seeds(9_500_000) + seed, Side::A);
             tournament::play(&mut game, &mut agents, |g| g.hand_number() > 1);
             let hand = if game.hand_number() > 1 {
                 game.previous_hand().unwrap()
@@ -331,7 +353,7 @@ fn ladder(pairs: u64) {
     for level in 2..=bezique_core::agents::TOP {
         let upper = move |_: u64| rung(level);
         let lower = move |_: u64| rung(level - 1);
-        let base = 1_000_000 * u64::from(level);
+        let base = seeds(1_000_000 * u64::from(level));
         report_hands(
             &format!("rung {level} against rung {}, hands", level - 1),
             &tournament::hands(base, pairs, &upper, &lower),
@@ -346,7 +368,7 @@ fn ladder(pairs: u64) {
 fn riders(pairs: u64) {
     report_hands(
         "rung 2 against rung 2 without free riders, hands",
-        &tournament::hands(3_000_000, pairs, &maxims, &no_riders),
+        &tournament::hands(seeds(3_000_000), pairs, &maxims, &no_riders),
     );
 }
 
@@ -366,7 +388,7 @@ fn anatomy(games: u64) {
     let (mut with_riders, mut announcements, mut carried_scored) = (0u64, 0u64, 0u64);
     let (mut last_stock_margin, mut last_stock_won_hand) = (0i64, 0u64);
     for seed in 0..games {
-        let mut game = Game::new(10_000_000 + seed, Side::A);
+        let mut game = Game::new(seeds(10_000_000) + seed, Side::A);
         let mut agents: [Box<dyn Agent>; 2] = [rung(level), rung(level)];
         while let Some(side) = game.to_move() {
             let view = View::of(&game, side);
@@ -379,15 +401,21 @@ fn anatomy(games: u64) {
                 if !a.melds.contains(&a.score) {
                     carried_scored += 1;
                 }
-                *declared
-                    .entry(kind(a.score.meld, game.hand().trump()))
-                    .or_default() += 1;
             }
             let number = game.hand_number();
             game.apply(action).unwrap();
             if game.hand_number() > number {
                 let hand = game.previous_hand().unwrap();
                 tally(hand, &mut by_seat, &mut by_source);
+                // Combinations counted from the finished hands tallied, so
+                // that they share the denominator (the full review of
+                // 2026-10-02 found the rate inflated by the unfinished last
+                // hands).
+                for s in hand.log() {
+                    if let Source::Meld(d) = s.source {
+                        *declared.entry(kind(d.meld, hand.trump())).or_default() += 1;
+                    }
+                }
                 hands += 1;
                 let t = hand.tricks()[23];
                 let (w, l) = (hand.score(t.winner), hand.score(t.winner.other()));

@@ -476,7 +476,9 @@ declaration lays cards open and the rollouts treat every card as open
 already.
 
 What the measurements say (`measurements/lookahead-sweep.txt`): more
-worlds help steadily (8, 16, 32 at horizon 9: +27.2, +32.8, +35.3); a longer
+worlds seemed to help (8, 16, 32 at horizon 9: +27.2, +32.8, +35.3, one run of
+500 pairs each, se 2–3; a direct test of 32 against 16 later gave only +2.4,
+se 1.3); a longer
 horizon helps up to 9–13 face-down cards and then hurts (21: +19.5), as
 rung-4 rollouts from far out become a poor model of the play. The chosen
 setting, at the knee, was confirmed on fresh seeds at +30.1 points a hand
