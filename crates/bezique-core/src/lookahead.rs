@@ -32,6 +32,8 @@ pub struct Lookahead {
     pub horizon: usize,
     /// Worlds sampled for each decision.
     pub worlds: usize,
+    /// Looks ahead in the turn of declaring too, not only in play.
+    pub declarations: bool,
 }
 
 impl Default for Lookahead {
@@ -40,6 +42,7 @@ impl Default for Lookahead {
             style: Style::default(),
             horizon: 9,
             worlds: 16,
+            declarations: false,
         }
     }
 }
@@ -58,11 +61,11 @@ impl Lookahead {
         }
     }
 
-    /// The points `card` is worth to this player, from now to the end of the
-    /// hand, in `world`.
-    fn value_of(&self, world: &Game, seat: Seat, card: Card, solver: &mut Solver) -> i32 {
+    /// The points `action` is worth to this player, from now to the end of
+    /// the hand, in `world`.
+    fn value_of(&self, world: &Game, seat: Seat, action: &Action, solver: &mut Solver) -> i32 {
         let mut game = world.clone();
-        if game.apply(Action::Play(card)).is_err() {
+        if game.apply(action.clone()).is_err() {
             return i32::MIN / 2;
         }
         let mut agents = [self.rung4(), self.rung4()];
@@ -93,14 +96,8 @@ impl Agent for Lookahead {
     fn choose(&mut self, view: &View, legal: &[Action]) -> Action {
         let mut rung4 = self.rung4();
         let usual = rung4.choose(view, legal);
-        let candidates: Vec<Card> = legal
-            .iter()
-            .filter_map(|a| match a {
-                Action::Play(card) => Some(*card),
-                _ => None,
-            })
-            .collect();
-        if view.phase == Phase::Declare
+        let candidates: Vec<Action> = legal.to_vec();
+        if (view.phase == Phase::Declare && !self.declarations)
             || view.turn_up.is_none()
             || view.stock > self.horizon
             || candidates.len() < 2
@@ -116,24 +113,21 @@ impl Agent for Lookahead {
                 continue;
             };
             sampled += 1;
-            for (total, &card) in totals.iter_mut().zip(&candidates) {
-                *total += i64::from(self.value_of(&world, view.seat, card, &mut solver));
+            for (total, action) in totals.iter_mut().zip(&candidates) {
+                *total += i64::from(self.value_of(&world, view.seat, action, &mut solver));
             }
         }
         if sampled == 0 {
             return usual;
         }
-        // Rung 4's own card wins ties.
-        let mut best = candidates
-            .iter()
-            .position(|&c| Action::Play(c) == usual)
-            .unwrap_or(0);
+        // Rung 4's own choice wins ties.
+        let mut best = candidates.iter().position(|a| *a == usual).unwrap_or(0);
         for (i, &total) in totals.iter().enumerate() {
             if total > totals[best] {
                 best = i;
             }
         }
-        Action::Play(candidates[best])
+        candidates[best].clone()
     }
 }
 
@@ -158,22 +152,30 @@ pub fn world(view: &View, rng: &mut Rng) -> Option<Game> {
     for &card in theirs_hidden {
         theirs.concealed = theirs.concealed.with(card);
     }
-    // Answering a lead: the world starts at the trick's start, the led card
-    // back in the leader's hand, and replays the lead.
-    if let Some(led) = view.led {
-        theirs.concealed = theirs.concealed.with(led);
-    }
     let mut holdings = [Holdings::default(), Holdings::default()];
     holdings[view.seat.index()] = view.mine.clone();
     holdings[other.index()] = theirs;
+    // The world starts at the start of the trick in progress, or, in the
+    // turn of declaring, of the trick just taken, and replays it: its cards
+    // go back to the hands that played them.
+    let mut replay = Vec::new();
+    let mut leader = view.leader;
+    let mut tricks = view.tricks.len();
+    if let Some(led) = view.led {
+        replay.push((leader, led));
+    } else if view.phase == Phase::Declare {
+        let last = view.tricks.last()?;
+        leader = last.leader;
+        tricks -= 1;
+        replay.push((last.leader, last.led));
+        replay.push((last.leader.other(), last.second));
+    }
+    for &(seat, card) in &replay {
+        let h = &mut holdings[seat.index()];
+        h.concealed = h.concealed.with(card);
+    }
     let stock = Stock::new(face_down, view.turn_up);
-    let hand = Hand::arranged(
-        view.trump,
-        stock,
-        holdings,
-        view.leader,
-        view.tricks.len() as u8,
-    )
+    let hand = Hand::arranged(view.trump, stock, holdings, leader, tricks as u8)
     .ok()?
     .with_sevens_scored(sevens_scored(view));
     let dealer = if view.seat == Seat::Dealer {
@@ -182,34 +184,38 @@ pub fn world(view: &View, rng: &mut Rng) -> Option<Game> {
         view.side.other()
     };
     let mut game = Game::arranged(0, [0, 0], dealer, hand).ok()?;
-    if let Some(led) = view.led {
-        game.apply(Action::Play(led)).ok()?;
+    for (_, card) in replay {
+        game.apply(Action::Play(card)).ok()?;
+    }
+    if game.to_move() != Some(view.side) || game.hand().phase() != view.phase {
+        return None;
     }
     Some(game)
 }
 
-/// The sevens of trumps in sight that may have scored: the turn-up, if it is
-/// one, and those held by a player who has scored the dix. (A player who
-/// exchanged one seven and later drew the other is counted as having scored
-/// both; it costs at most ten points in a world, and only then.)
+/// The sevens of trumps that have scored, exactly. While the stock lasts a
+/// seven of trumps scores only by being turned up at the deal, exchanged for
+/// the turn-up (which it then becomes, until the last card is drawn), or
+/// shown when the turn-up is already the other seven. So if the turn-up is
+/// not a seven of trumps, none has scored; if it is, it has, and its twin
+/// too when two sevens appear in the log.
 fn sevens_scored(view: &View) -> CardSet {
-    let is_seven = |c: &Card| c.rank() == Rank::SEVEN && c.suit() == view.trump;
-    let mut scored = CardSet::EMPTY;
-    for card in view.turn_up.iter().filter(|c| is_seven(c)) {
-        scored = scored.with(*card);
+    let Some(turn_up) = view.turn_up else {
+        return CardSet::EMPTY;
+    };
+    if turn_up.rank() != Rank::SEVEN || turn_up.suit() != view.trump {
+        return CardSet::EMPTY;
     }
-    for (holdings, seat) in [(&view.mine, view.seat), (&view.theirs, view.seat.other())] {
-        let dix = view
-            .log
-            .iter()
-            .any(|s| s.seat == seat && s.source == Source::Dix);
-        if dix {
-            for card in holdings.cards().cards().filter(is_seven) {
-                scored = scored.with(card);
-            }
-        }
+    let scored = view
+        .log
+        .iter()
+        .filter(|s| matches!(s.source, Source::Dix | Source::TurnedSeven))
+        .count();
+    if scored >= 2 {
+        turn_up.card_type().twins()
+    } else {
+        CardSet::EMPTY.with(turn_up)
     }
-    scored
 }
 
 /// A seed for the worlds, from what the player can see.
@@ -243,7 +249,7 @@ mod tests {
             let mut agents = [rung(4), rung(4)];
             while let Some(side) = game.to_move() {
                 let view = View::of(&game, side);
-                if view.turn_up.is_some() && view.stock <= 7 && view.phase != Phase::Declare {
+                if view.turn_up.is_some() && view.stock <= 7 {
                     out.push((game.clone(), view.clone()));
                 }
                 let action = agents[side.index()].choose(&view, &game.legal());
@@ -289,7 +295,10 @@ mod tests {
     fn it_plays_a_legal_card_and_the_same_one_every_time() {
         for (game, view) in positions(6) {
             let legal = game.legal();
-            let mut agent = Lookahead::default();
+            let mut agent = Lookahead {
+                declarations: true,
+                ..Lookahead::default()
+            };
             let first = agent.choose(&view, &legal);
             assert!(legal.contains(&first), "{first:?} not in {legal:?}");
             assert_eq!(agent.choose(&view, &legal), first);
