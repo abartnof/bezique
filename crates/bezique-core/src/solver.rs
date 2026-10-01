@@ -59,7 +59,7 @@ impl Solver {
     pub fn new(trump: Suit) -> Solver {
         Solver {
             trump,
-            table: HashMap::default(),
+            table: HashMap::with_capacity_and_hasher(4096, Default::default()),
         }
     }
 
@@ -108,7 +108,7 @@ impl Solver {
         }
         let floor = alpha;
         let mut best = -INFINITY;
-        for card in ordered(position, self.trump) {
+        for card in ordered(position, self.trump).iter() {
             best = best.max(self.after(position, card, alpha, beta));
             alpha = alpha.max(best);
             if alpha >= beta {
@@ -266,8 +266,25 @@ fn moves(position: Endgame, trump: Suit) -> Vec<Card> {
 
 /// The moves in the order most likely to cut the search short: answering,
 /// the cards that win the trick first; leading, the highest first.
-fn ordered(position: Endgame, trump: Suit) -> Vec<Card> {
-    let mut cards = moves(position, trump);
+/// Kept on the stack: the search asks for them at every node.
+fn ordered(position: Endgame, trump: Suit) -> Moves {
+    let allowed = match position.led {
+        Some(led) => tricks::endgame_replies(position.mover, led, trump),
+        None => position.mover,
+    };
+    let mut moves = Moves {
+        cards: [Card(0); 16],
+        len: 0,
+    };
+    let mut seen = CardSet::EMPTY;
+    for card in allowed.cards() {
+        if seen.intersect(card.card_type().twins()).is_empty() {
+            moves.cards[moves.len] = card;
+            moves.len += 1;
+        }
+        seen = seen.with(card);
+    }
+    let cards = &mut moves.cards[..moves.len];
     match position.led {
         Some(led) => cards.sort_by_key(|&c| {
             (
@@ -278,7 +295,19 @@ fn ordered(position: Endgame, trump: Suit) -> Vec<Card> {
         }),
         None => cards.sort_by_key(|&c| std::cmp::Reverse(c.rank())),
     }
-    cards
+    moves
+}
+
+/// At most sixteen moves: a hand holds eight cards.
+struct Moves {
+    cards: [Card; 16],
+    len: usize,
+}
+
+impl Moves {
+    fn iter(&self) -> impl Iterator<Item = Card> + '_ {
+        self.cards[..self.len].iter().copied()
+    }
 }
 
 /// A hand with twins made interchangeable: of each pair of twins, the lower
