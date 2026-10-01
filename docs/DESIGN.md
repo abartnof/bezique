@@ -250,13 +250,18 @@ for people:
    could wait for a later trick won loses nothing by waiting, and laying it
    early only shows the cards.
 
-So the engine enumerates every legal choice (agents and tests see all of
-them), and the protocol offers people a curated list. Each option is one
-combination to score, plus the best consistent set of free riders, phrased
-the period way: *"Sixty for queens, and forty, twenty and twenty to score."*
-Free riders can conflict within a class: with one bezique already declared,
-laying a second Q♠ may complete either a second single or a double, never
-both. The curation picks by value, and the full list remains reachable.
+So the engine *checks* every legal announcement (`Holdings::check`, which
+`Hand::apply` uses) but *offers* a curated list (`Holdings::options`, which
+`Hand::legal` returns, for people and agents alike). Each option lays one
+combination with the best consistent set of free riders, once for each
+choice of which of them to score now, plus each carried combination scored
+alone; phrased the period way: *"Sixty queens, and forty, and twenty, and
+twenty to score."* Free riders can conflict within a class: with one bezique
+already declared, laying a second Q♠ may complete either a second single or
+a double, never both; the curation picks by value. Nothing yet enumerates
+every legal announcement; a search that wants the full set must build it
+(review finding 7). The review's fuzzing found no omitted announcement that
+scores more than an offered one; whether any plays better is not measured.
 
 ### 6.3 Reference implementation
 

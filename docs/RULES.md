@@ -53,7 +53,9 @@ for later, as separate games rather than settings.
   present twice. Both packs should have the same back (p. 338).
 - Rank in each suit, high to low: **A, 10, K, Q, J, 9, 8, 7**, in cutting and
   in play (p. 338). The ten ranks second, above the king.
-- Two cards of the same suit and rank are identical in every respect.
+- Two cards of the same suit and rank are identical in play: played to one
+  trick, the leader's wins (p. 340). In declaring, each copy keeps its own
+  history (rule 3 below), and a player cannot tell an opponent's twins apart.
 
 ### 2. Cutting and dealing
 
@@ -142,8 +144,10 @@ by adding A, 10, J to make the sequence (Cady, p. 14 [S4]). All carried scores
 are lost when the stock is exhausted (p. 343). A player carrying a score is not
 obliged to score it before something else (p. 343).
 
-**Double bezique** must have all four cards on the table at once. Declared
-as a whole it scores 500 only. The good order is a single bezique (40), then
+**Double bezique** must have all four cards on the table at once (Cady, p. 20,
+in his Rubicon table, which by p. 15 governs the ordinary game "in everything
+else"; Foster, pp. 341–343, does not say so in terms). Declared as a whole it
+scores 500 only. The good order is a single bezique (40), then
 the other pair (500 more). A second single bezique *can* be scored for 40, but
 the double is then out of reach, since it would add no new card (p. 342).
 
@@ -229,6 +233,12 @@ Where no source settles a point, the choice is made here and labelled.
   declared when it is announced, scored or not. Foster says as much for the
   new-card rule ("even if it is not scored until later"), and the two cannot
   diverge without contradiction.
+- **A carried combination may be scored in a turn that announces new
+  ones.** Foster lets a player "make two or more announcements at the same
+  time" and score one of them (p. 341), and says a player carrying a score
+  "is not obliged to score it if he has anything else to announce" (p. 343);
+  neither forbids the reverse, scoring the old while announcing the new, and
+  the engine allows it.
 - **The second seven of trumps stays in the hand.** Showing it scores 10; it is
   not laid on the table (the 1892 *American Hoyle* [S58]: "only shown").
 

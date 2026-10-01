@@ -322,9 +322,12 @@ impl Hand {
             .sum()
     }
 
-    /// Every move open to the seat whose turn it is. Concealed twins are one
-    /// move; cards on the table are offered one by one, since their histories
-    /// may differ.
+    /// The moves to offer the seat whose turn it is. Every card it may play
+    /// (concealed twins as one move; cards on the table one by one, since
+    /// their histories may differ); in the turn of declaring, passing, the
+    /// dix, and the announcements of `Holdings::options`, which are the
+    /// worthwhile ones, not every announcement the rules allow. `apply`
+    /// accepts any announcement `Holdings::check` allows.
     pub fn legal(&self) -> Vec<Action> {
         let Some(seat) = self.to_move() else {
             return Vec::new();
