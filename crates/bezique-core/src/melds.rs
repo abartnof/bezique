@@ -415,6 +415,13 @@ impl Holdings {
     pub fn receive(&mut self, card: Card) {
         self.concealed = self.concealed.with(card);
     }
+
+    /// When the stock is exhausted the cards on the table go back into the
+    /// hand, and declaring is over.
+    pub fn take_up(&mut self) {
+        self.concealed = self.cards();
+        self.shown = CardSet::EMPTY;
+    }
 }
 
 /// Two combinations in one class that share a card cannot be announced
