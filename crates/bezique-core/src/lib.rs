@@ -8,5 +8,6 @@ pub mod deal;
 pub mod game;
 pub mod hand;
 pub mod melds;
+pub mod observation;
 pub mod rng;
 pub mod tricks;
