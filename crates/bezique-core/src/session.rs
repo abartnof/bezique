@@ -478,6 +478,17 @@ impl Session {
         );
         let mut again = Session::replay(self.seed, self.settings.clone(), &record)?;
         again.error = None;
+        // An aid switched on since can make the table play the decision just
+        // taken back (a forced card, with play_forced): then there was no
+        // decision there, and undo goes back to the one before.
+        if again.record.len() >= self.record.len() - 1
+            && format!("{:?}", again.view()) == format!("{:?}", self.view())
+        {
+            if !again.can_undo() {
+                return Err("there is nothing to undo".to_string());
+            }
+            again.undo()?;
+        }
         *self = again;
         Ok(())
     }
@@ -901,6 +912,33 @@ mod tests {
         assert!(!s.can_undo());
         assert!(!s.send("undo"));
         assert_ne!(s.prompt(), Prompt::ChooseDealer);
+    }
+
+    /// With play_forced switched on after a forced card was played by hand,
+    /// undoing that card would only see the table play it again: undo goes
+    /// back to the decision before.
+    #[test]
+    fn undo_always_takes_something_back() {
+        let mut s = Session::new(11, Settings::default());
+        // Play by hand until a card is the only one allowed, and play it.
+        let mut forced = false;
+        for _ in 0..400 {
+            if let Prompt::Play { legal } = s.prompt() {
+                if legal.len() == 1 && s.can_undo() {
+                    assert!(s.send(&format!("play {}", legal[0].0)));
+                    forced = true;
+                    break;
+                }
+            }
+            let command = first(&s).unwrap();
+            assert!(s.send(&command));
+        }
+        assert!(forced);
+        assert!(s.send("set play_forced on"));
+        let before = format!("{:?}", s.view());
+        assert!(s.send("undo"));
+        assert_ne!(format!("{:?}", s.view()), before);
+        assert!(!matches!(s.prompt(), Prompt::Play { legal } if legal.len() == 1));
     }
 
     #[test]
