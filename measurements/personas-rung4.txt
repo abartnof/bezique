@@ -1,0 +1,4 @@
+balanced    +0.00 a hand (se 0.00); scores 138.6 in combinations and 80.0 in brisques a hand
+concentrates  -0.36 a hand (se 0.96); scores 138.9 in combinations and 79.4 in brisques a hand
+close       -0.32 a hand (se 0.84); scores 138.4 in combinations and 79.9 in brisques a hand
+bezique     -1.35 a hand (se 0.89); scores 143.7 in combinations and 77.1 in brisques a hand

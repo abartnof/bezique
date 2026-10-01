@@ -24,6 +24,7 @@ cargo run --release -p bezique-core --bin measure -- <report> [n]
 | `anatomy-rung2-final.txt` | `anatomy 2000` | Rung 2 with the final style: 4.25 hands a game, 12.4% doubles, 95.2% ended mid-hand, the first dealer winning 50.0%; double bezique scored in 2.5% of player-hands (0.2% before the night's fixes). |
 | `lookahead-sweep.txt` | `lookahead 500 <horizon> <worlds>` | Rung 5 (rung 4 looking ahead near the end of the stock) against rung 4, swept over the horizon (face-down cards left when it starts looking) and the worlds sampled. Gains grow with worlds (8: +27.2, 16: +32.8, 32: +35.3 at horizon 9) and with the horizon up to 9–13, then fall (21: +19.5, se 4.5). Times a hand are rough: other work shared the machine. |
 | `lookahead-confirm.txt` | `MEASURE_SEED=60000000 lookahead 2000 9 16` | The chosen setting, horizon 9 and 16 worlds (the knee, not the maximum), confirmed on fresh seeds: +30.05 points a hand over rung 4 (se 1.29). It became rung 5. |
+| `personas-rung4.txt` | `MEASURE_LEVEL=4 personas 5000` | The personas at rung 4, where they had only been calibrated at rung 2: concentrates −0.36 (se 0.96), close −0.32 (se 0.84), bezique −1.35 (se 0.89) points a hand against balanced. All within the two-point limit. |
 | `ladder.txt` | `ladder 2000` | The ladder as rebuilt: rung 2 over rung 1 +79.0 (se 2.4), 87.5% of games; rung 3 (memory and the exact endgame) over rung 2 +19.2 (se 0.8), 58.0% of games. |
 
 ## Tuning rung 2 (2026-10-02)

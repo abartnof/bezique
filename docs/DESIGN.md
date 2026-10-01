@@ -422,9 +422,9 @@ most instructive measurement of the night:
   nearly equal worth. A `Leaning` breaks near-ties only, so it costs
   little; how near, and what it costs, are measured.
 
-The personas, each within 1.24 points a hand of balanced (measured at rung
-2, which plays the stock as the top rung does in all but about 1.5% of
-decisions): **balanced**;
+The personas, each within 1.24 points a hand of balanced at rung 2, where
+they were calibrated, and within 1.35 at rung 4 (`personas-rung4.txt`):
+**balanced**;
 **concentrates** (of cards exactly equal in worth, throws from its shortest
 suit: Foster's "pick one or two suits and discard the rest"); **close**
 (plays from the table first, after Pardon: show the opponent as little as
