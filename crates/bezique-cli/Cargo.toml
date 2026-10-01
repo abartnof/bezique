@@ -1,0 +1,15 @@
+[package]
+name = "bezique-cli"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+authors.workspace = true
+description = "A table in the terminal: bezique against the computer, or two computer players watched."
+
+[[bin]]
+name = "bezique"
+path = "src/main.rs"
+
+[dependencies]
+bezique-core = { path = "../bezique-core" }

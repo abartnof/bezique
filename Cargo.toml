@@ -1,6 +1,6 @@
 [workspace]
 resolver = "2"
-members = ["crates/bezique-core"]
+members = ["crates/bezique-core", "crates/bezique-cli"]
 
 [workspace.package]
 version = "0.1.0"
