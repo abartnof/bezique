@@ -37,6 +37,23 @@ pub struct Stock {
 }
 
 impl Stock {
+    /// A stock from its face-down cards, top first, and the turn-up if it is
+    /// still there: for arranging a position part-way through a hand.
+    pub fn new(top_first: &[Card], turn_up: Option<Card>) -> Stock {
+        Stock {
+            face_down: top_first.iter().rev().copied().collect(),
+            turn_up,
+        }
+    }
+
+    /// Puts `seven` face up in place of the turn-up and returns the card it
+    /// replaces: the exchange of the seven of trumps.
+    pub fn exchange(&mut self, seven: Card) -> Card {
+        self.turn_up
+            .replace(seven)
+            .expect("the turn-up is there to exchange while declaring lasts")
+    }
+
     /// The cards still to be drawn, the turn-up included.
     pub fn len(&self) -> usize {
         self.face_down.len() + usize::from(self.turn_up.is_some())
@@ -207,6 +224,31 @@ mod tests {
         let c = Deal::shuffled(&mut Rng::seeded(9));
         assert_eq!(a, b);
         assert_ne!(a, c);
+    }
+
+    #[test]
+    fn a_stock_arranged_part_way_through_draws_in_order() {
+        let mut stock = Stock::new(&[Card(40), Card(41)], Some(Card(7)));
+        assert_eq!(stock.len(), 3);
+        assert_eq!(stock.face_down(), 2);
+        assert_eq!(stock.draw(), Some(Card(40)));
+        assert_eq!(stock.draw(), Some(Card(41)));
+        assert_eq!(stock.draw(), Some(Card(7)));
+        assert!(Stock::new(&[], None).is_empty());
+    }
+
+    #[test]
+    fn the_seven_takes_the_turn_ups_place() {
+        let mut stock = Stock::new(&[Card(40)], Some(Card(30)));
+        assert_eq!(stock.exchange(Card(16)), Card(30));
+        assert_eq!(stock.turn_up(), Some(Card(16)));
+        assert_eq!(stock.len(), 2);
+        assert_eq!(stock.draw(), Some(Card(40)));
+        assert_eq!(
+            stock.draw(),
+            Some(Card(16)),
+            "the loser of the last trick takes the seven"
+        );
     }
 
     #[test]
