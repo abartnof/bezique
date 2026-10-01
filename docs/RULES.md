@@ -1,8 +1,8 @@
 # Bezique: the rules as implemented
 
-> Status: **proposed**, 2026-10-01. The choice of authority (below) awaits the
-> maintainer's confirmation. Until then the engine is built to this document,
-> and any change to it is a change to the tests first.
+> Status: **adopted**, 2026-10-01. Foster as the authority and one rule set
+> without switches were confirmed by the maintainer on that date. The engine is
+> built to this document, and any change to it is a change to the tests first.
 
 This is the two-player game with two packs: the "ordinary game" of the
 period books. Each rule cites its source by the IDs of the literature review

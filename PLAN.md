@@ -13,7 +13,7 @@
   matrix, strategy, computed odds), as delivered.
 - `docs/sources/`: Foster (1897) and Cady (1896) on bezique, as text.
 - `docs/RULES.md`: the ordinary two-pack game as it will be implemented, with
-  Foster as the proposed authority, every contested point settled once, and ten
+  Foster as the authority, every contested point settled once, and ten
   worked examples ready to become fixtures.
 - `docs/DESIGN.md`: architecture, method, the card and declaration models,
   observation, the opponent, the table, testing.
@@ -37,18 +37,14 @@
 | Measurement | Mirrored pairs, always; smallest run that can answer | `DESIGN.md` §10.5 |
 | Client contract | The page holds no rules; JSON protocol; cards carry ids | `DESIGN.md` §9 |
 | Working method | TDD; atomic commits to `main` | `DESIGN.md` §2 |
+| Rule authority | **Foster (1897)**, Cady where he is silent; pagat as the modern cross-check (confirmed 2026-10-01) | `RULES.md` "Authority" |
+| Variants | **One rule set, no switches**; Rubicon, six-pack and Polish bezique only ever as separate games (confirmed 2026-10-01) | `RULES.md` "Authority" |
 
 ### Awaiting the maintainer
 
-1. **Rule authority.** Foster (1897) is proposed in place of pagat, which was
-   piquet's authority; `RULES.md` "Authority" gives the case.
-2. **One rule set, no switches.** Piquet settled each conflict once rather
-   than adding options. The literature review recommends named presets
-   instead. Proposed: one rule set, as piquet, with Rubicon and the six-pack
-   game as possible later *games*, not settings.
-3. **A GitHub repository** (private, as piquet began) **and a licence**
+1. **A GitHub repository** (private, as piquet began) **and a licence**
    (piquet is MIT).
-4. **Unit of play.** Proposed: one game to 1,000. Foster also describes a
+2. **Unit of play.** Proposed: one game to 1,000. Foster also describes a
    *partie*, the best of five games with a double counting two, which is
    possible later as a longer format.
 
