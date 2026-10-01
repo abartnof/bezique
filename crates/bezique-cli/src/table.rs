@@ -103,7 +103,7 @@ impl<R: BufRead, W: Write> Table<R, W> {
     fn agent(&self) -> Box<dyn Agent> {
         match self.options.level {
             1 => Box::new(Legal),
-            _ => Box::new(Maxims),
+            _ => Box::new(Maxims::default()),
         }
     }
 

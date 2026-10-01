@@ -55,6 +55,17 @@ impl Meld {
         ]
     }
 
+    /// Whether this names a combination that exists: a marriage in one of
+    /// the four suits, a four of aces, kings, queens or jacks, or one of the
+    /// others.
+    pub fn is_valid(self) -> bool {
+        match self {
+            Meld::Marriage(suit) => suit.is_valid(),
+            Meld::Four(rank) => [Rank::ACE, Rank::KING, Rank::QUEEN, Rank::JACK].contains(&rank),
+            _ => true,
+        }
+    }
+
     pub fn class(self) -> Class {
         match self {
             Meld::Marriage(_) | Meld::Sequence => Class::Marriages,
@@ -275,6 +286,9 @@ impl Holdings {
     /// Whether `announcement` is allowed, and if not, why.
     pub fn check(&self, trump: Suit, announcement: &Announcement) -> Result<(), String> {
         let Announcement { melds, score } = announcement;
+        if let Some(bad) = melds.iter().chain([score]).find(|d| !d.meld.is_valid()) {
+            return Err(format!("{:?} is not a combination", bad.meld));
+        }
         for d in melds {
             let name = name(d.meld, trump);
             if !d.meld.is_made_by(d.cards, trump) {
@@ -1054,6 +1068,34 @@ mod tests {
             score: marriage,
         };
         assert!(h.check(HEARTS, &nothing_carried).is_err());
+    }
+
+    #[test]
+    fn combinations_that_cannot_exist_are_refused_not_panicked_on() {
+        let h = Holdings::new(set("KC QC TS TH TD TC"));
+        for meld in [
+            Meld::Marriage(Suit(4)),
+            Meld::Four(Rank(8)),
+            Meld::Four(Rank::TEN),
+        ] {
+            let d = Declared {
+                meld,
+                cards: set("KC QC"),
+            };
+            assert!(
+                h.check(
+                    HEARTS,
+                    &Announcement {
+                        melds: vec![d],
+                        score: d
+                    }
+                )
+                .is_err(),
+                "{meld:?}"
+            );
+        }
+        assert!(!Meld::Four(Rank::TEN).is_valid());
+        assert!(Meld::Four(Rank::JACK).is_valid());
     }
 
     #[test]

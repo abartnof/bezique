@@ -168,7 +168,7 @@ mod tests {
     use crate::agents::{Legal, Maxims};
 
     fn maxims(_: u64) -> Box<dyn Agent> {
-        Box::new(Maxims)
+        Box::new(Maxims::default())
     }
 
     fn legal(_: u64) -> Box<dyn Agent> {

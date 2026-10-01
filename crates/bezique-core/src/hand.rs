@@ -242,6 +242,11 @@ impl Hand {
     /// refused with a reason fit to show a player, and changes nothing.
     pub fn apply(&mut self, action: Action) -> Result<(), String> {
         let seat = self.to_move().ok_or("the hand is over")?;
+        if let Action::Play(card) | Action::Dix(card) = action {
+            if !card.is_valid() {
+                return Err(format!("there is no card numbered {}", card.0));
+            }
+        }
         match (self.phase, action) {
             (Phase::Lead, Action::Play(card)) => {
                 if !self.holdings[seat.index()].cards().contains(card) {
@@ -641,6 +646,27 @@ mod tests {
         play(&mut h, "7C");
         play(&mut h, "8S");
         assert!(!h.legal().iter().any(|a| matches!(a, Action::Dix(_))));
+    }
+
+    #[test]
+    fn ids_that_name_no_card_are_refused() {
+        let mut h = hand(PONE, DEALER, "KH", "");
+        let before = format!("{h:?}");
+        assert!(h.apply(Action::Play(Card(64))).is_err());
+        assert!(h.apply(Action::Play(Card(255))).is_err());
+        assert_eq!(format!("{h:?}"), before);
+        play(&mut h, "AS");
+        play(&mut h, "8H");
+        assert!(h.apply(Action::Dix(Card(200))).is_err());
+        let bogus = crate::melds::Declared {
+            meld: Meld::Marriage(Suit(4)),
+            cards: CardSet::EMPTY,
+        };
+        let refused = h.apply(Action::Declare(Announcement {
+            melds: vec![bogus],
+            score: bogus,
+        }));
+        assert!(refused.is_err());
     }
 
     #[test]

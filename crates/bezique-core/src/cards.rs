@@ -40,6 +40,11 @@ impl Rank {
         Rank::ACE,
     ];
 
+    /// Whether this names one of the eight ranks.
+    pub fn is_valid(self) -> bool {
+        self.0 < 8
+    }
+
     pub fn letter(self) -> char {
         RANK_CHARS[self.0 as usize] as char
     }
@@ -67,6 +72,11 @@ impl Suit {
     pub const DIAMONDS: Suit = Suit(2);
     pub const CLUBS: Suit = Suit(3);
     pub const ALL: [Suit; 4] = [Suit::SPADES, Suit::HEARTS, Suit::DIAMONDS, Suit::CLUBS];
+
+    /// Whether this names one of the four suits.
+    pub fn is_valid(self) -> bool {
+        self.0 < 4
+    }
 
     pub fn letter(self) -> char {
         SUIT_LETTERS[self.0 as usize] as char
@@ -112,12 +122,12 @@ impl CardType {
     /// Reads a code. The ten may be written `T` or `10`, and letters in either
     /// case.
     pub fn parse(text: &str) -> Result<CardType, String> {
-        let upper = text.trim().to_ascii_uppercase();
+        let upper = text.trim().to_uppercase();
         let code = upper
             .strip_prefix("10")
             .map_or(upper.clone(), |suit| format!("T{suit}"));
-        let bytes = code.as_bytes();
-        if bytes.len() != 2 {
+        let chars: Vec<char> = code.chars().collect();
+        if chars.len() != 2 {
             return Err(format!(
                 "{:?} is not a card: write rank then suit, as AS or 10D",
                 text.trim()
@@ -125,17 +135,17 @@ impl CardType {
         }
         let rank = RANK_CHARS
             .iter()
-            .position(|&r| r == bytes[0])
+            .position(|&r| char::from(r) == chars[0])
             .ok_or_else(|| {
                 format!(
                     "{:?} is not a rank in the bezique pack (7 8 9 10 J Q K A)",
-                    bytes[0] as char
+                    chars[0]
                 )
             })?;
         let suit = SUIT_LETTERS
             .iter()
-            .position(|&s| s == bytes[1])
-            .ok_or_else(|| format!("{:?} is not a suit (S H D C)", bytes[1] as char))?;
+            .position(|&s| char::from(s) == chars[1])
+            .ok_or_else(|| format!("{:?} is not a suit (S H D C)", chars[1]))?;
         Ok(CardType::new(Rank(rank as u8), Suit(suit as u8)))
     }
 
@@ -159,6 +169,12 @@ impl fmt::Display for CardType {
 pub struct Card(pub u8);
 
 impl Card {
+    /// Whether this names one of the 64 cards. Ids come from outside (a
+    /// client's command), so the engine checks before using one.
+    pub fn is_valid(self) -> bool {
+        self.0 < 64
+    }
+
     pub fn new(card_type: CardType, copy: u8) -> Card {
         debug_assert!(copy < 2, "a two-pack game has copies 0 and 1");
         Card(card_type.0 * 2 + copy)
@@ -378,6 +394,15 @@ mod tests {
             let refusal = CardType::parse(bad).unwrap_err();
             assert!(!refusal.is_empty(), "{bad:?}");
         }
+    }
+
+    #[test]
+    fn a_refusal_names_the_character_typed() {
+        let refusal = CardType::parse("AŠ").unwrap_err();
+        assert!(refusal.contains('Š'), "{refusal}");
+        assert!(Card(63).is_valid() && !Card(64).is_valid());
+        assert!(Suit(3).is_valid() && !Suit(4).is_valid());
+        assert!(Rank(7).is_valid() && !Rank(8).is_valid());
     }
 
     #[test]
