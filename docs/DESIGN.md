@@ -151,18 +151,34 @@ identities without the twins costing the search anything.
   in piquet, and names a type, not a card.
 
 **Twins are equivalent unless their histories differ.** Two concealed copies of
-a type are the same move. A concealed copy and one on the table are different
-moves, because the table copy carries a history. Two table copies are
-different moves when their histories differ. Move generation therefore
-deduplicates by *(type, location, history)*. Search hashes positions by that
-canonical form, never by physical identity, so the twins cost the search
-nothing.
+a type are the same move: the list of moves offers one (`Hand::legal`), and
+the engine accepts either. A concealed copy and one on the table are
+different moves, because the table copy carries a history; two table copies
+can differ in their histories *and in which carried score each guards*
+(review finding 9: two kings with equal levels, one guarding a carried
+marriage, are 20 points apart). So the list of moves offers every table card
+separately, and a search that hashes positions must key table cards by type,
+history and carried-score membership, never by type and history alone.
 
-**Physical identity is still exposed to clients.** The 3D table needs a stable
-mesh per physical card (§11), so the protocol names cards as
-`{ "id": 23, "card": "QS" }`. Ids leak nothing: the copies are assigned at
-pack construction and only the shuffle is random, so knowing that a Q♠ is copy
-1 says nothing about where copy 0 lies.
+**Twins are told apart by the engine, never by a player.** The engine keeps
+physical ids (a mesh per card for the 3D table, histories per card for
+declaring), but real twins are indistinguishable, so physical ids must not
+reach a player as information. Review finding 1 showed two channels: the
+engine always played the lower concealed twin, so a copy number said where
+its twin lay; and seen cards were tracked by copy, so a player who had seen a
+K♥ taken and a K♥ played was told whether another remained. Both are closed
+(`hand.rs`, `observation.rs`):
+
+- What a player knows of the other's concealed cards is a *count per type*,
+  reduced whenever a card of that type leaves the concealed hand.
+- In a player's view, the twins of a type that player has never held are
+  renumbered from what is visible now: a lone visible copy is always copy 0,
+  and two are numbered by where they lie, which is public. Once the stock is
+  gone, the record of the other player's declarations keeps types only,
+  because the cards may be back in hand.
+- Tested on every position of random games: a lone twin the viewer never
+  held is always shown as copy 0, and the view agrees with the truth type for
+  type.
 
 **More packs later.** The layout generalises to `type × packs + copy` (`u128`
 for Rubicon's four packs, three words for six). Nothing is built for it now,

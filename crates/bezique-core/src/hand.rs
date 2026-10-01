@@ -8,7 +8,7 @@
 //! scored. `docs/RULES.md` §2–§6 gives the rules; `docs/DESIGN.md` §7 the
 //! shape.
 
-use crate::cards::{Card, CardSet, Rank, Suit};
+use crate::cards::{Card, CardSet, CardType, Rank, Suit};
 use crate::deal::{Deal, Seat, Stock};
 use crate::melds::{Announcement, Declared, Holdings};
 use crate::tricks;
@@ -90,8 +90,15 @@ pub struct Hand {
     won: [CardSet; 2],
     /// Sevens of trumps that have scored, so that none scores twice.
     sevens_scored: CardSet,
-    /// Concealed cards each seat has let the other see.
-    seen: [CardSet; 2],
+    /// For each seat and card type, how many of its concealed cards of that
+    /// type the other player has seen and not since seen leave. Counted by
+    /// type, because twins cannot be told apart: a player who saw a K♥ taken
+    /// and then a K♥ played cannot know whether another remains.
+    seen: [[u8; 32]; 2],
+    /// Every card each seat has held, for telling its own twins apart.
+    handled: [CardSet; 2],
+    /// Cards in the order they first became public.
+    appeared: Vec<Card>,
     log: Vec<Scored>,
 }
 
@@ -118,10 +125,10 @@ impl Hand {
         leader: Seat,
         tricks_taken: u8,
     ) -> Hand {
-        Hand {
+        let mut hand = Hand {
             trump,
             stock,
-            holdings,
+            holdings: holdings.clone(),
             leader,
             led: None,
             phase: Phase::Lead,
@@ -129,9 +136,22 @@ impl Hand {
             taken: tricks_taken,
             won: [CardSet::EMPTY; 2],
             sevens_scored: CardSet::EMPTY,
-            seen: [CardSet::EMPTY; 2],
+            seen: [[0; 32]; 2],
+            handled: [holdings[0].cards(), holdings[1].cards()],
+            appeared: Vec::new(),
             log: Vec::new(),
+        };
+        let public = hand
+            .stock
+            .turn_up()
+            .into_iter()
+            .chain(hand.holdings[0].shown.cards())
+            .chain(hand.holdings[1].shown.cards());
+        let public: Vec<Card> = public.collect();
+        for card in public {
+            hand.appear(card);
         }
+        hand
     }
 
     pub fn trump(&self) -> Suit {
@@ -192,11 +212,56 @@ impl Hand {
     /// the table, and concealed ones shown or taken in view (by the dix, the
     /// second seven shown, the turn-up taken at the last stock trick, and
     /// table cards taken back into the hand).
+    ///
+    /// Concealed known cards are counted by type; of twins, the lower copies
+    /// held stand for them.
     pub fn known(&self, seat: Seat) -> CardSet {
         let holdings = &self.holdings[seat.index()];
-        self.seen[seat.index()]
-            .union(holdings.shown)
-            .intersect(holdings.cards())
+        let mut known = holdings.shown;
+        for (index, &count) in self.seen[seat.index()].iter().enumerate() {
+            let twins = holdings.concealed.intersect(CardType(index as u8).twins());
+            // The copies that were actually seen stand first.
+            let mut copies: Vec<Card> = twins.cards().collect();
+            copies.sort_by_key(|c| (!self.appeared.contains(c), c.0));
+            for &card in copies.iter().take(count as usize) {
+                known = known.with(card);
+            }
+        }
+        known
+    }
+
+    /// Every card `seat` has held this hand: the ones it can tell apart from
+    /// their twins.
+    pub fn handled(&self, seat: Seat) -> CardSet {
+        self.handled[seat.index()]
+    }
+
+    /// The cards that have become public, in the order they did: the turn-up,
+    /// cards laid on the table, cards played, sevens shown.
+    pub fn appeared(&self) -> &[Card] {
+        &self.appeared
+    }
+
+    fn appear(&mut self, card: Card) {
+        if !self.appeared.contains(&card) {
+            self.appeared.push(card);
+        }
+    }
+
+    /// `card` comes into the other player's sight while concealed in `seat`'s
+    /// hand.
+    fn comes_to_light(&mut self, seat: Seat, card: Card) {
+        let count = &mut self.seen[seat.index()][card.card_type().0 as usize];
+        *count = (*count + 1).min(2);
+    }
+
+    /// A card of `card`'s type leaves `seat`'s concealed cards (played or
+    /// laid): the other player can no longer be sure a seen one remains.
+    fn leaves_concealed(&mut self, seat: Seat, card: Card) {
+        if self.holdings[seat.index()].concealed.contains(card) {
+            let count = &mut self.seen[seat.index()][card.card_type().0 as usize];
+            *count = count.saturating_sub(1);
+        }
     }
 
     /// A seat's points this hand.
@@ -252,7 +317,9 @@ impl Hand {
                 if !self.holdings[seat.index()].cards().contains(card) {
                     return Err(format!("you do not hold {}", card.code()));
                 }
+                self.leaves_concealed(seat, card);
                 self.holdings[seat.index()].play(card);
+                self.appear(card);
                 self.led = Some(card);
                 self.phase = Phase::Follow;
             }
@@ -263,7 +330,9 @@ impl Hand {
                 if !self.playable(seat).contains(card) {
                     return Err(self.why_not(seat, card));
                 }
+                self.leaves_concealed(seat, card);
                 self.holdings[seat.index()].play(card);
+                self.appear(card);
                 self.take_trick(card);
             }
             (Phase::Declare, Action::Pass) => self.draw(),
@@ -283,21 +352,31 @@ impl Hand {
                     .stock
                     .turn_up()
                     .expect("the turn-up is there while declaring lasts");
-                let in_view = if is_seven_of(turned, self.trump) {
-                    seven
+                if is_seven_of(turned, self.trump) {
+                    // Shown and kept.
+                    self.comes_to_light(seat, seven);
                 } else {
                     let taken = self.stock.exchange(seven);
+                    self.leaves_concealed(seat, seven);
                     let holdings = &mut self.holdings[seat.index()];
                     holdings.play(seven);
                     holdings.receive(taken);
-                    taken
-                };
-                self.seen[seat.index()] = self.seen[seat.index()].with(in_view);
+                    self.handled[seat.index()] = self.handled[seat.index()].with(taken);
+                    self.comes_to_light(seat, taken);
+                }
+                self.appear(seven);
                 self.score_to(seat, 10, Source::Dix);
                 self.draw();
             }
             (Phase::Declare, Action::Declare(announcement)) => {
+                let before = self.holdings[seat.index()].concealed;
                 let points = self.holdings[seat.index()].apply(self.trump, &announcement)?;
+                let laid = before.minus(self.holdings[seat.index()].concealed);
+                for card in laid.cards() {
+                    let count = &mut self.seen[seat.index()][card.card_type().0 as usize];
+                    *count = count.saturating_sub(1);
+                    self.appear(card);
+                }
                 self.score_to(seat, points, Source::Meld(announcement.score));
                 self.draw();
             }
@@ -389,15 +468,17 @@ impl Hand {
                 .draw()
                 .expect("the stock holds an even number of cards");
             self.holdings[seat.index()].receive(card);
+            self.handled[seat.index()] = self.handled[seat.index()].with(card);
             if face_up {
-                self.seen[seat.index()] = self.seen[seat.index()].with(card);
+                self.comes_to_light(seat, card);
             }
         }
         if self.stock.is_empty() {
             for seat in Seat::BOTH {
-                let holdings = &mut self.holdings[seat.index()];
-                self.seen[seat.index()] = self.seen[seat.index()].union(holdings.shown);
-                holdings.take_up();
+                for card in self.holdings[seat.index()].shown.cards() {
+                    self.comes_to_light(seat, card);
+                }
+                self.holdings[seat.index()].take_up();
             }
         }
         self.phase = Phase::Lead;
@@ -809,6 +890,38 @@ mod tests {
             h.known(Seat::Dealer).is_empty(),
             "played, so no longer in the hand"
         );
+    }
+
+    /// A seen card and its unseen twin cannot be told apart: once a card of
+    /// the type is played, the seen one may be gone.
+    #[test]
+    fn a_seen_card_is_known_only_until_one_like_it_is_played() {
+        let mut h = hand(PONE, "TS 7S 8S 9S JS 8H 7H KH", "KH", "");
+        play(&mut h, "AS");
+        play(&mut h, "8H");
+        h.apply(Action::Dix(c("7H", 0))).unwrap();
+        assert_eq!(
+            h.known(Seat::Dealer)
+                .count_of(CardType::parse("KH").unwrap()),
+            1
+        );
+        play(&mut h, "KH");
+        assert!(
+            h.known(Seat::Dealer).is_empty(),
+            "{:?}",
+            h.known(Seat::Dealer)
+        );
+    }
+
+    #[test]
+    fn the_order_of_appearance_is_kept() {
+        let mut h = hand(PONE, DEALER, "KH", "");
+        assert_eq!(h.appeared(), &[c("KH", 0)]);
+        play(&mut h, "AS");
+        play(&mut h, "8H");
+        assert_eq!(h.appeared(), &[c("KH", 0), c("AS", 0), c("8H", 0)]);
+        assert!(h.handled(Seat::Pone).contains(c("AS", 0)));
+        assert!(!h.handled(Seat::Pone).contains(c("8H", 0)));
     }
 
     #[test]

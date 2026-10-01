@@ -8,11 +8,11 @@
 //! size of the stock, and every card played this hand. Memory of the played
 //! cards is offered; whether an agent uses it is a matter of skill.
 
-use crate::cards::{Card, CardSet, Suit};
+use crate::cards::{Card, CardSet, CardType, Suit};
 use crate::deal::Seat;
 use crate::game::{Game, Side};
-use crate::hand::{Action, Phase, Scored, Trick};
-use crate::melds::Holdings;
+use crate::hand::{Action, Phase, Scored, Source, Trick};
+use crate::melds::{Announced, Declared, Holdings};
 
 #[derive(Clone, Debug)]
 pub struct View {
@@ -55,25 +55,75 @@ impl View {
         let other = seat.other();
         let them = hand.holdings(other);
         let seen = them.concealed.intersect(hand.known(other));
+        let mut visible: Vec<Card> = Vec::new();
+        for trick in hand.tricks() {
+            visible.extend([trick.led, trick.second]);
+        }
+        visible.extend(hand.led());
+        visible.extend(hand.stock().turn_up());
+        visible.extend(them.shown.cards());
+        visible.extend(seen.cards());
+        let relabel = Relabel::new(hand.handled(seat), &visible);
+        // Once the stock is gone, cards declared earlier may be back in hand
+        // and indistinguishable from their twins: their record keeps types.
+        let endgame = hand.in_endgame();
+        let record = |cards: CardSet| {
+            if endgame {
+                by_type(cards)
+            } else {
+                relabel.set(cards)
+            }
+        };
         View {
             side,
             seat,
             trump: hand.trump(),
-            turn_up: hand.stock().turn_up(),
+            turn_up: hand.stock().turn_up().map(|c| relabel.card(c)),
             stock: hand.stock().face_down(),
             phase: hand.phase(),
             to_move: hand.to_move(),
             leader: hand.leader(),
-            led: hand.led(),
+            led: hand.led().map(|c| relabel.card(c)),
             mine: hand.holdings(seat).clone(),
             theirs: Holdings {
-                concealed: seen,
-                shown: them.shown,
-                announced: them.announced.clone(),
+                concealed: relabel.set(seen),
+                shown: relabel.set(them.shown),
+                announced: them
+                    .announced
+                    .iter()
+                    .map(|a| Announced {
+                        declared: Declared {
+                            meld: a.declared.meld,
+                            cards: record(a.declared.cards),
+                        },
+                        scored: a.scored,
+                    })
+                    .collect(),
             },
             their_hidden: them.concealed.len() - seen.len(),
-            tricks: hand.tricks().to_vec(),
-            log: hand.log().to_vec(),
+            tricks: hand
+                .tricks()
+                .iter()
+                .map(|t| Trick {
+                    led: relabel.card(t.led),
+                    second: relabel.card(t.second),
+                    ..*t
+                })
+                .collect(),
+            log: hand
+                .log()
+                .iter()
+                .map(|s| Scored {
+                    source: match s.source {
+                        Source::Meld(d) if s.seat == other => Source::Meld(Declared {
+                            meld: d.meld,
+                            cards: record(d.cards),
+                        }),
+                        other => other,
+                    },
+                    ..*s
+                })
+                .collect(),
             hand_scores: (hand.score(seat), hand.score(other)),
             totals: (game.total(side), game.total(side.other())),
             hand_number: game.hand_number(),
@@ -108,6 +158,70 @@ impl View {
     }
 }
 
+/// Which physical copy of a twin appears is the engine's choice, not
+/// something a player can see: real twins cannot be told apart. So in a
+/// player's view the twins of a type that player has never held are
+/// renumbered from what is visible now: a lone visible copy is always copy 0;
+/// two visible copies are numbered in the order of where they lie (the
+/// tricks in order, the turn-up, the table, the cards seen in hand), which is
+/// public. Otherwise the copy numbers would tell where a twin lies, or
+/// whether a card seen and later played was the one seen. Twins of which the
+/// player has held one are left alone: the player can tell its own from the
+/// other.
+struct Relabel {
+    to: [u8; 64],
+}
+
+impl Relabel {
+    /// `visible`: the cards not the player's own that it can see now, in the
+    /// order of where they lie.
+    fn new(handled: CardSet, visible: &[Card]) -> Relabel {
+        let mut to: [u8; 64] = std::array::from_fn(|i| i as u8);
+        for card_type in CardType::all() {
+            let twins = card_type.twins();
+            if !twins.intersect(handled).is_empty() {
+                continue;
+            }
+            let copies: Vec<Card> = twins.cards().collect();
+            let mut order: Vec<Card> = Vec::new();
+            for &card in visible {
+                if card.card_type() == card_type && !order.contains(&card) {
+                    order.push(card);
+                }
+            }
+            if let Some(&first) = order.first() {
+                let second = copies.iter().copied().find(|&c| c != first).expect("twins");
+                to[first.0 as usize] = copies[0].0;
+                to[second.0 as usize] = copies[1].0;
+            }
+        }
+        Relabel { to }
+    }
+
+    fn card(&self, card: Card) -> Card {
+        Card(self.to[card.0 as usize])
+    }
+
+    fn set(&self, cards: CardSet) -> CardSet {
+        cards
+            .cards()
+            .fold(CardSet::EMPTY, |s, c| s.with(self.card(c)))
+    }
+}
+
+/// The same cards by type only: each type's copies renumbered from 0. For
+/// records whose cards may since have gone back into a hand, where linking
+/// them to cards seen now would say which twin is which.
+fn by_type(cards: CardSet) -> CardSet {
+    let mut out = CardSet::EMPTY;
+    for card_type in CardType::all() {
+        for copy in 0..cards.count_of(card_type) {
+            out = out.with(Card::new(card_type, copy as u8));
+        }
+    }
+    out
+}
+
 /// Anything that chooses moves from a view: the opponent, at any level.
 pub trait Agent {
     /// Picks one of `legal` (never empty) for the player whose view it is.
@@ -119,23 +233,21 @@ mod tests {
     use super::*;
     use crate::rng::Rng;
 
-    /// Every card a view names anywhere.
-    fn mentioned(v: &View) -> CardSet {
-        let mut cards = v.mine.cards().union(v.theirs.cards()).union(v.played());
-        for h in [&v.mine, &v.theirs] {
-            for a in &h.announced {
-                cards = cards.union(a.declared.cards);
-            }
-        }
-        if let Some(t) = v.turn_up {
-            cards = cards.with(t);
-        }
-        for s in &v.log {
-            if let crate::hand::Source::Meld(d) = s.source {
-                cards = cards.union(d.cards);
-            }
-        }
-        cards
+    /// The cards a view shows where they are now: hands, tables, tricks, the
+    /// turn-up.
+    fn live(v: &View) -> CardSet {
+        let turn_up = v.turn_up.map_or(CardSet::EMPTY, |c| CardSet::EMPTY.with(c));
+        v.mine
+            .cards()
+            .union(v.theirs.cards())
+            .union(v.played())
+            .union(turn_up)
+    }
+
+    /// Card types with their counts, for comparing sets up to which twin is
+    /// which.
+    fn types(cards: CardSet) -> Vec<u32> {
+        CardType::all().map(|t| cards.count_of(t)).collect()
     }
 
     /// Plays random games and checks every view of every position.
@@ -152,26 +264,23 @@ mod tests {
                     assert_eq!(v.seat, mine);
                     assert_eq!(v.mine, *hand.holdings(mine));
                     // Of the opponent's concealed cards, only those seen.
-                    assert_eq!(
-                        v.theirs.concealed,
-                        hand.holdings(theirs)
-                            .concealed
-                            .intersect(hand.known(theirs))
-                    );
-                    assert_eq!(v.theirs.shown, hand.holdings(theirs).shown);
+                    let seen = hand
+                        .holdings(theirs)
+                        .concealed
+                        .intersect(hand.known(theirs));
+                    assert_eq!(types(v.theirs.concealed), types(seen));
+                    assert_eq!(types(v.theirs.shown), types(hand.holdings(theirs).shown));
                     let hidden = hand.holdings(theirs).concealed.minus(hand.known(theirs));
                     assert_eq!(v.their_hidden, hidden.len());
-                    // What is unseen is exactly their hidden cards and the stock.
+                    // What is unseen is their hidden cards and the stock, type
+                    // for type.
                     let mut stock = CardSet::EMPTY;
                     let mut s = hand.stock().clone();
                     while s.face_down() > 0 {
                         stock = stock.with(s.draw().unwrap());
                     }
-                    assert_eq!(v.unseen(), hidden.union(stock));
-                    assert!(
-                        mentioned(&v).intersect(hidden.union(stock)).is_empty(),
-                        "seed {seed}: a view names an unseen card"
-                    );
+                    assert_eq!(types(v.unseen()), types(hidden.union(stock)), "seed {seed}");
+                    assert!(live(&v).intersect(v.unseen()).is_empty());
                     assert_eq!(v.stock, hand.stock().face_down());
                 }
                 let legal = game.legal();
@@ -179,6 +288,36 @@ mod tests {
                     .unwrap();
             }
         }
+    }
+
+    /// Copy numbers carry no information: of a type whose twins a player
+    /// has never held, a lone visible copy is always shown as copy 0.
+    #[test]
+    fn a_lone_twin_the_player_never_held_is_always_copy_zero() {
+        let mut lone = 0;
+        for seed in 100..140 {
+            let mut game = Game::new(seed, Side::A);
+            let mut rng = Rng::stream(seed, 9);
+            while game.to_move().is_some() {
+                for side in Side::BOTH {
+                    let v = View::of(&game, side);
+                    let handled = game.hand().handled(game.seat_of(side));
+                    let visible = live(&v).minus(v.mine.cards());
+                    for card_type in CardType::all() {
+                        let twins = card_type.twins();
+                        if twins.intersect(handled).is_empty() && visible.count_of(card_type) == 1 {
+                            lone += 1;
+                            let shown = visible.intersect(twins).cards().next().unwrap();
+                            assert_eq!(shown.copy(), 0, "seed {seed}: {shown:?}");
+                        }
+                    }
+                }
+                let legal = game.legal();
+                game.apply(legal[rng.below(legal.len() as u64) as usize].clone())
+                    .unwrap();
+            }
+        }
+        assert!(lone > 1000, "the case must arise: {lone}");
     }
 
     #[test]
