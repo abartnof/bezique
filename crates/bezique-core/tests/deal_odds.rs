@@ -16,7 +16,8 @@
 //!
 //! The winners here are coin flips from a stream of their own. Each figure may
 //! stray 4.5 standard errors, which a correct implementation does about once
-//! in 150,000 tries; the seeds are fixed, so the test is deterministic anyway.
+//! in 150,000 tries, so the four together about once in 37,000; the seeds are
+//! fixed, so the test is deterministic anyway.
 
 use bezique_core::cards::{Card, CardSet, CardType, Rank, Suit};
 use bezique_core::deal::{Deal, Seat};

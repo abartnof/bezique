@@ -354,10 +354,7 @@ impl<R: BufRead, W: Write> Table<R, W> {
             }
         }
         let all = opponent::personas();
-        let mut rng = Rng::stream(
-            self.options.seed,
-            purpose::PERSONA + 100 * side.index() as u64,
-        );
+        let mut rng = Rng::stream(self.options.seed, purpose::persona(side.index()));
         all[rng.below(all.len() as u64) as usize].clone()
     }
 

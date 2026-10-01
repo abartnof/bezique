@@ -20,6 +20,11 @@ pub mod purpose {
     pub const ARRANGED_DEALS: u64 = 2;
     /// The opponent's persona, when it is drawn rather than chosen.
     pub const PERSONA: u64 = 3;
+    /// A computer player's persona in the terminal client, by side (0 or
+    /// 1), when drawn rather than chosen: side 0's is [`PERSONA`].
+    pub const fn persona(side: usize) -> u64 {
+        PERSONA + 100 * side as u64
+    }
     /// The opponent's own choices, by side (0 or 1).
     pub const fn agent(side: usize) -> u64 {
         16 + side as u64
@@ -342,5 +347,31 @@ mod tests {
             Rng::seeded(5),
             "a stream is not the bare seed"
         );
+    }
+
+    /// Every card is equally likely in every position of a 64-card
+    /// shuffle: the three-card test cannot see a fault that shows only at
+    /// larger sizes.
+    #[test]
+    fn shuffle_puts_every_card_in_every_position_equally() {
+        let mut g = Rng::seeded(99);
+        let n = 128_000u64;
+        let mut counts = vec![[0u64; 64]; 64];
+        for _ in 0..n {
+            let mut p: Vec<u8> = (0..64).collect();
+            g.shuffle(&mut p);
+            for (pos, &c) in p.iter().enumerate() {
+                counts[c as usize][pos] += 1;
+            }
+        }
+        let e = n as f64 / 64.0;
+        let chi: f64 = counts
+            .iter()
+            .flat_map(|r| r.iter())
+            .map(|&c| (c as f64 - e).powi(2) / e)
+            .sum();
+        // 63 × 63 degrees of freedom; five standard deviations above.
+        let df = 63.0 * 63.0;
+        assert!(chi < df + 5.0 * (2.0f64 * df).sqrt(), "{chi}");
     }
 }

@@ -176,7 +176,8 @@ impl Card {
     }
 
     pub fn new(card_type: CardType, copy: u8) -> Card {
-        debug_assert!(copy < 2, "a two-pack game has copies 0 and 1");
+        // Checked in release too: copy 2 would silently name the next type.
+        assert!(copy < 2, "a two-pack game has copies 0 and 1");
         Card(card_type.0 * 2 + copy)
     }
 
@@ -207,6 +208,9 @@ impl Card {
 
     #[inline]
     fn bit(self) -> u64 {
+        // Checked in release too, where the shift would wrap and Card(64)
+        // would silently name the seven of spades.
+        assert!(self.is_valid(), "card id {} names no card", self.0);
         1 << self.0
     }
 }
