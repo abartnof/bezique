@@ -394,13 +394,15 @@ mirrored hands; games are the share won in mirrored games.
 | 2 | The period maxims (Pole, Pardon, Foster, Hoffmann), weighed by a tuned style: values each card for keeping (rank, trumps, bezique cards above aces while the double lives, marriage partners, sequence cards, three of a rank, the dix); throws the cheapest; takes brisques cheaply; wins the lead when there is something to declare, paying more the more it would score; single bezique before the double, royal marriage before the sequence | +98.6 (92% of games) |
 | 3 | Remembers every card played, and so plays the last eight tricks exactly (`solver.rs`): in bezique, memory pays in the endgame, where the cards played tell the opponent's hand | +18.7 (58%) |
 | 4 | Fights for the last trick before the stock runs out: its winner makes the last declaration and leads into the endgame | +2.3 (51%) |
+| 5 | Looks ahead once nine or fewer face-down cards remain: tries each card in 16 worlds drawn from its view, rung 4 playing out the stock and the solver valuing the endgame (`lookahead.rs`, §10.4) | +30.1 (se 1.3, fresh seeds) |
 
 Two proposed rungs failed measurement and were dropped, as piquet dropped
 two: memory used only to notice combinations that can no longer be made
 (+1.9 over rung 2: real, but small and now part of rung 3), and watching the
 opponent's table (counting its cards as gone, taking tricks to stop it
-declaring: nothing measurable). Search in the stock phase (§10.4) and play
-for the game rather than the hand remain proposals for rungs 5 and up.
+declaring: nothing measurable). Search earlier in the stock phase, and
+play for the game rather than the hand, remain proposals for rungs 6 and
+up.
 
 **Erraticism** (`opponent.rs`): on each decision the opponent may slip a
 rung, and another, with the set probability, drawn from its own stream, so
@@ -458,9 +460,30 @@ remain to enumerate exactly.
 
 ### 10.4 Search in the stock phase
 
-Determinised Monte Carlo: sample the opponent's concealed cards and the stock
+**As built (rung 5, `lookahead.rs`, 2026-10-02).** Once nine or fewer
+face-down cards remain, each card the player may play is tried in 16
+worlds: the cards it cannot account for (`View::unseen`) are dealt at random
+between the opponent's unseen hand and the stock, and the position is
+rebuilt with `Hand::arranged` (answering a lead, the world starts at the
+trick's start and replays the lead). Rung 4 plays both sides through the
+rest of the stock, and one call to the solver values the endgame they lead
+into. The same worlds serve every candidate (common random numbers), and
+one solver serves the whole decision, its table shared across worlds. The
+worlds are seeded from the position, so a decision is the same on replay
+and after undo. Declaring is left to rung 4.
+
+What the measurements say (`measurements/lookahead-sweep.txt`): more
+worlds help steadily (8, 16, 32 at horizon 9: +27.2, +32.8, +35.3); a longer
+horizon helps up to 9–13 face-down cards and then hurts (21: +19.5), as
+rung-4 rollouts from far out become a poor model of the play. The chosen
+setting, at the knee, was confirmed on fresh seeds at +30.1 points a hand
+over rung 4. It cost a ninefold speed-up of the solver to make affordable
+(alpha-beta with a table of bounds, §10.3). The cautions below still stand
+for any search reaching further back.
+
+**The general method.** Determinised Monte Carlo: sample the opponent's concealed cards and the stock
 order consistently with the view, play each candidate move out with a fast
-rung-5 policy, and average. Three cautions carry over from piquet, all
+policy (rung 4), and average. Three cautions carry over from piquet, all
 measured there:
 
 - **The optimizer's curse.** Choosing the argmax of noisy rollout estimates
