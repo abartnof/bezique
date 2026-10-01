@@ -112,7 +112,8 @@ play-test waits for the maintainer, so the engine work went ahead.
 - **The solver** is now alpha-beta with a table of bounds: the same cards
   chosen, about four times faster in play and nine times in search.
 - **Rung 5** looks ahead once nine or fewer face-down cards remain: +30.1
-  points a hand over rung 4 on fresh seeds (se 1.3). Levels run 1 to 5.
+  points a hand over rung 4 on fresh seeds (se 1.3), and 62.4% of games in
+the full ladder run. Levels run 1 to 5.
 - **The personas** hold at rung 4: each within 1.35 points a hand of
   balanced.
 - **The "To measure" questions** that the anatomy already answered are
