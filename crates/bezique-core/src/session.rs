@@ -204,9 +204,22 @@ impl Session {
     }
 
     /// Rebuilds a sitting from its seed, settings and record: how a client
-    /// reloads a game, and how undo works. Entries marked `*` were made by
-    /// the table, and are made again as the record is replayed.
+    /// reloads a game. Entries marked `*` were made by the table, and are
+    /// made again as the record is replayed; if they come out differently,
+    /// the record was made by a build that plays differently, and is
+    /// refused rather than replayed into another game (a second guard
+    /// beside `RECORD_VERSION`).
     pub fn replay(seed: u64, settings: Settings, record: &[String]) -> Result<Session, String> {
+        let session = Session::rebuild(seed, settings, record)?;
+        if session.record != record {
+            return Err("the record replays differently: it was made by another version".to_string());
+        }
+        Ok(session)
+    }
+
+    /// Replays the person's entries of `record`, the table making its own:
+    /// undo's replay, whose record may lack the table's entries after it.
+    fn rebuild(seed: u64, settings: Settings, record: &[String]) -> Result<Session, String> {
         let mut session = Session::new(seed, settings);
         for entry in record.iter().filter(|e| !e.starts_with('*')) {
             if !session.send(entry) {
@@ -485,7 +498,7 @@ impl Session {
                 .filter(|r| r.starts_with("set "))
                 .cloned(),
         );
-        let mut again = Session::replay(self.seed, self.settings.clone(), &record)?;
+        let mut again = Session::rebuild(self.seed, self.settings.clone(), &record)?;
         again.error = None;
         // An aid switched on since can make the table play the decision just
         // taken back (a forced card, with play_forced): then there was no
@@ -950,38 +963,81 @@ mod tests {
         assert!(!matches!(s.prompt(), Prompt::Play { legal } if legal.len() == 1));
     }
 
-    /// One whole game at every level, the person taking the first option
-    /// offered, pinned by a fingerprint of its record and events. If this
-    /// fails, a change has altered play: bump `RECORD_VERSION`, then update
-    /// the pin.
+    /// Whole games at every level, each persona at two levels, the person
+    /// choosing at random among what is offered (the dealer too, when it
+    /// cuts higher), pinned by a fingerprint of every prompt (the legal
+    /// cards, the declaring options' words in order), the record and the
+    /// narration. If this fails, a change has altered play or what is
+    /// offered: bump `RECORD_VERSION`, then pin the new fingerprint.
     #[test]
     fn the_golden_game_replays_unchanged() {
         let mut fingerprint = 0xcbf2_9ce4_8422_2325u64;
         let mut mix = |text: &str| {
-            for b in text.bytes() {
+            for b in text.bytes().chain([0xff]) {
                 fingerprint = (fingerprint ^ u64::from(b)).wrapping_mul(0x0100_0000_01b3);
             }
         };
+        let personas = opponent::personas();
+        let (mut dealer_choices, mut wide_declarations) = (0, 0);
         for level in 1..=agents::TOP {
-            let settings = Settings {
-                level,
-                persona: None,
-                erraticism: 0.2,
-            };
-            let mut s = Session::new(7, settings);
-            play_out(&mut s);
-            for entry in s.record() {
-                mix(entry);
-            }
-            for e in s.events() {
-                mix(&e.text);
+            for k in 0..2 {
+                let persona = &personas[(usize::from(level) + 2 * k) % personas.len()];
+                let settings = Settings {
+                    level,
+                    persona: Some(persona.key.to_string()),
+                    erraticism: 0.2,
+                };
+                let seed = 100 + 10 * u64::from(level) + k as u64;
+                let mut s = Session::new(seed, settings);
+                let mut choose = Rng::stream(seed, 999);
+                loop {
+                    let command = match s.prompt() {
+                        Prompt::ChooseDealer => {
+                            dealer_choices += 1;
+                            ["dealer you", "dealer them"][choose.below(2) as usize].to_string()
+                        }
+                        Prompt::Play { legal } => {
+                            mix(&format!("{legal:?}"));
+                            format!("play {}", legal[choose.below(legal.len() as u64) as usize].0)
+                        }
+                        Prompt::Declare { options } => {
+                            for o in &options {
+                                mix(&o.text);
+                            }
+                            wide_declarations += usize::from(options.len() >= 3);
+                            format!("declare {}", choose.below(options.len() as u64))
+                        }
+                        Prompt::Over => break,
+                    };
+                    assert!(s.send(&command), "{command}: {:?}", s.error());
+                }
+                for entry in s.record() {
+                    mix(entry);
+                }
+                for e in s.events() {
+                    mix(&e.text);
+                }
             }
         }
+        // The games must reach what they are meant to pin.
+        assert!(dealer_choices > 0 && wide_declarations > 0, "{dealer_choices} {wide_declarations}");
         assert_eq!(
             (RECORD_VERSION, fingerprint),
-            (2, 460_755_890_721_319_643),
+            (2, 10_613_566_370_220_004_578),
             "play has changed: bump RECORD_VERSION and pin the new fingerprint"
         );
+    }
+
+    /// A record whose table-made entries come out differently is refused.
+    #[test]
+    fn a_record_from_another_version_is_refused() {
+        let mut s = Session::new(11, Settings::default());
+        play_out(&mut s);
+        let mut record = s.record().to_vec();
+        assert!(Session::replay(11, Settings::default(), &record).is_ok());
+        let auto = record.iter().position(|r| r.starts_with('*')).expect("a table-made entry");
+        record[auto] = "*declare 9".to_string();
+        assert!(Session::replay(11, Settings::default(), &record).is_err());
     }
 
     #[test]
