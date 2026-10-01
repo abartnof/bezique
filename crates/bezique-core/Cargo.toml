@@ -1,0 +1,10 @@
+[package]
+name = "bezique-core"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+authors.workspace = true
+description = "The rules engine for two-player bezique, as Foster's Complete Hoyle (1897) gives it."
+
+[dependencies]

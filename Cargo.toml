@@ -1,0 +1,20 @@
+[workspace]
+resolver = "2"
+members = ["crates/bezique-core"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+authors = ["Andrew Bartnof"]
+# The page ships built from one pinned toolchain, so an older MSRV buys nothing.
+rust-version = "1.98"
+
+[profile.release]
+lto = true
+codegen-units = 1
+
+# The statistical tests shuffle tens of thousands of packs; at opt-level 0 the
+# fast loop would crawl. Debug assertions and overflow checks stay on.
+[profile.test]
+opt-level = 2
