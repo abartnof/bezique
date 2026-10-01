@@ -312,8 +312,13 @@ fn riders(pairs: u64) {
     );
 }
 
-/// What a game between two rung-2 players is made of.
+/// What a game between two players of one rung is made of: rung 2, or
+/// `MEASURE_LEVEL`.
 fn anatomy(games: u64) {
+    let level: u8 = std::env::var("MEASURE_LEVEL")
+        .ok()
+        .and_then(|s| s.parse().ok())
+        .unwrap_or(2);
     let mut hands_per_game = BTreeMap::new();
     let (mut doubles, mut mid_hand, mut first_dealer_won) = (0u64, 0u64, 0u64);
     let mut hands = 0u64;
@@ -324,8 +329,7 @@ fn anatomy(games: u64) {
     let (mut last_stock_margin, mut last_stock_won_hand) = (0i64, 0u64);
     for seed in 0..games {
         let mut game = Game::new(10_000_000 + seed, Side::A);
-        let mut agents: [Box<dyn Agent>; 2] =
-            [Box::new(Maxims::default()), Box::new(Maxims::default())];
+        let mut agents: [Box<dyn Agent>; 2] = [rung(level), rung(level)];
         while let Some(side) = game.to_move() {
             let view = View::of(&game, side);
             let action = agents[side.index()].choose(&view, &game.legal());
@@ -361,7 +365,7 @@ fn anatomy(games: u64) {
     }
     let g = games as f64;
     let h = hands as f64;
-    println!("Rung 2 against itself: {games} games, {hands} finished hands.");
+    println!("Rung {level} against itself: {games} games, {hands} finished hands.");
     println!();
     let mean_hands: f64 = hands_per_game
         .iter()
