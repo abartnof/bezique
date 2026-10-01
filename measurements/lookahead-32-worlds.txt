@@ -1,0 +1,1 @@
+rung 5 with horizon 9 and 32 worlds, against rung 5: +2.44 points a hand for the first (1500 mirrored pairs, standard error 1.27)

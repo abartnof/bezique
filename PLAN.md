@@ -201,7 +201,9 @@ the full ladder run. Levels run 1 to 5.
    §10.4). It changes only a game's last hand, about one in four, so a gain
    in games won would be small: telling a 1–2% gain from noise needs on
    the order of 10,000 mirrored pairs of games, about three hours on this
-   machine. To agree with the maintainer before running.
+   machine. To agree with the maintainer before running. Also open: 32
+   worlds rather than 16 at rung 5 measured +2.4 points a hand (se 1.3),
+   not yet significant; about 6,000 pairs (some two hours) would settle it.
 
 ## To measure, once the engine plays
 
