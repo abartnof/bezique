@@ -7,7 +7,8 @@
 
 ## Where we are
 
-**2026-10-01: planning complete; no code yet.**
+**2026-10-01: milestone 1 done: the pack, the generator and the deal,
+32 tests.** Planning was completed the same day:
 
 - `docs/LITERATURE.md`: the literature review (68 sources, the conflict
   matrix, strategy, computed odds), as delivered.
@@ -41,14 +42,15 @@
 | Variants | **One rule set, no switches**; Rubicon, six-pack and Polish bezique only ever as separate games (confirmed 2026-10-01) | `RULES.md` "Authority" |
 | Repository and licence | **Public** at `github.com/abartnof/bezique`; **MIT**, revisable later (2026-10-01) | `LICENSE` |
 | Unit of play | **One game to 1,000**, doubled if the loser is under 500. Foster's partie (best of five) is possible later as a longer format | `RULES.md` §7 |
-
+| Generator | xoshiro256\*\* seeded by SplitMix64, pinned to the authors' C (`tools/prng-reference/`) | `crates/bezique-core/src/rng.rs` |
 
 ## Milestones
 
 - [x] **0. Planning**: literature, sources, rules, design, plan.
-- [ ] **1. The pack**: card types and physical cards, bitboards, codes, the
+- [x] **1. The pack**: card types and physical cards, bitboards, codes, the
       seeded generator and shuffle, the deal (3-2-3) and the turn-up. A
-      statistical test of the deal and draw against the exact odds.
+      statistical test of the deal and draw against the exact odds, shown
+      to catch an unshuffled pack and a naive shuffle.
 - [ ] **2. Tricks**: who wins a trick; the follow-and-win rule of the last
       eight tricks.
 - [ ] **3. Declarations**: combinations, class levels, the new-card rule,
@@ -71,17 +73,15 @@
 
 ## Next action
 
-**Milestone 1, test first.** Create the Cargo workspace (`bezique-core`
-first; `bezique-wasm` and `bezique-cli` when they have something to hold),
-then `cards.rs`. The first tests:
+**Milestone 2, test first: `tricks.rs`.**
 
-- the pack is 64 cards, two of each of 32 types;
-- codes round-trip (`AS`, `TD`, `7C`), and parse errors are reported;
-- rank order within a suit is A, 10, K, Q, J, 9, 8, 7, and twins compare equal;
-- suit masks partition the 64 bits; the highest card of a suit in a set.
-
-Then the generator against its published reference outputs, the shuffle,
-and the deal.
+- While the stock lasts: the higher card of the suit led wins; a trump beats
+  a plain-suit lead; an off-suit plain card loses; identical cards go to the
+  leader.
+- The last eight tricks: the legal replies to a lead. Follow suit and beat
+  it if possible; holding the suit but unable to beat it, any card of the
+  suit; void, a trump if held; otherwise anything. A trump lead must be
+  overtrumped if possible. An identical card does not beat.
 
 ## To measure, once the engine plays
 
