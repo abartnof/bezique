@@ -146,6 +146,15 @@ impl Hand {
         {
             return Err("a card in two places".to_string());
         }
+        if stock.cards().len() as usize != stock.len() {
+            return Err("a card twice in the stock".to_string());
+        }
+        if stock.turn_up().is_some_and(|c| c.suit() != trump) {
+            return Err("the turn-up is not of the trump suit".to_string());
+        }
+        if held[0].len() > 8 || held[1].len() > 8 {
+            return Err("a player holds more than eight cards".to_string());
+        }
         if stock.face_down() > 0 && stock.turn_up().is_none() {
             return Err("face-down cards remain but the turn-up is gone".to_string());
         }
@@ -262,8 +271,8 @@ impl Hand {
     /// second seven shown, the turn-up taken at the last stock trick, and
     /// table cards taken back into the hand).
     ///
-    /// Concealed known cards are counted by type; of twins, the lower copies
-    /// held stand for them.
+    /// Concealed known cards are counted by type; of twins, the copies that
+    /// were actually seen stand first, then the lower.
     pub fn known(&self, seat: Seat) -> CardSet {
         let holdings = &self.holdings[seat.index()];
         let mut known = holdings.shown;
@@ -925,7 +934,6 @@ mod tests {
 
     #[test]
     fn an_impossible_position_is_refused() {
-        let trump = Suit::HEARTS;
         let eight = |codes: &str| Holdings::new(set(codes));
         let (a, b) = (
             eight("AS TS KS QS JS 9S 8S 7S"),
@@ -936,6 +944,8 @@ mod tests {
             .minus(b.cards())
             .cards()
             .collect();
+        // The turn-up's suit is trumps.
+        let trump = rest[0].suit();
         let fine = Hand::arranged(
             trump,
             Stock::new(&rest[1..], Some(rest[0])),
@@ -991,6 +1001,41 @@ mod tests {
                 Seat::Pone,
                 0,
             ),
+            // A card twice in the stock, and another nowhere.
+            Hand::arranged(
+                trump,
+                Stock::new(&[&rest[1..2], &rest[1..47]].concat(), Some(rest[0])),
+                [a.clone(), b.clone()],
+                Seat::Pone,
+                0,
+            ),
+            // The turn-up face down as well.
+            Hand::arranged(
+                trump,
+                Stock::new(&rest[..47], Some(rest[0])),
+                [a.clone(), b.clone()],
+                Seat::Pone,
+                0,
+            ),
+            // A turn-up not of the trump suit.
+            Hand::arranged(
+                Suit((trump.0 + 1) % 4),
+                Stock::new(&rest[1..], Some(rest[0])),
+                [a.clone(), b.clone()],
+                Seat::Pone,
+                0,
+            ),
+            // More than eight cards each once the stock is gone.
+            Hand::arranged(
+                trump,
+                Stock::new(&[], None),
+                [
+                    Holdings::new(a.cards().union(b.cards())),
+                    Holdings::new(CardSet::PACK.minus(a.cards()).minus(b.cards())),
+                ],
+                Seat::Pone,
+                0,
+            ),
         ];
         for (i, position) in bad.iter().enumerate() {
             assert!(position.is_err(), "position {i} should be refused");
@@ -1022,12 +1067,13 @@ mod tests {
         let trump = Suit::HEARTS;
         let pone = Holdings::new(set("7H AS 8C 9C 7D 8D 9D JC"));
         let dealer = Holdings::new(set("TS 7S 8S 9S JS 8H 9H KC"));
-        let rest: Vec<Card> = CardSet::PACK
+        let mut rest: Vec<Card> = CardSet::PACK
             .minus(pone.cards())
             .minus(dealer.cards())
             .cards()
             .collect();
-        let stock = Stock::new(&rest[1..], Some(rest[0]));
+        let turn_up = rest.remove(rest.iter().position(|c| c.suit() == trump).unwrap());
+        let stock = Stock::new(&rest, Some(turn_up));
         let mut h = Hand::arranged(trump, stock, [dealer, pone], Seat::Pone, 0)
             .unwrap()
             .with_sevens_scored(CardSet::of(&[c("7H", 0)]));
