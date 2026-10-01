@@ -5,6 +5,7 @@
 
 pub mod cards;
 pub mod deal;
+pub mod game;
 pub mod hand;
 pub mod melds;
 pub mod rng;
