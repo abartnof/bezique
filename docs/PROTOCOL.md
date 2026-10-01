@@ -23,14 +23,17 @@ end of the game).
 The person is always side A. `level` is 1 to 4 (`agents::TOP`); `persona` is
 0 to draw one from the seed, else its place in `opponent::personas()` from 1
 (balanced, concentrates, close, bezique); `erraticism` is in thousandths. The
-same arguments always give the same sitting.
+same arguments always give the same sitting. Out-of-range arguments are not
+refused: the level is clamped to 1–4, erraticism to 0–1,000, and a persona
+number past the list is drawn from the seed as 0 is. Before `bezique_new`
+the state is empty (`bezique_state_len()` is 0).
 
 ## Commands
 
 | Command | When | Meaning |
 |---|---|---|
 | `dealer you` / `dealer them` | `prompt.kind == "choose_dealer"` | Having cut higher, choose who deals first |
-| `play <id>` | `prompt.kind == "play"` | Lead or answer with your card numbered `id` (one of `prompt.legal`, or its twin) |
+| `play <id>` | `prompt.kind == "play"` | Lead or answer with your card numbered `id` (one of `prompt.legal`, or its twin if you hold both) |
 | `declare <n>` | `prompt.kind == "declare"` | Choose option `n` of `prompt.options`; option 0 is to draw without declaring |
 | `undo` | `can_undo` | Take back the last decision, with everything that followed it |
 | `set <aid> on` / `off` | any time | Switch an aid: `hints`, `play_forced`, `tracker` |
@@ -41,10 +44,13 @@ while you can"). Sending a move just to show the refusal is fine; the reason
 is the lesson.
 
 **Aids** change what the person is asked, never what happens. `hints` adds
-`hint`, the top rung's choice in the person's place; `play_forced` plays a
-card when it is the only one allowed; `tracker` adds `tricks_played`, every
-trick of the hand (off, only the last trick shows: Foster says a quitted
-trick may not be looked at again). A turn of declaring with nothing to
+`hint`, the top rung's choice in the person's place (it counts every card
+played, whether or not the tracker is on); `play_forced` plays a card when
+it is the only one allowed; `tracker` adds `tricks_played`, every trick of
+the hand (off, only the last trick shows: Foster says a quitted trick may not
+be looked at again). The narration (`events`) is the full log of the sitting
+whatever the tracker says, so with the tracker off a client should show only
+the last trick's `played` events. A turn of declaring with nothing to
 declare is never put to the person.
 
 **Reloading and undo.** `record` lists every command from the person's seat,
@@ -52,18 +58,30 @@ declare is never put to the person.
 record)` rebuilds the sitting exactly; undo is a replay without the last
 decision. The choice of dealer cannot be undone: the first deal comes from
 the seed, and the choice decides only which of its two hands is whose.
+There is no replay export over the FFI: to reload, call `bezique_new` with
+the same arguments and send each entry of the record that is not marked
+`*`. Erraticism is not in the state, so the page keeps its own arguments.
+
+Because undo is a replay, the stock and the opponent's cards are the same
+after it: a person who undoes can learn the next card drawn, or the
+opponent's answer to a lead, and then play differently. Undo is a learning
+aid, not a part of fair play.
 
 ## The state
 
 Every field comes from the person's view (`observation::View`), so a client
-cannot show more than the person could know. The protocol test plays whole
-games and checks, type by type, that no state shows a card hidden from the
-person.
+cannot show more than the person could know. The protocol tests play whole
+games and check, type by type, that no state shows a card hidden from the
+person, and that a type whose two copies are both hidden is named nowhere
+in the hand's state: not in a card, a narration line, the error or any
+other string. The seed is not in the state, since it fixes every card; but
+hidden cards are only as hidden as the seed and the module's memory, which
+an engine running in the page cannot keep from a person determined to look.
 
 ```jsonc
 {
   "protocol": 1,
-  "seed": 42, "level": 4,
+  "level": 4,
   "opponent": "Your opponent remembers every card, ... Its style: ...",
   "phase": "lead",            // choose_dealer, lead, follow, declare, over
   "hand_number": 2, "you_deal": false,

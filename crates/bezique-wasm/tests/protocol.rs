@@ -59,9 +59,60 @@ fn whole_games_through_the_protocol() {
     }
 }
 
+/// Every string in a JSON value, and the code of every card object, with
+/// the events kept to those of hand `hand` (earlier hands' cards are no
+/// longer hidden) and the record left out (it names the person's own ids).
+fn said_in(value: &Value, hand: u64, out: &mut Vec<String>) {
+    match value {
+        Value::String(s) => out.push(s.clone()),
+        Value::Object(map) => {
+            for (key, v) in map {
+                match key.as_str() {
+                    "record" => {}
+                    "events" => {
+                        for e in v.as_array().into_iter().flatten() {
+                            if e["hand"].as_u64() == Some(hand) {
+                                said_in(e, hand, out);
+                            }
+                        }
+                    }
+                    _ => said_in(v, hand, out),
+                }
+            }
+        }
+        Value::Array(items) => items.iter().for_each(|v| said_in(v, hand, out)),
+        _ => {}
+    }
+}
+
+/// Whether `text` names `code` as a word ("the KH", not "KHAKI").
+fn names(text: &str, code: &str) -> bool {
+    text.match_indices(code).any(|(i, _)| {
+        let before = text[..i].chars().next_back();
+        let after = text[i + code.len()..].chars().next();
+        !before.is_some_and(char::is_alphanumeric) && !after.is_some_and(char::is_alphanumeric)
+    })
+}
+
+/// The cards the person cannot know of: the opponent's unseen ones and the
+/// face-down stock.
+fn hidden(session: &bezique_core::session::Session) -> CardSet {
+    let game = session.game().expect("a game");
+    let hand = game.hand();
+    let theirs = game.seat_of(Side::B);
+    let mut hidden = hand.holdings(theirs).concealed.minus(hand.known(theirs));
+    let mut stock = hand.stock().clone();
+    while stock.face_down() > 0 {
+        hidden = hidden.with(stock.draw().unwrap());
+    }
+    hidden
+}
+
 /// No state shows more cards of a type than the person could know of: their
 /// own, and those visible or seen. Hidden cards (the opponent's unseen ones
-/// and the face-down stock) never appear, counted type by type.
+/// and the face-down stock) never appear, counted type by type; and a type
+/// whose two copies are both hidden is named nowhere this hand, in any
+/// string, the narration and the error included.
 #[test]
 fn no_state_shows_a_hidden_card() {
     for seed in 10..16 {
@@ -71,15 +122,8 @@ fn no_state_shows_a_hidden_card() {
             let json = state(&session);
             let s: Value = serde_json::from_str(&json).unwrap();
             if let Some(game) = session.game() {
-                let hand = game.hand();
-                let (mine, theirs) = (game.seat_of(Side::A), game.seat_of(Side::B));
-                let hidden_theirs = hand.holdings(theirs).concealed.minus(hand.known(theirs));
-                let mut stock = CardSet::EMPTY;
-                let mut st = hand.stock().clone();
-                while st.face_down() > 0 {
-                    stock = stock.with(st.draw().unwrap());
-                }
-                let hidden = hidden_theirs.union(stock);
+                let mine = game.seat_of(Side::A);
+                let hidden = hidden(&session);
                 let mut shown = Vec::new();
                 cards_in(&s, &mut shown);
                 shown.sort();
@@ -95,11 +139,54 @@ fn no_state_shows_a_hidden_card() {
                     );
                 }
                 let _ = mine;
+                let mut said = Vec::new();
+                said_in(&s, s["hand_number"].as_u64().unwrap(), &mut said);
+                for card_type in CardType::all().filter(|&t| hidden.count_of(t) == 2) {
+                    let code = card_type.code();
+                    if let Some(text) = said.iter().find(|t| names(t, &code)) {
+                        panic!("seed {seed}: {code} is wholly hidden but the state says {text:?}");
+                    }
+                }
             }
             let Some(command) = first(&s) else { break };
             assert!(session.send(&command));
         }
     }
+}
+
+/// The checks above catch leaks planted in real states: a hidden card told
+/// in an event, the hidden hand spelled out in the error.
+#[test]
+fn the_leak_checks_catch_planted_leaks() {
+    let mut session = sit_down(3, 12, 0, 0);
+    for _ in 0..10 {
+        let s: Value = serde_json::from_str(&state(&session)).unwrap();
+        session.send(&first(&s).unwrap());
+    }
+    let hidden = hidden(&session);
+    let wholly = CardType::all()
+        .find(|&t| hidden.count_of(t) == 2)
+        .expect("a type wholly hidden")
+        .code();
+    let s: Value = serde_json::from_str(&state(&session)).unwrap();
+    let hand = s["hand_number"].as_u64().unwrap();
+    for plant in 0..2 {
+        let mut leaked = s.clone();
+        if plant == 0 {
+            leaked["events"].as_array_mut().unwrap().push(serde_json::json!({
+                "kind": "drew", "hand": hand, "text": format!("Your opponent holds the {wholly}.")
+            }));
+        } else {
+            leaked["error"] = Value::String(format!("they hold {wholly}"));
+        }
+        let mut said = Vec::new();
+        said_in(&leaked, hand, &mut said);
+        assert!(said.iter().any(|t| names(t, &wholly)), "plant {plant} missed");
+    }
+    // And the honest state says nothing of it.
+    let mut said = Vec::new();
+    said_in(&s, hand, &mut said);
+    assert!(!said.iter().any(|t| names(t, &wholly)));
 }
 
 #[test]
