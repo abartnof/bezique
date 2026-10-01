@@ -180,6 +180,17 @@ impl Hand {
         if !stock.is_empty() && held[0].len() != 8 {
             return Err("while the stock lasts each player holds eight".to_string());
         }
+        // While the stock lasts a card that has been declared stays on the
+        // table until it is played; a concealed one has no history.
+        if !stock.is_empty()
+            && holdings.iter().any(|h| {
+                h.announced
+                    .iter()
+                    .any(|a| !a.declared.cards.intersect(h.concealed).is_empty())
+            })
+        {
+            return Err("a concealed card that has been declared".to_string());
+        }
         if stock.is_empty() && holdings.iter().any(|h| !h.shown.is_empty()) {
             return Err("cards on the table once the stock is gone".to_string());
         }
@@ -997,6 +1008,27 @@ mod tests {
                 [eight("AS"), eight("7S")],
                 Seat::Pone,
                 255,
+            ),
+            // A concealed card with a declaring history, while the stock
+            // lasts: declared cards stay on the table until played.
+            Hand::arranged(
+                trump,
+                Stock::new(&rest[1..], Some(rest[0])),
+                [
+                    Holdings {
+                        announced: vec![crate::melds::Announced {
+                            declared: crate::melds::Declared {
+                                meld: crate::melds::Meld::Marriage(Suit::SPADES),
+                                cards: set("KS QS"),
+                            },
+                            scored: true,
+                        }],
+                        ..a.clone()
+                    },
+                    b.clone(),
+                ],
+                Seat::Pone,
+                0,
             ),
             // A hand after its last trick: over, not a position to play.
             Hand::arranged(

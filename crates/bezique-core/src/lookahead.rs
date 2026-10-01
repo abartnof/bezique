@@ -210,7 +210,12 @@ pub fn world(view: &View, rng: &mut Rng) -> Option<Game> {
     }
     for &(seat, card) in &replay {
         let h = &mut holdings[seat.index()];
-        h.concealed = h.concealed.with(card);
+        // A card in its player's announcements was played from the table.
+        if h.announced.iter().any(|a| a.declared.cards.contains(card)) {
+            h.shown = h.shown.with(card);
+        } else {
+            h.concealed = h.concealed.with(card);
+        }
     }
     let stock = Stock::new(face_down, view.turn_up);
     let hand = Hand::arranged(view.trump, stock, holdings, leader, tricks as u8)
