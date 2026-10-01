@@ -7,6 +7,7 @@
 //! cargo run --release -p bezique-core --bin measure -- tune <field> <pairs> <value>...
 //! cargo run --release -p bezique-core --bin measure -- lookahead [pairs] [horizon] [worlds]
 //! cargo run --release -p bezique-core --bin measure -- lookahead-declarations [pairs]
+//! cargo run --release -p bezique-core --bin measure -- lookahead-vs-five [pairs] [horizon] [worlds]
 //! ```
 //!
 //! Each prints a short report; the reports kept are in `measurements/`.
@@ -37,6 +38,7 @@ fn main() {
         Some("personas") => personas(n(1000)),
         Some("lookahead") => lookahead(n(200), &args[2..]),
         Some("lookahead-declarations") => lookahead_declarations(n(500)),
+        Some("lookahead-vs-five") => lookahead_vs_five(n(500), &args[2..]),
         _ => eprintln!("measure anatomy|riders|ladder [n] | tune <field> <pairs> <value>..."),
     }
 }
@@ -224,6 +226,25 @@ fn lookahead(pairs: u64, rest: &[String]) {
     println!(
         "    {:.2} s a hand",
         start.elapsed().as_secs_f64() / (2 * pairs) as f64
+    );
+}
+
+/// Rung 5 with another horizon and number of worlds, against rung 5 as it
+/// stands: `lookahead-vs-five <pairs> <horizon> <worlds>`.
+fn lookahead_vs_five(pairs: u64, rest: &[String]) {
+    let horizon = rest.first().and_then(|s| s.parse().ok()).unwrap_or(9);
+    let worlds = rest.get(1).and_then(|s| s.parse().ok()).unwrap_or(32);
+    let variant = move |_: u64| -> Box<dyn Agent> {
+        Box::new(Lookahead {
+            horizon,
+            worlds,
+            ..Lookahead::default()
+        })
+    };
+    let five = |_: u64| rung(5);
+    report_hands(
+        &format!("rung 5 with horizon {horizon} and {worlds} worlds, against rung 5"),
+        &tournament::hands(seed_base() + 9_000_000, pairs, &variant, &five),
     );
 }
 
