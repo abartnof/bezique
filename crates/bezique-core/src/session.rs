@@ -967,8 +967,10 @@ mod tests {
     /// choosing at random among what is offered (the dealer too, when it
     /// cuts higher), pinned by a fingerprint of every prompt (the legal
     /// cards, the declaring options' words in order), the record and the
-    /// narration. If this fails, a change has altered play or what is
-    /// offered: bump `RECORD_VERSION`, then pin the new fingerprint.
+    /// narration. If this fails, a change has altered play, what is offered
+    /// or how it is told. If play or the options changed, bump
+    /// `RECORD_VERSION`; then pin the new fingerprint. (A change of wording
+    /// alone needs only the new pin: records replay the same.)
     #[test]
     fn the_golden_game_replays_unchanged() {
         let mut fingerprint = 0xcbf2_9ce4_8422_2325u64;
@@ -1023,8 +1025,8 @@ mod tests {
         assert!(dealer_choices > 0 && wide_declarations > 0, "{dealer_choices} {wide_declarations}");
         assert_eq!(
             (RECORD_VERSION, fingerprint),
-            (2, 10_613_566_370_220_004_578),
-            "play has changed: bump RECORD_VERSION and pin the new fingerprint"
+            (2, 1_997_377_466_795_593_592),
+            "play, the options or the narration changed: see this test's comment"
         );
     }
 

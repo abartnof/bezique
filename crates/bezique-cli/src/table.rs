@@ -205,12 +205,10 @@ impl<R: BufRead, W: Write> Table<R, W> {
         session: &Session,
         options: &[DeclareOption],
     ) -> io::Result<Option<String>> {
-        // The table first, so that `t` shows the tricks here too.
+        // The table first (with the hint, if hints are on), so that `t`
+        // shows the tricks here too.
         let view = session.view().expect("a game in progress");
         self.show_view(session, &view)?;
-        if let Some((_, said)) = session.hint() {
-            writeln!(self.out, "Hint: {said}")?;
-        }
         writeln!(self.out, "You took the trick. Declare before you draw:")?;
         for (i, option) in options.iter().enumerate() {
             writeln!(self.out, "  {i}  {}", option.text)?;
@@ -655,7 +653,8 @@ impl<R: BufRead, W: Write> Table<R, W> {
         if new_hand || (after.phase() == Phase::Over) {
             self.hand_ends(after, game, new_hand)?;
         }
-        if new_hand && game.outcome().is_none() {
+        // A new deal is told even when it ends the game: a turned seven can.
+        if new_hand {
             self.hand_begins(game)?;
         }
         Ok(())
@@ -665,18 +664,26 @@ impl<R: BufRead, W: Write> Table<R, W> {
     fn draws(&mut self, before: &Hand, after: &Hand, winner: Side) -> io::Result<()> {
         let winner_seat = before.leader();
         let last = before.stock().face_down() == 1;
-        // The turn-up, which goes to the loser at the end or to the winner by
-        // the dix, is told separately.
-        let turn_up = before
-            .stock()
-            .turn_up()
-            .map_or(CardSet::EMPTY, |c| CardSet::EMPTY.with(c));
-        if last {
-            let card = before
-                .stock()
-                .turn_up()
-                .map(|c| self.card(c))
-                .unwrap_or_default();
+        // At the end the loser takes the turn-up as it is then: the seven, if
+        // one was just exchanged for it (the review of 2026-10-02 found the
+        // old turn-up told here, as the session once told it).
+        let taken_last = last.then(|| {
+            let loser = winner_seat.other();
+            after
+                .holdings(loser)
+                .cards()
+                .minus(before.holdings(loser).cards())
+                .lowest()
+                .expect("the loser takes the turn-up")
+        });
+        // Not draws: the card taken by an exchange, and the turn-up taken at
+        // the end; both are told separately.
+        let turn_up = [before.stock().turn_up(), taken_last]
+            .into_iter()
+            .flatten()
+            .fold(CardSet::EMPTY, |s, c| s.with(c));
+        if let Some(taken) = taken_last {
+            let card = self.card(taken);
             let loser = winner.other();
             let (does, whom) = (self.does(winner, "take"), self.whom(loser));
             writeln!(
@@ -848,7 +855,11 @@ pub fn pick_card(
             return Ok(card);
         }
     }
-    Err(held.cards().find(|c| c.card_type() == card_type))
+    // Held but not playable: sent anyway, for the engine's reason. With a
+    // star, only a copy on the table will do.
+    Err(held
+        .cards()
+        .find(|&c| c.card_type() == card_type && (!table || shown.contains(c))))
 }
 
 #[cfg(test)]
@@ -901,6 +912,9 @@ mod tests {
         assert_eq!(pick_card("ad", &plays, shown, held), Err(Some(c("AD", 0))));
         assert_eq!(pick_card("9", &plays, shown, held), Err(None));
         assert_eq!(pick_card("zz", &plays, shown, held), Err(None));
+        // A star asks for the table copy: with none on the table, not the
+        // one in the hand.
+        assert_eq!(pick_card("9h*", &plays, shown, held), Err(None));
     }
 
     #[test]

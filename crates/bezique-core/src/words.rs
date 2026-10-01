@@ -14,7 +14,9 @@ pub fn points(points: u32) -> String {
     match points {
         10 => "ten".to_string(),
         20 => "twenty".to_string(),
+        30 => "thirty".to_string(),
         40 => "forty".to_string(),
+        50 => "fifty".to_string(),
         60 => "sixty".to_string(),
         80 => "eighty".to_string(),
         100 => "a hundred".to_string(),
@@ -85,6 +87,8 @@ mod tests {
     fn scores_said_aloud() {
         assert_eq!(points(10), "ten");
         assert_eq!(points(20), "twenty");
+        // A trick can be worth thirty: two brisques and the last trick.
+        assert_eq!(points(30), "thirty");
         assert_eq!(points(40), "forty");
         assert_eq!(points(60), "sixty");
         assert_eq!(points(80), "eighty");
