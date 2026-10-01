@@ -105,7 +105,11 @@ ids carry no information beyond what the person may know (`docs/DESIGN.md`
   where they lie. The same physical card may therefore be numbered
   differently in a later state; key a client's meshes for the opponent's
   cards by code and position, not by id.
-- In events, the opponent's cards are named by type only (copy 0).
+- In events, the opponent's cards are named by type only: copy 0, unless
+  you have held a twin of that card, when its true id is kept. Within one
+  event two copies of a type are numbered 0 and 1 (a double bezique lays
+  four distinct ids), but across events the same id may name different
+  physical cards; key by code.
 
 ### Prompts
 

@@ -422,10 +422,10 @@ impl Session {
     fn start(&mut self, dealer: Side) {
         self.game = Some(Game::new(self.seed, dealer));
         let you = dealer == Side::A;
-        let text = if you {
-            "You deal first."
-        } else {
-            "Your opponent cut higher and chooses to deal."
+        let text = match (you, self.cut.chooser) {
+            (true, _) => "You deal first.",
+            (false, Side::A) => "You give the deal to your opponent.",
+            (false, Side::B) => "Your opponent cut higher and chooses to deal.",
         };
         self.tell(EventKind::FirstDealer { you }, text.to_string());
         self.hand_begins();
@@ -481,8 +481,15 @@ impl Session {
         Ok(())
     }
 
+    /// Tells an event of the hand in play.
     fn tell(&mut self, kind: EventKind, text: String) {
         let hand = self.game.as_ref().map_or(0, Game::hand_number);
+        self.tell_of(hand, kind, text);
+    }
+
+    /// Tells an event of hand `hand`: a move's events belong to the hand it
+    /// was made in, though the game may have dealt the next.
+    fn tell_of(&mut self, hand: u32, kind: EventKind, text: String) {
         self.events.push(Event { kind, hand, text });
     }
 
@@ -652,6 +659,18 @@ impl Session {
                     .cards()
                     .map(|c| self.named(c, &after, mine))
                     .collect();
+                // Both twins named by type would share an id: number them.
+                let laid = laid
+                    .iter()
+                    .enumerate()
+                    .map(|(i, &c)| {
+                        if laid[..i].contains(&c) {
+                            Card::new(c.card_type(), 1 - c.copy())
+                        } else {
+                            c
+                        }
+                    })
+                    .collect();
                 let points = a.score.meld.points(trump);
                 told.push((
                     EventKind::Declared {
@@ -689,14 +708,25 @@ impl Session {
         }
         if before.phase() == Phase::Declare {
             let last = before.stock().face_down() == 1;
-            let turn_up = before.stock().turn_up();
+            let old_turn_up = before.stock().turn_up();
+            // The turn-up when the draw comes: the seven, if one was just
+            // exchanged for it.
+            let exchanged = match action {
+                Action::Dix(seven) if old_turn_up.is_some_and(|t| t.rank() != crate::cards::Rank::SEVEN || t.suit() != trump) => Some(*seven),
+                _ => None,
+            };
+            let turn_up = exchanged.or(old_turn_up);
+            // Not draws: the card taken by the exchange, and the turn-up
+            // taken when the stock runs out.
+            let not_drawn = [old_turn_up, turn_up]
+                .into_iter()
+                .flatten()
+                .fold(crate::cards::CardSet::EMPTY, |s, c| s.with(c));
             let drawn = after
                 .holdings(mine)
                 .cards()
                 .minus(before.holdings(mine).cards())
-                .minus(turn_up.map_or(crate::cards::CardSet::EMPTY, |c| {
-                    crate::cards::CardSet::EMPTY.with(c)
-                }));
+                .minus(not_drawn);
             for card in drawn.cards() {
                 told.push((
                     EventKind::Drew { card },
@@ -729,6 +759,7 @@ impl Session {
                 format!("End of the hand: you {yours}, your opponent {theirs}."),
             ));
         }
+        let mut game_ends = None;
         if let Some(outcome) = game.outcome() {
             let you_won = outcome.winner == Side::A;
             let (a, b) = (game.total(Side::A), game.total(Side::B));
@@ -740,7 +771,7 @@ impl Session {
             if outcome.double {
                 text.push_str(" A double game: the loser had not reached 500.");
             }
-            told.push((
+            game_ends = Some((
                 EventKind::GameEnds {
                     you_won,
                     double: outcome.double,
@@ -748,12 +779,15 @@ impl Session {
                 text,
             ));
         }
-        let game_over = game.outcome().is_some();
         for (kind, text) in told {
-            self.tell(kind, text);
+            self.tell_of(number, kind, text);
         }
-        if new_hand && !game_over {
+        // A new deal is told even when it ends the game: a turned seven can.
+        if new_hand {
             self.hand_begins();
+        }
+        if let Some((kind, text)) = game_ends {
+            self.tell(kind, text);
         }
     }
 }
@@ -949,5 +983,171 @@ mod tests {
         let said = s.opponent();
         assert!(said.contains("remembers every card"), "{said}");
         assert!(said.contains("table first"), "{said}");
+    }
+
+    // Narration, from the review of 2026-10-02.
+
+    fn c(code: &str, copy: u8) -> Card {
+        Card::new(crate::cards::CardType::parse(code).unwrap(), copy)
+    }
+
+    fn set(cards: &[(&str, u8)]) -> crate::melds::Holdings {
+        let cards: Vec<Card> = cards.iter().map(|&(code, copy)| c(code, copy)).collect();
+        crate::melds::Holdings::new(crate::cards::CardSet::of(&cards))
+    }
+
+    /// A sitting from a position part-way through a game, the opponent at
+    /// rung 2.
+    fn arranged(seed: u64, banked: [u32; 2], dealer: Side, hand: Hand) -> Session {
+        let persona = opponent::persona("balanced").unwrap();
+        let mut s = Session {
+            seed,
+            settings: Settings::default(),
+            cut: cut_for_deal(&mut Rng::stream(seed, purpose::CUT)),
+            game: Some(Game::arranged(seed, banked, dealer, hand).unwrap()),
+            opponent: Box::new(Erratic::new(2, &persona, 0.0, Rng::stream(seed, purpose::agent(1)))),
+            persona,
+            record: vec![],
+            events: vec![],
+            aids: Aids::default(),
+            error: None,
+        };
+        s.run();
+        s
+    }
+
+    /// The last stock trick: the dealer leads the ace of spades and wins;
+    /// the ten of clubs is the last face-down card, the king of hearts (hearts
+    /// trumps) the turn-up. The winner holds the seven of trumps.
+    fn last_stock_trick() -> (crate::melds::Holdings, crate::melds::Holdings, crate::deal::Stock) {
+        let winner = set(&[("AS", 0), ("7H", 0), ("8C", 0), ("9C", 0), ("JC", 0), ("8D", 0), ("9D", 0), ("QC", 0)]);
+        let loser = set(&[("7S", 0), ("8S", 0), ("9S", 0), ("8S", 1), ("9S", 1), ("7C", 0), ("7D", 0), ("8D", 1)]);
+        let stock = crate::deal::Stock::new(&[c("TC", 0)], Some(c("KH", 0)));
+        (winner, loser, stock)
+    }
+
+    #[test]
+    fn after_your_dix_on_the_last_stock_trick_the_opponent_takes_the_seven() {
+        let (winner, loser, stock) = last_stock_trick();
+        let hand = Hand::arranged(crate::cards::Suit::HEARTS, stock, [winner, loser], Seat::Dealer, 23).unwrap();
+        let mut s = arranged(1, [0, 0], Side::A, hand);
+        assert!(s.send(&format!("play {}", c("AS", 0).0)), "{:?}", s.error());
+        let Prompt::Declare { options } = s.prompt() else { panic!("{:?}", s.prompt()) };
+        let dix = options.iter().position(|o| o.text.contains("seven")).unwrap();
+        let from = s.events().len();
+        assert!(s.send(&format!("declare {dix}")));
+        let told = &s.events()[from..];
+        let out = told.iter().find_map(|e| match e.kind {
+            EventKind::StockOut { turn_up, .. } => Some((turn_up, e.text.clone())),
+            _ => None,
+        });
+        let (turn_up, text) = out.expect("the stock runs out");
+        assert_eq!(turn_up.card_type(), c("7H", 0).card_type(), "{text}");
+        assert!(text.contains("the 7H"), "{text}");
+        // The king taken by the exchange and the ten drawn: only the ten is a draw.
+        let drew: Vec<Card> = told.iter().filter_map(|e| match e.kind {
+            EventKind::Drew { card } => Some(card),
+            _ => None,
+        }).collect();
+        assert_eq!(drew, vec![c("TC", 0)]);
+    }
+
+    #[test]
+    fn after_the_opponents_dix_on_the_last_stock_trick_you_take_the_seven() {
+        let (winner, loser, stock) = last_stock_trick();
+        let hand = Hand::arranged(crate::cards::Suit::HEARTS, stock, [winner, loser], Seat::Dealer, 23).unwrap();
+        // The opponent deals and leads; the person answers, and rung 2,
+        // winning, takes the dix.
+        let mut s = arranged(1, [0, 0], Side::B, hand);
+        while !s.game().unwrap().hand().stock().is_empty() {
+            let command = first(&s).unwrap();
+            assert!(s.send(&command));
+        }
+        assert!(s.events().iter().any(|e| matches!(e.kind, EventKind::Dix { you: false, .. })));
+        assert!(!s.events().iter().any(|e| matches!(e.kind, EventKind::Drew { card } if card.card_type() == c("7H", 0).card_type())),
+            "the turn-up taken is told as a draw");
+        let out = s.events().iter().find_map(|e| match e.kind {
+            EventKind::StockOut { turn_up, .. } => Some(turn_up),
+            _ => None,
+        });
+        assert_eq!(out.unwrap().card_type(), c("7H", 0).card_type());
+    }
+
+    #[test]
+    fn every_event_carries_the_hand_it_belongs_to() {
+        let mut s = Session::new(11, Settings::default());
+        play_out(&mut s);
+        let mut current = 0;
+        for e in s.events() {
+            if let EventKind::Dealt { .. } = e.kind {
+                current = e.hand;
+            }
+            if current > 0 {
+                assert_eq!(e.hand, current, "{:?}: {}", e.kind, e.text);
+            }
+        }
+        assert!(current > 1);
+    }
+
+    #[test]
+    fn a_turned_seven_that_wins_the_game_is_told() {
+        let last_trick = || {
+            Hand::arranged(
+                crate::cards::Suit::HEARTS,
+                crate::deal::Stock::new(&[], None),
+                [set(&[("AS", 0)]), set(&[("7S", 0)])],
+                Seat::Dealer,
+                31,
+            )
+            .unwrap()
+        };
+        // A seed whose next deal turns up a seven, with the opponent dealing it.
+        let seed = (0..500u64)
+            .find(|&seed| {
+                let mut g = Game::arranged(seed, [0, 0], Side::A, last_trick()).unwrap();
+                g.apply(g.legal()[0].clone()).unwrap();
+                g.apply(g.legal()[0].clone()).unwrap();
+                g.hand().log().iter().any(|s| s.source == Source::TurnedSeven)
+            })
+            .unwrap();
+        let mut s = arranged(seed, [0, 990], Side::A, last_trick());
+        assert!(s.send(&format!("play {}", c("AS", 0).0)), "{:?}", s.error());
+        assert_eq!(s.outcome().unwrap().winner, Side::B);
+        let kinds: Vec<&EventKind> = s.events().iter().map(|e| &e.kind).collect();
+        let dealt = kinds.iter().position(|k| matches!(k, EventKind::Dealt { .. }));
+        let ends = kinds.iter().position(|k| matches!(k, EventKind::GameEnds { .. }));
+        assert!(dealt.unwrap() < ends.unwrap(), "{kinds:?}");
+        let text = &s.events()[dealt.unwrap()].text;
+        assert!(text.contains("scores ten for it"), "{text}");
+    }
+
+    #[test]
+    fn giving_away_the_deal_is_told_as_your_choice() {
+        let seed = (0..50)
+            .find(|&s| Session::new(s, Settings::default()).prompt() == Prompt::ChooseDealer)
+            .unwrap();
+        let mut s = Session::new(seed, Settings::default());
+        assert!(s.send("dealer them"));
+        let told = s.events().iter().find(|e| matches!(e.kind, EventKind::FirstDealer { .. })).unwrap();
+        assert!(!told.text.contains("cut higher"), "{}", told.text);
+    }
+
+    #[test]
+    fn a_double_bezique_is_told_with_four_distinct_cards() {
+        // The opponent (dealer) leads, wins and declares double bezique.
+        let theirs = set(&[("AS", 0), ("QS", 0), ("QS", 1), ("JD", 0), ("JD", 1), ("8C", 0), ("9C", 0), ("8D", 0)]);
+        let yours = set(&[("7S", 0), ("8S", 0), ("9S", 0), ("8S", 1), ("9S", 1), ("7C", 0), ("7D", 0), ("8D", 1)]);
+        let stock = crate::deal::Stock::new(&[c("TC", 0), c("TC", 1), c("9D", 0)], Some(c("KH", 0)));
+        let hand = Hand::arranged(crate::cards::Suit::HEARTS, stock, [theirs, yours], Seat::Dealer, 22).unwrap();
+        let mut s = arranged(1, [0, 0], Side::B, hand);
+        let command = first(&s).unwrap();
+        assert!(s.send(&command));
+        let laid = s.events().iter().find_map(|e| match &e.kind {
+            EventKind::Declared { you: false, cards, .. } => Some(cards.clone()),
+            _ => None,
+        }).expect("the opponent declares");
+        assert_eq!(laid.len(), 4);
+        let distinct: std::collections::BTreeSet<u8> = laid.iter().map(|c| c.0).collect();
+        assert_eq!(distinct.len(), 4, "{laid:?}");
     }
 }
