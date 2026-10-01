@@ -12,3 +12,4 @@ pub mod melds;
 pub mod observation;
 pub mod rng;
 pub mod tricks;
+pub mod words;
