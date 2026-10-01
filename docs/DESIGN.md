@@ -265,8 +265,17 @@ twenty to score."* Free riders can conflict within a class: with one bezique
 already declared, laying a second Q♠ may complete either a second single or
 a double, never both; the curation picks by value. Nothing yet enumerates
 every legal announcement; a search that wants the full set must build it
-(review finding 7). The review's fuzzing found no omitted announcement that
-scores more than an offered one; whether any plays better is not measured.
+(review finding 7). The first review's fuzzing found no omitted announcement
+that scores more *now* than an offered one. The full review of 2026-10-02
+compared every legal announcement with the options over 500,000 positions,
+counting what is carried as well, and found one shape the one-combination
+structure missed: two new cards that could each marry a twin already on the
+table, where the two cross-marriages (twenty and twenty to score) beat the
+marriage of the new pair, which would leave the old cards unable ever to
+marry. Options now include, where it is worth more, the best set laying the
+same cards without insisting on any one combination. Of options scoring
+alike, the agents prefer the one leaving most to score, never a choice by
+copy number.
 
 ### 6.3 Reference implementation
 

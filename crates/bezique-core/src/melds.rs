@@ -384,8 +384,9 @@ impl Holdings {
     /// could be laid, the announcement that lays it together with every
     /// combination its new cards complete with the cards already shown (the
     /// "free riders", at most value-maximising set that does not repeat a
-    /// card within a class), once for each choice of which to score now. Then
-    /// each carried combination, scored alone.
+    /// card within a class), once for each choice of which to score now; and
+    /// where it is worth more, the best set laying the same cards without
+    /// that combination. Then each carried combination, scored alone.
     pub fn options(&self, trump: Suit) -> Vec<Announcement> {
         let every = self.every_candidate(trump);
         let mut out: Vec<Announcement> = Vec::new();
@@ -420,6 +421,26 @@ impl Holdings {
             melds.extend(best_riders(&riders, trump, guarded.union(main.cards)));
             for &score in &melds {
                 offer(melds.clone(), score);
+            }
+            // The same cards laid, without insisting on `main`: two new
+            // cards that could each marry a twin already on the table make
+            // two marriages, worth more than their own one, which would
+            // leave the old cards unable ever to marry (full review of
+            // 2026-10-02). Offered when it is worth more.
+            let around: Vec<Declared> = every
+                .iter()
+                .copied()
+                .filter(|r| {
+                    r.cards.minus(self.shown.union(laid)).is_empty()
+                        && !r.cards.intersect(laid).is_empty()
+                })
+                .collect();
+            let wider = best_riders(&around, trump, guarded);
+            let worth = |set: &[Declared]| set.iter().map(|d| d.meld.points(trump)).sum::<u32>();
+            if worth(&wider) > worth(&melds) {
+                for &score in &wider {
+                    offer(wider.clone(), score);
+                }
             }
         }
         for carried in self.carried() {
@@ -1466,5 +1487,41 @@ mod tests {
                 );
             }
         }
+    }
+
+    /// K♠ and Q♠ each on the table unmarried (one from four kings, one from a
+    /// bezique), their twins drawn: the two cross-marriages, twenty now and
+    /// twenty to score, are offered, and are worth more than marrying the new
+    /// pair, which would leave the old cards unable to marry (full review of
+    /// 2026-10-02).
+    #[test]
+    fn the_cross_marriages_are_offered_when_worth_more() {
+        let card = |code: &str, copy: u8| Card::new(CardType::parse(code).unwrap(), copy);
+        let mut h = Holdings::new(CardSet::of(&[
+            card("KS", 1), card("KH", 0), card("KD", 0), card("KC", 0),
+            card("QS", 1), card("JD", 0), card("7C", 0), card("8C", 0),
+        ]));
+        let kings = Declared {
+            meld: Meld::Four(Rank::KING),
+            cards: CardSet::of(&[card("KS", 1), card("KH", 0), card("KD", 0), card("KC", 0)]),
+        };
+        h.apply(HEARTS, &Announcement { melds: vec![kings], score: kings }).unwrap();
+        let bezique = Declared {
+            meld: Meld::Bezique,
+            cards: CardSet::of(&[card("QS", 1), card("JD", 0)]),
+        };
+        h.apply(HEARTS, &Announcement { melds: vec![bezique], score: bezique }).unwrap();
+        h.play(card("7C", 0));
+        h.play(card("8C", 0));
+        h.receive(card("KS", 0));
+        h.receive(card("QS", 0));
+        let options = h.options(HEARTS);
+        for o in &options {
+            assert_eq!(h.check(HEARTS, o), Ok(()), "{o:?}");
+        }
+        let marriages = |o: &Announcement| {
+            o.melds.iter().filter(|d| d.meld == Meld::Marriage(Suit::SPADES)).count()
+        };
+        assert!(options.iter().any(|o| marriages(o) == 2), "{options:?}");
     }
 }
