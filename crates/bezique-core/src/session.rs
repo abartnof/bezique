@@ -14,7 +14,7 @@
 //! - `declare <n>`: choose option `n` of the turn of declaring (0 is to draw
 //!   without declaring);
 //! - `undo`: take back the last decision;
-//! - `set <aid> on|off`: switch an aid (`hints`, `play_forced`).
+//! - `set <aid> on|off`: switch an aid (`hints`, `play_forced`, `tracker`).
 
 use crate::agents::{self, rung_with};
 use crate::cards::Card;
@@ -55,6 +55,10 @@ pub struct Aids {
     pub hints: bool,
     /// Play a card when it is the only one allowed.
     pub play_forced: bool,
+    /// Show every trick played this hand. Off, only the last trick shows:
+    /// a quitted trick may not be looked at again (Foster, p. 343), so
+    /// remembering them is the player's skill.
+    pub tracker: bool,
 }
 
 /// What the person must decide now.
@@ -347,6 +351,7 @@ impl Session {
                 match *aid {
                     "hints" => self.aids.hints = on,
                     "play_forced" => self.aids.play_forced = on,
+                    "tracker" => self.aids.tracker = on,
                     _ => return Err(format!("there is no aid called {aid}")),
                 }
                 self.record.push(format!("set {aid} {setting}"));
