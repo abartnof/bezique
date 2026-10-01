@@ -127,7 +127,10 @@ impl Game {
         self.seed
     }
 
-    /// The hand finished most recently, once there is one.
+    /// The hand before the one in [`Game::hand`], once there is one. When
+    /// the game ends on a hand's last trick, that hand stays in `hand()`
+    /// (finished) and this is the one before it; when it ends mid-hand,
+    /// `hand()` is the unfinished hand.
     pub fn previous_hand(&self) -> Option<&Hand> {
         self.previous.as_ref()
     }
@@ -343,6 +346,16 @@ mod tests {
         assert!(game.legal().is_empty());
         assert!(game.apply(Action::Pass).is_err());
         assert_eq!(game.hand_number(), 1, "no further hand is dealt");
+    }
+
+    #[test]
+    fn when_the_last_trick_wins_the_game_its_hand_stays_in_hand() {
+        let mut game = Game::arranged(5, [990, 400], Side::A, last_trick());
+        game.apply(game.legal()[0].clone()).unwrap();
+        game.apply(game.legal()[0].clone()).unwrap();
+        assert!(game.outcome().is_some());
+        assert_eq!(game.hand().phase(), crate::hand::Phase::Over);
+        assert!(game.previous_hand().is_none());
     }
 
     #[test]

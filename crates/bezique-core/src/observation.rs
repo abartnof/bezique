@@ -81,7 +81,9 @@ impl View {
             turn_up: hand.stock().turn_up().map(|c| relabel.card(c)),
             stock: hand.stock().face_down(),
             phase: hand.phase(),
-            to_move: hand.to_move(),
+            // The game's turn, not the hand's: a game won mid-hand leaves
+            // the hand unfinished, with no one to move.
+            to_move: game.to_move().map(|s| game.seat_of(s)),
             leader: hand.leader(),
             led: hand.led().map(|c| relabel.card(c)),
             mine: hand.holdings(seat).clone(),
@@ -318,6 +320,25 @@ mod tests {
             }
         }
         assert!(lone > 1000, "the case must arise: {lone}");
+    }
+
+    #[test]
+    fn no_one_is_to_move_once_the_game_is_won_mid_hand() {
+        let game = Game::new(3, Side::A);
+        let mut game = Game::arranged(3, [0, 995], Side::A, game.hand().clone());
+        while game.outcome().is_none() {
+            let first = game.legal()[0].clone();
+            game.apply(first).unwrap();
+        }
+        assert!(
+            game.hand().to_move().is_some(),
+            "the hand itself is unfinished"
+        );
+        for side in Side::BOTH {
+            let v = View::of(&game, side);
+            assert!(!v.my_turn());
+            assert_eq!(v.to_move, None);
+        }
     }
 
     #[test]
