@@ -4,4 +4,5 @@
 //! the structure is in `docs/DESIGN.md`.
 
 pub mod cards;
+pub mod deal;
 pub mod rng;
