@@ -100,6 +100,8 @@ pub struct Hand {
     /// Cards in the order they first became public.
     appeared: Vec<Card>,
     log: Vec<Scored>,
+    /// Each seat's points this hand: the log's sums, kept as it grows.
+    scores: [u32; 2],
 }
 
 impl Hand {
@@ -191,6 +193,7 @@ impl Hand {
             handled: [holdings[0].cards(), holdings[1].cards()],
             appeared: Vec::new(),
             log: Vec::new(),
+            scores: [0, 0],
         };
         let public = hand
             .stock
@@ -324,11 +327,7 @@ impl Hand {
 
     /// A seat's points this hand.
     pub fn score(&self, seat: Seat) -> u32 {
-        self.log
-            .iter()
-            .filter(|s| s.seat == seat)
-            .map(|s| s.points)
-            .sum()
+        self.scores[seat.index()]
     }
 
     /// The moves to offer the seat whose turn it is. Every card it may play
@@ -546,6 +545,7 @@ impl Hand {
     }
 
     fn score_to(&mut self, seat: Seat, points: u32, source: Source) {
+        self.scores[seat.index()] += points;
         self.log.push(Scored {
             seat,
             points,
