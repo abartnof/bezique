@@ -41,9 +41,20 @@ it lands, with what was found.
    game exposed that rung 2 threw its bezique cards away and would not fight
    for the lead to declare; tuned by mirrored measurement, rung 2 now wins
    88% of games against rung 1 (was 72%).
-3. Rungs 3–5: card memory, reading the table, the exact endgame solver;
-   each kept only if it measurably beats the rung below.
-4. Difficulty, erraticism and personas (requested 2026-10-01): difficulty
+3. ~~Rungs 3–5.~~ **Done, as rungs 3–4**: an exact endgame solver
+   (`solver.rs`); rung 3 = memory with the exact endgame (+19.2 points a hand
+   over rung 2); rung 4 = rung 3 fighting for the last stock trick (+1.8 to
+   +2.5). Memory alone (+1.9) and watching the table (nothing) did not earn
+   rungs of their own; watching was removed. A rung 5 needs search in the
+   stock phase (DESIGN §10.4), not built.
+4. ~~Difficulty, erraticism and personas.~~ **Done** (`opponent.rs`;
+   `measurements/README.md`): levels 1–4; erraticism slips a rung per
+   decision from the agent's own stream; four personas (balanced,
+   concentrates, close, bezique), each within 1.24 points a hand of
+   balanced. Calibration also tuned five more weights into the default.
+   (Commit `bc7fae8` also carries the terminal client's `--level`,
+   `--persona` and `--erratic` options, not named in its message.)
+   Originally: difficulty
    1–5 is the ladder; erraticism draws the effective rung per decision;
    personas are stable styles taken from the period writers' disagreements
    (brisques or combinations; boldness for double bezique; declaring at once
@@ -53,8 +64,7 @@ it lands, with what was found.
    confirm with the maintainer).
 5. The session layer: undo, replay, aids, hints; the JSON protocol, its
    document and the wasm crate.
-6. The terminal client: `--level 1..5`, `--persona`, and how the opponent is
-   described.
+6. ~~The terminal client: level, persona, erraticism.~~ **Done** (see 4).
 
 Constraints: nothing large deleted, no history rewritten, nothing drastic.
 Report due 08:45 Los Angeles time, 2026-10-02.
