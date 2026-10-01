@@ -7,9 +7,10 @@
 
 ## Where we are
 
-**2026-10-01: milestones 1–3 done: the pack, the generator, the deal, the
-trick rules and declaring; 69 tests, under a second.** Planning was completed
-the same day:
+**2026-10-01: milestones 1–5 done: the rules engine is complete.** The pack,
+the generator, the deal, the trick rules, declaring, a whole hand and a whole
+game, in 95 tests that run in about a second. Planning was completed the same
+day:
 
 - `docs/LITERATURE.md`: the literature review (68 sources, the conflict
   matrix, strategy, computed odds), as delivered.
@@ -59,10 +60,11 @@ the same day:
       example in `RULES.md` as a test; references for candidates and for
       `check` on random positions; planted defects used to find untested
       rules (one was found, and covered).
-- [ ] **4. The hand**: the phase machine end to end (drawing, the dix, the
-      last stock trick, the endgame), the event log, a text notation for
-      positions, invariants over random self-play.
-- [ ] **5. The game**: the cut, alternating deals, the race to 1,000, the
+- [x] **4. The hand**: the phase machine end to end (drawing, the dix, the
+      last stock trick, the endgame), the score log, invariants over 4,500
+      hands of random play. Positions are arranged in code; a text notation
+      waits for the terminal client, which needs one (milestone 7).
+- [x] **5. The game**: the cut, alternating deals, the race to 1,000, the
       double game.
 - [ ] **6. Observation and the first rungs**: the view; rungs 1–2; the
       mirrored-pair harness and the measurement binaries.
@@ -76,24 +78,20 @@ the same day:
 
 ## Next action
 
-**Milestone 4, test first: `hand.rs`, one hand played from the deal to the
-last trick.**
+**Milestone 6: observation and the first rungs.**
 
-- The state: trumps, the stock, each seat's `Holdings`, the leader, the
-  trick in progress, the cards each seat has won, and an ordered log of
-  scores (`DESIGN.md` §7).
-- The actions, generated per phase: play a card (from hand or table); after
-  winning a trick while the stock lasts, declare (an option from
-  `Holdings::options`), the dix, or nothing; then the draws happen by
-  themselves, the winner first.
-- The scores: the dealer's turned seven, brisques as taken, combinations,
-  the dix (exchanging it moves the turn-up), the last trick of all.
-- The last stock trick: the winner may declare, then takes the last card and
-  the loser the turn-up; carried scores lapse; table cards return to hand;
-  the follow-and-win rule takes over.
-- A text notation for positions, so that any situation can be a fixture.
-- Invariants over random self-play: 32 tricks, 64 cards conserved, brisques
-  totalling 160, the log reconciling with the totals.
+- `observation.rs`, test first: a seat's view of a hand (`DESIGN.md` §8).
+  Its own concealed cards; both players' table cards with their histories
+  and carried scores; the turn-up and the stock's size; cards known to be in
+  the opponent's hand (taken by the dix, shown as the second seven, the
+  turn-up taken at the last stock trick); every card played. Each field is
+  asked *when was this shown or said, and to whom?*, and a test asserts that
+  no view ever holds a card its seat could not know.
+- Agents read only views. Rung 1 (legal, lowest lead, declare the most) and
+  rung 2 (the period maxims, `DESIGN.md` §10.1).
+- The mirrored-pair harness and a first measurement binary, then the first
+  questions from "To measure" that rung 2 can answer: hands per game, where
+  the points come from, the first lead.
 
 ## To measure, once the engine plays
 
