@@ -373,27 +373,50 @@ human learns, so that the ladder is also the curriculum. It is not a noise
 dial. Each rung must beat the one below in mirrored play, or it is removed;
 piquet deleted two proposed rungs that way.
 
-| Rung | Capability | Where the idea comes from |
+The ladder as built and measured (2026-10-02; `agents.rs`,
+`measurements/README.md`). Margins are points a hand over the rung below, in
+mirrored hands; games are the share won in mirrored games.
+
+| Rung | Capability | Over the rung below |
 |---|---|---|
-| 1 | Plays legally: leads its lowest card, declares whatever scores most | baseline |
-| 2 | The period maxims: throws sevens, eights, nines and plain jacks; takes brisques cheaply; keeps bezique and sequence cards; exchanges the dix; declares in the right order (single bezique before double, royal marriage before sequence) | Pole 1861, Pardon, Foster, Hoffmann (literature review §7) |
-| 3 | Remembers what has been played: abandons a combination once its cards are gone ("no mistake is worse than chasing a card that's gone"), counts trumps for the endgame | Pagat, the 1860s Hoyles |
-| 4 | Watches the table: reads the opponent's laid cards and discards, keeps back the card the opponent needs, plays declared cards before concealed ones | Cady, Foster, the Hoyles |
-| 5 | Plays the last eight tricks exactly, and fights for the last stock trick (it carries the last declaration and the lead into the endgame) | §10.3; Hoffmann, Pardon |
-| 6 | Searches the stock phase: samples the hidden cards consistent with its view, and judges each move by playouts | §10.4 |
-| 7 | Plays the game, not the hand: weighs points by what they do for reaching 1,000 first and for the 500 that decides a double | piquet's partie lesson, §10.4 |
+| 1 | Plays legally: its lowest card, and whatever declaration scores most | – |
+| 2 | The period maxims (Pole, Pardon, Foster, Hoffmann), weighed by a tuned style: values each card for keeping (rank, trumps, bezique cards above aces while the double lives, marriage partners, sequence cards, three of a rank, the dix); throws the cheapest; takes brisques cheaply; wins the lead when there is something to declare, paying more the more it would score; single bezique before the double, royal marriage before the sequence | +98.6 (92% of games) |
+| 3 | Remembers every card played, and so plays the last eight tricks exactly (`solver.rs`): in bezique, memory pays in the endgame, where the cards played tell the opponent's hand | +18.7 (58%) |
+| 4 | Fights for the last trick before the stock runs out: its winner makes the last declaration and leads into the endgame | +2.3 (51%) |
 
-The rungs are a proposal. Their order, their number and their content are
-settled by measurement.
+Two proposed rungs failed measurement and were dropped, as piquet dropped
+two: memory used only to notice combinations that can no longer be made
+(+1.9 over rung 2: real, but small and now part of rung 3), and watching the
+opponent's table (counting its cards as gone, taking tricks to stop it
+declaring: nothing measurable). Search in the stock phase (§10.4) and play
+for the game rather than the hand remain proposals for rungs 5 and up.
 
-**Erraticism** (the effective rung drawn per decision around the setting) and
-**style** (preferences among options of nearly equal value, drawn once per
-game and held) carry over from piquet unchanged in concept. The sources supply
-bezique's style dimensions. *Brisques or melds*: Pagat calls that the game's
-central tension. *Boldness in chasing double bezique and the sequence.*
-*Declaring at once or holding back to hide the hand.* *Hoarding trumps for the
-endgame.* A style must be EV-neutral, and that is checked by measurement,
-not assumed.
+**Erraticism** (`opponent.rs`): on each decision the opponent may slip a
+rung, and another, with the set probability, drawn from its own stream, so
+a sitting replays exactly. Real players are inconsistent, not uniformly bad.
+
+**Personas** (`opponent.rs`): a style must be close to EV-neutral, or it is
+a lower skill level wearing a hat. Calibrating that turned out to be the
+most instructive measurement of the night:
+
+- Shifting weights (keep sequences longer, chase brisques, hoard trumps) on
+  a well-tuned default mostly fails one way or the other: it costs points,
+  or it is simply better play and belongs in the default (five weights moved
+  into the default that way).
+- Brisques resist style altogether: a player's share of the 160 is set by
+  the cards and the trick rules, and no lever moved it.
+- What works is piquet's own definition: a style chooses among options of
+  nearly equal worth. A `Leaning` breaks near-ties only, so it is free by
+  construction; how near is set by measurement.
+
+The personas, each within 1.24 points a hand of balanced: **balanced**;
+**concentrates** (of cards exactly equal in worth, throws from its shortest
+suit: Foster's "pick one or two suits and discard the rest"); **close**
+(plays from the table first, after Pardon: show the opponent as little as
+possible); **bezique** (values bezique cards at twice the default, after
+Pardon; the one weight shift that is both free and visible, scoring 145 in
+combinations a hand against 139). An opponent is described by how it plays,
+never named.
 
 ### 10.2 Decisions per trick
 
