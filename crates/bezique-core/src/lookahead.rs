@@ -32,7 +32,8 @@ pub struct Lookahead {
     pub horizon: usize,
     /// Worlds sampled for each decision.
     pub worlds: usize,
-    /// Looks ahead in the turn of declaring too, not only in play.
+    /// Looks ahead in the turn of declaring too, not only in play. Off at
+    /// rung 5: it measured worse (`measurements/lookahead-declarations.txt`).
     pub declarations: bool,
 }
 

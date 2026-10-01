@@ -470,7 +470,10 @@ rest of the stock, and one call to the solver values the endgame they lead
 into. The same worlds serve every candidate (common random numbers), and
 one solver serves the whole decision, its table shared across worlds. The
 worlds are seeded from the position, so a decision is the same on replay
-and after undo. Declaring is left to rung 4.
+and after undo. Declaring is left to rung 4: looking ahead there too
+measured −0.94 points a hand (se 0.41), likely strategy fusion, since a
+declaration lays cards open and the rollouts treat every card as open
+already.
 
 What the measurements say (`measurements/lookahead-sweep.txt`): more
 worlds help steadily (8, 16, 32 at horizon 9: +27.2, +32.8, +35.3); a longer
