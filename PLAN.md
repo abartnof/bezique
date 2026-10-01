@@ -11,7 +11,7 @@
 its first play-test.** The rules engine (milestones 1–5), observation and
 the opponent's rungs 1–4 with personas and erraticism (milestone 6, and 8
 in part), the session, the JSON protocol and the wasm module (milestone 7)
-are done; the terminal client runs on the session. 147 tests. What remains:
+are done; the terminal client runs on the session. 161 tests, all passing. What remains:
 the maintainer's play-test, a rung 5, and the 3D table. Planning was
 completed on 2026-10-01:
 
