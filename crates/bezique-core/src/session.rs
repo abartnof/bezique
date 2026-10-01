@@ -128,6 +128,15 @@ pub enum EventKind {
 }
 
 /// A sitting.
+/// The version of the engine's play that a record replays against. A record
+/// is a list of commands, and replays faithfully only while the cards dealt,
+/// the opponent's choices and the order of the declaring options are the
+/// same: bump this whenever a change alters any of them, so that a saved
+/// record from before is refused rather than replayed into a different
+/// game. The test `the_golden_game_replays_unchanged` fails when play
+/// changes, as the reminder to bump it.
+pub const RECORD_VERSION: u32 = 1;
+
 pub struct Session {
     seed: u64,
     settings: Settings,
@@ -939,6 +948,40 @@ mod tests {
         assert!(s.send("undo"));
         assert_ne!(format!("{:?}", s.view()), before);
         assert!(!matches!(s.prompt(), Prompt::Play { legal } if legal.len() == 1));
+    }
+
+    /// One whole game at every level, the person taking the first option
+    /// offered, pinned by a fingerprint of its record and events. If this
+    /// fails, a change has altered play: bump `RECORD_VERSION`, then update
+    /// the pin.
+    #[test]
+    fn the_golden_game_replays_unchanged() {
+        let mut fingerprint = 0xcbf2_9ce4_8422_2325u64;
+        let mut mix = |text: &str| {
+            for b in text.bytes() {
+                fingerprint = (fingerprint ^ u64::from(b)).wrapping_mul(0x0100_0000_01b3);
+            }
+        };
+        for level in 1..=agents::TOP {
+            let settings = Settings {
+                level,
+                persona: None,
+                erraticism: 0.2,
+            };
+            let mut s = Session::new(7, settings);
+            play_out(&mut s);
+            for entry in s.record() {
+                mix(entry);
+            }
+            for e in s.events() {
+                mix(&e.text);
+            }
+        }
+        assert_eq!(
+            (RECORD_VERSION, fingerprint),
+            (1, 10_493_367_756_294_174_433),
+            "play has changed: bump RECORD_VERSION and pin the new fingerprint"
+        );
     }
 
     #[test]

@@ -58,7 +58,11 @@ declare is never put to the person.
 record)` rebuilds the sitting exactly; undo is a replay without the last
 decision. The choice of dealer cannot be undone: the first deal comes from
 the seed, and the choice decides only which of its two hands is whose.
-There is no replay export over the FFI: to reload, call `bezique_new` with
+A saved record replays only against the same play: the state's
+`record_version` (`session::RECORD_VERSION`) changes whenever the deal, the
+opponent's choices or the order of the declaring options change, so a page
+should save it with the record and refuse a record of another version. There
+is no replay export over the FFI: to reload, call `bezique_new` with
 the same arguments and send each entry of the record that is not marked
 `*`. Erraticism is not in the state, so the page keeps its own arguments.
 
@@ -80,7 +84,7 @@ an engine running in the page cannot keep from a person determined to look.
 
 ```jsonc
 {
-  "protocol": 1,
+  "protocol": 1, "record_version": 1,
   "level": 4,
   "opponent": "Your opponent remembers every card, ... Its style: ...",
   "phase": "lead",            // choose_dealer, lead, follow, declare, over

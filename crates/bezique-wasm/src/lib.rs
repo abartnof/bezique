@@ -230,6 +230,10 @@ pub fn state(session: &Session) -> String {
     let aids = session.aids();
     let mut fields: Vec<(&str, String)> = vec![
         ("protocol", PROTOCOL.to_string()),
+        (
+            "record_version",
+            bezique_core::session::RECORD_VERSION.to_string(),
+        ),
         ("level", session.settings().level.to_string()),
         ("opponent", text(&session.opponent())),
         ("phase", text(phase(view.as_ref(), &p))),
