@@ -108,7 +108,8 @@ impl Hand {
     pub fn new(deal: Deal) -> Hand {
         let (hands, trump, stock) = deal.into_parts();
         let turned = stock.turn_up().expect("a fresh stock has its turn-up");
-        let mut hand = Hand::arranged(trump, stock, hands.map(Holdings::new), Seat::Pone, 0);
+        let mut hand = Hand::arranged(trump, stock, hands.map(Holdings::new), Seat::Pone, 0)
+            .expect("a fresh deal is a possible position");
         if is_seven_of(turned, trump) {
             hand.sevens_scored = hand.sevens_scored.with(turned);
             hand.score_to(Seat::Dealer, 10, Source::TurnedSeven);
@@ -116,15 +117,56 @@ impl Hand {
         hand
     }
 
-    /// A position part-way through a hand, for tests and analysis: `leader` to
-    /// lead, `tricks_taken` tricks already played (their cards gone).
+    /// A position part-way through a hand, for tests, analysis and search:
+    /// `leader` to lead, `tricks_taken` tricks already played (their cards
+    /// gone). Refused unless it is a position a hand can reach: every card in
+    /// one place, the cards and tricks adding up to the pack, eight cards each
+    /// while the stock lasts, a turn-up while face-down cards remain, an even
+    /// number to draw, and nothing on the table once the stock is gone. Which
+    /// sevens of trumps have already scored is not part of the position; say
+    /// so with [`Hand::with_sevens_scored`].
     pub fn arranged(
         trump: Suit,
         stock: Stock,
         holdings: [Holdings; 2],
         leader: Seat,
         tricks_taken: u8,
-    ) -> Hand {
+    ) -> Result<Hand, String> {
+        if tricks_taken > 32 {
+            return Err(format!("{tricks_taken} tricks: a hand has 32"));
+        }
+        let held = [holdings[0].cards(), holdings[1].cards()];
+        for h in &holdings {
+            if !h.concealed.intersect(h.shown).is_empty() {
+                return Err("a card both concealed and on the table".to_string());
+            }
+        }
+        if !held[0].intersect(held[1]).is_empty()
+            || !held[0].union(held[1]).intersect(stock.cards()).is_empty()
+        {
+            return Err("a card in two places".to_string());
+        }
+        if stock.face_down() > 0 && stock.turn_up().is_none() {
+            return Err("face-down cards remain but the turn-up is gone".to_string());
+        }
+        if stock.len() % 2 == 1 {
+            return Err("an odd number of cards left to draw".to_string());
+        }
+        if held[0].len() != held[1].len() {
+            return Err("the players hold different numbers of cards".to_string());
+        }
+        let in_play = 2 * held[0].len() as usize + stock.len();
+        if in_play != 64 - 2 * usize::from(tricks_taken) {
+            return Err(format!(
+                "{in_play} cards in play after {tricks_taken} tricks"
+            ));
+        }
+        if !stock.is_empty() && held[0].len() != 8 {
+            return Err("while the stock lasts each player holds eight".to_string());
+        }
+        if stock.is_empty() && holdings.iter().any(|h| !h.shown.is_empty()) {
+            return Err("cards on the table once the stock is gone".to_string());
+        }
         let mut hand = Hand {
             trump,
             stock,
@@ -151,7 +193,14 @@ impl Hand {
         for card in public {
             hand.appear(card);
         }
-        hand
+        Ok(hand)
+    }
+
+    /// The same position, with these sevens of trumps recorded as having
+    /// scored, so that none scores again.
+    pub fn with_sevens_scored(mut self, sevens: CardSet) -> Hand {
+        self.sevens_scored = sevens;
+        self
     }
 
     pub fn trump(&self) -> Suit {
@@ -811,7 +860,7 @@ mod tests {
         assert_eq!(dealer.carried().len(), 1);
         let pone = Holdings::new(set("AH TH 9S 9D 8D 7D AC TC"));
         let stock = Stock::new(&[c("QH", 0)], Some(c("9H", 0)));
-        Hand::arranged(trump, stock, [dealer, pone], Seat::Pone, 23)
+        Hand::arranged(trump, stock, [dealer, pone], Seat::Pone, 23).unwrap()
     }
 
     #[test]
@@ -869,6 +918,119 @@ mod tests {
             Phase::Lead,
             "no declaring once the stock is gone"
         );
+    }
+
+    #[test]
+    fn an_impossible_position_is_refused() {
+        let trump = Suit::HEARTS;
+        let eight = |codes: &str| Holdings::new(set(codes));
+        let (a, b) = (
+            eight("AS TS KS QS JS 9S 8S 7S"),
+            eight("AH TH KH QH JH 9H 8H 7H"),
+        );
+        let rest: Vec<Card> = CardSet::PACK
+            .minus(a.cards())
+            .minus(b.cards())
+            .cards()
+            .collect();
+        let fine = Hand::arranged(
+            trump,
+            Stock::new(&rest[1..], Some(rest[0])),
+            [a.clone(), b.clone()],
+            Seat::Pone,
+            0,
+        );
+        assert!(fine.is_ok());
+        let bad = [
+            // Face-down cards without the turn-up.
+            Hand::arranged(
+                trump,
+                Stock::new(&rest[..47], None),
+                [a.clone(), b.clone()],
+                Seat::Pone,
+                0,
+            ),
+            // An odd number of cards to draw.
+            Hand::arranged(
+                trump,
+                Stock::new(&rest[2..], Some(rest[0])),
+                [a.clone(), b.clone()],
+                Seat::Pone,
+                0,
+            ),
+            // Cards and tricks that do not add up to the pack.
+            Hand::arranged(
+                trump,
+                Stock::new(&[], None),
+                [eight("AS"), eight("7S")],
+                Seat::Pone,
+                0,
+            ),
+            Hand::arranged(
+                trump,
+                Stock::new(&[], None),
+                [eight("AS 9C"), eight("7S 8C")],
+                Seat::Pone,
+                31,
+            ),
+            Hand::arranged(
+                trump,
+                Stock::new(&[], None),
+                [eight("AS"), eight("7S")],
+                Seat::Pone,
+                255,
+            ),
+            // A card in two places.
+            Hand::arranged(
+                trump,
+                Stock::new(&rest[1..], Some(rest[0])),
+                [a.clone(), a.clone()],
+                Seat::Pone,
+                0,
+            ),
+        ];
+        for (i, position) in bad.iter().enumerate() {
+            assert!(position.is_err(), "position {i} should be refused");
+        }
+        // Cards still on the table once the stock is gone.
+        let mut shown = Holdings::new(set("KS QS"));
+        let marriage = shown.candidates(trump)[0];
+        shown
+            .apply(
+                trump,
+                &Announcement {
+                    melds: vec![marriage],
+                    score: marriage,
+                },
+            )
+            .unwrap();
+        assert!(Hand::arranged(
+            trump,
+            Stock::new(&[], None),
+            [shown, eight("7C 8C")],
+            Seat::Pone,
+            30
+        )
+        .is_err());
+    }
+
+    #[test]
+    fn an_arranged_hand_can_be_told_which_sevens_have_scored() {
+        let trump = Suit::HEARTS;
+        let pone = Holdings::new(set("7H AS 8C 9C 7D 8D 9D JC"));
+        let dealer = Holdings::new(set("TS 7S 8S 9S JS 8H 9H KC"));
+        let rest: Vec<Card> = CardSet::PACK
+            .minus(pone.cards())
+            .minus(dealer.cards())
+            .cards()
+            .collect();
+        let stock = Stock::new(&rest[1..], Some(rest[0]));
+        let mut h = Hand::arranged(trump, stock, [dealer, pone], Seat::Pone, 0)
+            .unwrap()
+            .with_sevens_scored(CardSet::of(&[c("7H", 0)]));
+        play(&mut h, "AS");
+        play(&mut h, "7S");
+        assert!(!h.legal().iter().any(|a| matches!(a, Action::Dix(_))));
     }
 
     #[test]
@@ -954,7 +1116,8 @@ mod tests {
             [Holdings::new(set("AS")), Holdings::new(set("7S"))],
             Seat::Dealer,
             31,
-        );
+        )
+        .unwrap();
         let mut h = h0.clone();
         play(&mut h, "AS");
         play(&mut h, "7S");

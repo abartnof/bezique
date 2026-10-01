@@ -8,7 +8,7 @@
 use crate::cards::Card;
 use crate::deal::{Deal, Seat};
 use crate::hand::{Action, Hand};
-use crate::rng::Rng;
+use crate::rng::{purpose, Rng};
 
 pub const GAME: u32 = 1000;
 pub const DOUBLE_BELOW: u32 = 500;
@@ -89,7 +89,7 @@ pub struct Game {
 impl Game {
     /// A game whose cards are fixed by `seed`, `first_dealer` dealing first.
     pub fn new(seed: u64, first_dealer: Side) -> Game {
-        let mut deals = Rng::stream(seed, DEALS);
+        let mut deals = Rng::stream(seed, purpose::DEALS);
         let hand = Hand::new(Deal::shuffled(&mut deals));
         let mut game = Game {
             seed,
@@ -107,10 +107,15 @@ impl Game {
 
     /// A game part-way through, for tests: `banked` points already scored, and
     /// `hand` in play with `dealer` dealing it.
-    pub fn arranged(seed: u64, banked: [u32; 2], dealer: Side, hand: Hand) -> Game {
+    pub fn arranged(seed: u64, banked: [u32; 2], dealer: Side, hand: Hand) -> Result<Game, String> {
+        if hand.to_move().is_none() {
+            return Err("the hand is already over".to_string());
+        }
         let mut game = Game {
             seed,
-            deals: Rng::stream(seed, DEALS),
+            // Not the seed's own deals: the next hand must not repeat the
+            // first hand of `Game::new(seed)`.
+            deals: Rng::stream(seed, purpose::ARRANGED_DEALS),
             first_dealer: dealer,
             banked,
             hand,
@@ -119,7 +124,7 @@ impl Game {
             previous: None,
         };
         game.check_for_game();
-        game
+        Ok(game)
     }
 
     /// The seed that fixes the cards.
@@ -227,9 +232,6 @@ impl Game {
     }
 }
 
-/// The stream the deals are drawn from; the cut and the agents have others.
-const DEALS: u64 = 0;
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -254,6 +256,7 @@ mod tests {
             Seat::Dealer,
             31,
         )
+        .unwrap()
     }
 
     fn play_it_out(game: &mut Game) {
@@ -308,7 +311,7 @@ mod tests {
 
     #[test]
     fn hands_follow_with_the_deal_alternating_and_the_points_banked() {
-        let mut game = Game::arranged(5, [100, 200], Side::A, last_trick());
+        let mut game = Game::arranged(5, [100, 200], Side::A, last_trick()).unwrap();
         // Side A deals, so holds the dealer's ace: 10 for it, 10 for the trick.
         assert!(game.previous_hand().is_none());
         game.apply(game.legal()[0].clone()).unwrap();
@@ -331,7 +334,7 @@ mod tests {
 
     #[test]
     fn the_first_to_one_thousand_wins_at_once() {
-        let mut game = Game::arranged(5, [990, 400], Side::A, last_trick());
+        let mut game = Game::arranged(5, [990, 400], Side::A, last_trick()).unwrap();
         game.apply(game.legal()[0].clone()).unwrap();
         game.apply(game.legal()[0].clone()).unwrap();
         assert_eq!(
@@ -350,7 +353,7 @@ mod tests {
 
     #[test]
     fn when_the_last_trick_wins_the_game_its_hand_stays_in_hand() {
-        let mut game = Game::arranged(5, [990, 400], Side::A, last_trick());
+        let mut game = Game::arranged(5, [990, 400], Side::A, last_trick()).unwrap();
         game.apply(game.legal()[0].clone()).unwrap();
         game.apply(game.legal()[0].clone()).unwrap();
         assert!(game.outcome().is_some());
@@ -359,8 +362,29 @@ mod tests {
     }
 
     #[test]
+    fn a_finished_hand_cannot_be_arranged_into_a_game() {
+        let mut hand = last_trick();
+        hand.apply(hand.legal()[0].clone()).unwrap();
+        hand.apply(hand.legal()[0].clone()).unwrap();
+        assert!(Game::arranged(5, [0, 0], Side::A, hand).is_err());
+    }
+
+    #[test]
+    fn the_hand_after_an_arranged_one_is_not_a_repeat_of_the_seeds_first_deal() {
+        let new = Game::new(5, Side::A);
+        let mut game = Game::arranged(5, [100, 200], Side::A, last_trick()).unwrap();
+        game.apply(game.legal()[0].clone()).unwrap();
+        game.apply(game.legal()[0].clone()).unwrap();
+        assert_eq!(game.hand_number(), 2);
+        assert_ne!(
+            game.hand().holdings(Seat::Pone).cards(),
+            new.hand().holdings(Seat::Pone).cards()
+        );
+    }
+
+    #[test]
     fn a_loser_with_five_hundred_is_not_doubled() {
-        let mut game = Game::arranged(5, [990, 500], Side::A, last_trick());
+        let mut game = Game::arranged(5, [990, 500], Side::A, last_trick()).unwrap();
         play_it_out(&mut game);
         assert_eq!(
             game.outcome(),
@@ -375,7 +399,7 @@ mod tests {
     fn the_game_can_end_in_the_middle_of_a_hand() {
         // Side B, the pone here, needs only the ten for the first brisque.
         let mut game = Game::new(3, Side::A);
-        game = Game::arranged(3, [0, 995], Side::A, game.hand().clone());
+        game = Game::arranged(3, [0, 995], Side::A, game.hand().clone()).unwrap();
         while game.outcome().is_none() {
             let first = game.legal()[0].clone();
             game.apply(first).unwrap();

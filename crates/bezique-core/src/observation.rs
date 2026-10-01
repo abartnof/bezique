@@ -325,7 +325,7 @@ mod tests {
     #[test]
     fn no_one_is_to_move_once_the_game_is_won_mid_hand() {
         let game = Game::new(3, Side::A);
-        let mut game = Game::arranged(3, [0, 995], Side::A, game.hand().clone());
+        let mut game = Game::arranged(3, [0, 995], Side::A, game.hand().clone()).unwrap();
         while game.outcome().is_none() {
             let first = game.legal()[0].clone();
             game.apply(first).unwrap();

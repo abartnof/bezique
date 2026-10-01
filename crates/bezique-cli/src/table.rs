@@ -10,11 +10,8 @@ use bezique_core::deal::Seat;
 use bezique_core::game::{cut_for_deal, Game, Outcome, Side};
 use bezique_core::hand::{Action, Hand, Phase, Source};
 use bezique_core::observation::{Agent, View};
-use bezique_core::rng::Rng;
+use bezique_core::rng::{purpose, Rng};
 use bezique_core::words;
-
-/// The stream the cut draws from, apart from the deals and the agents.
-const CUT: u64 = 2;
 
 #[derive(Clone, Debug)]
 pub struct Options {
@@ -151,7 +148,7 @@ impl<R: BufRead, W: Write> Table<R, W> {
 
     /// Cuts for the deal; returns who deals first, or `None` on quitting.
     fn cut(&mut self) -> io::Result<Option<Side>> {
-        let cut = cut_for_deal(&mut Rng::stream(self.options.seed, CUT));
+        let cut = cut_for_deal(&mut Rng::stream(self.options.seed, purpose::CUT));
         for (i, [a, b]) in cut.rounds.iter().enumerate() {
             let (cuts, other) = (self.does(Side::A, "cut"), self.whom(Side::B));
             writeln!(

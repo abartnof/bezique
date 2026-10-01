@@ -410,21 +410,22 @@ mod tests {
             )
             .unwrap();
         let pone = Holdings::new(CardSet::parse("7C 8C 9C 7D 8D 9D 7S 8S").unwrap());
-        let stock: Vec<Card> = CardSet::parse("9S 9H JC QC KC JS KS JH QH KH")
-            .unwrap()
+        let turn_up = CardSet::parse("7H").unwrap().cards().next().unwrap();
+        let stock: Vec<Card> = CardSet::PACK
+            .minus(dealer.cards())
+            .minus(pone.cards())
+            .without(turn_up)
             .cards()
             .collect();
         let hand = Hand::arranged(
             trump,
-            Stock::new(
-                &stock,
-                Some(CardSet::parse("7H").unwrap().cards().next().unwrap()),
-            ),
+            Stock::new(&stock, Some(turn_up)),
             [dealer, pone],
             Seat::Dealer,
-            4,
-        );
-        let game = Game::arranged(1, [0, 0], Side::A, hand);
+            0,
+        )
+        .unwrap();
+        let game = Game::arranged(1, [0, 0], Side::A, hand).unwrap();
         let view = View::of(&game, Side::A);
         let lead = Maxims::default().choose(&view, &game.legal());
         let Action::Play(card) = lead else {

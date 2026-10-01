@@ -69,6 +69,14 @@ impl Stock {
         self.face_down.len()
     }
 
+    /// Every card still to be drawn, the turn-up included.
+    pub fn cards(&self) -> CardSet {
+        CardSet::of(&self.face_down).union(
+            self.turn_up
+                .map_or(CardSet::EMPTY, |c| CardSet::EMPTY.with(c)),
+        )
+    }
+
     /// The face-up card, while it is still on the table.
     pub fn turn_up(&self) -> Option<Card> {
         self.turn_up

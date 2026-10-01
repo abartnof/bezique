@@ -7,6 +7,23 @@
 //! outputs. Agents draw from separate [`Rng::stream`]s, so how much the
 //! opponent thinks never changes the cards.
 
+/// What each stream drawn from a game's seed is for. Each purpose has a
+/// stream of its own, so that drawing for one never moves another: how much
+/// the opponent thinks never changes the cards.
+pub mod purpose {
+    /// The deals of a game.
+    pub const DEALS: u64 = 0;
+    /// The cut for the first deal.
+    pub const CUT: u64 = 1;
+    /// The deals after a game arranged part-way through, which must not
+    /// repeat the seed's own.
+    pub const ARRANGED_DEALS: u64 = 2;
+    /// The opponent's own choices, by side (0 or 1).
+    pub const fn agent(side: usize) -> u64 {
+        16 + side as u64
+    }
+}
+
 /// SplitMix64: used only to seed xoshiro256\*\* and to derive streams.
 #[derive(Clone, Debug)]
 pub(crate) struct SplitMix64 {
