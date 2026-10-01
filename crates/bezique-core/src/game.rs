@@ -82,6 +82,8 @@ pub struct Game {
     /// How many hands have been dealt, this one included.
     hand_number: u32,
     outcome: Option<Outcome>,
+    /// The hand before this one, kept so that its end can be told.
+    previous: Option<Hand>,
 }
 
 impl Game {
@@ -97,6 +99,7 @@ impl Game {
             hand,
             hand_number: 1,
             outcome: None,
+            previous: None,
         };
         game.check_for_game();
         game
@@ -113,6 +116,7 @@ impl Game {
             hand,
             hand_number: 1,
             outcome: None,
+            previous: None,
         };
         game.check_for_game();
         game
@@ -121,6 +125,11 @@ impl Game {
     /// The seed that fixes the cards.
     pub fn seed(&self) -> u64 {
         self.seed
+    }
+
+    /// The hand finished most recently, once there is one.
+    pub fn previous_hand(&self) -> Option<&Hand> {
+        self.previous.as_ref()
     }
 
     pub fn hand(&self) -> &Hand {
@@ -194,7 +203,8 @@ impl Game {
                 self.banked[side.index()] = self.total(side);
             }
             self.hand_number += 1;
-            self.hand = Hand::new(Deal::shuffled(&mut self.deals));
+            let next = Hand::new(Deal::shuffled(&mut self.deals));
+            self.previous = Some(std::mem::replace(&mut self.hand, next));
             // A turned seven can be the point that wins.
             self.check_for_game();
         }
@@ -297,10 +307,14 @@ mod tests {
     fn hands_follow_with_the_deal_alternating_and_the_points_banked() {
         let mut game = Game::arranged(5, [100, 200], Side::A, last_trick());
         // Side A deals, so holds the dealer's ace: 10 for it, 10 for the trick.
+        assert!(game.previous_hand().is_none());
         game.apply(game.legal()[0].clone()).unwrap();
         game.apply(game.legal()[0].clone()).unwrap();
         assert_eq!(game.hand_number(), 2);
         assert_eq!(game.dealer(), Side::B);
+        let finished = game.previous_hand().expect("the hand just played is kept");
+        assert_eq!(finished.tricks().len(), 1);
+        assert_eq!(finished.score(Seat::Dealer), 20);
         assert_eq!(
             game.total(Side::A),
             120 + game.hand().score(game.seat_of(Side::A))
