@@ -11,8 +11,23 @@ queen of spades with the jack of diamonds: bezique.
 This project is building a version you can play against the computer, and
 learn as you play, as one self-contained web page.
 
-**Status:** in development. The rules engine is written and tested (cargo
-test runs it in about a second); the computer opponent and the table are next.
+**Status:** in development. The rules engine, a first computer opponent and a
+terminal table are written; the stronger opponents and the 3D table are next.
+
+## Playing it now, in a terminal
+
+The browser table is still to come; the game is playable in a terminal today.
+With Rust installed:
+
+```
+cargo run --release -p bezique-cli                   # you against the computer
+cargo run --release -p bezique-cli -- --level 1      # an opponent that plays legally and no more
+cargo run --release -p bezique-cli -- --watch        # two computer players; Enter after each trick
+cargo run --release -p bezique-cli -- --seed 42      # the same cards every time
+```
+
+Type a card as it is shown (`AS`, `10D`; `*` for the copy on the table) or by
+its number; declarations are offered as a numbered list; `q` leaves.
 
 ## Learning the game
 
