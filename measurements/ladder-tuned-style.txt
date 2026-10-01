@@ -1,0 +1,6 @@
+rung 2 against rung 1, hands: +98.57 points a hand for the first (2000 mirrored pairs, standard error 2.51)
+rung 2 against rung 1, games: the first won 1839 of 2000 games, 92.0% (standard error 0.6); pairs swept 844-5, split 151; doubles 529-4; 4.61 hands a game
+rung 3 against rung 2, hands: +18.65 points a hand for the first (2000 mirrored pairs, standard error 0.71)
+rung 3 against rung 2, games: the first won 1164 of 2000 games, 58.2% (standard error 0.6); pairs swept 167-3, split 830; doubles 170-101; 4.21 hands a game
+rung 4 against rung 3, hands: +2.29 points a hand for the first (2000 mirrored pairs, standard error 0.39)
+rung 4 against rung 3, games: the first won 1028 of 2000 games, 51.4% (standard error 0.4); pairs swept 46-18, split 936; doubles 136-121; 4.23 hands a game

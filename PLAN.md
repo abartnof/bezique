@@ -62,8 +62,11 @@ it lands, with what was found.
    persona is a style, not a handicap. Personas are described by how they
    play, not given a writer's name (piquet's rule for the opponent; to
    confirm with the maintainer).
-5. The session layer: undo, replay, aids, hints; the JSON protocol, its
-   document and the wasm crate.
+5. ~~The session layer, the protocol and the wasm crate.~~ **Done**:
+   `session.rs` (cut, dealer choice, record and replay, undo, aids, hints,
+   events), `crates/bezique-wasm` (JSON state from the person's view; a
+   leak test that catches a planted leak; 207 KB module playing a rung-4
+   game from Node in half a second), `docs/PROTOCOL.md`.
 6. ~~The terminal client: level, persona, erraticism.~~ **Done** (see 4).
 
 Constraints: nothing large deleted, no history rewritten, nothing drastic.
