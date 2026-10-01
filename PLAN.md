@@ -7,13 +7,15 @@
 
 ## Where we are
 
-**2026-10-02: a playable game with a measured four-level opponent, ready for
-its first play-test.** The rules engine (milestones 1–5), observation and
-the opponent's rungs 1–4 with personas and erraticism (milestone 6, and 8
-in part), the session, the JSON protocol and the wasm module (milestone 7)
-are done; the terminal client runs on the session. 161 tests, all passing. What remains:
-the maintainer's play-test, a rung 5, and the 3D table. Planning was
-completed on 2026-10-01:
+**2026-10-02: a playable game with a measured five-level opponent, reviewed,
+ready for its first play-test.** The rules engine (milestones 1–5),
+observation and the opponent's rungs 1–5 with personas and erraticism
+(milestones 6 and 8), the session, the JSON protocol and the wasm module
+(milestone 7) are done; the terminal client runs on the session. The
+overnight work has been reviewed and every finding but one design question
+resolved. 181 tests, all passing. What remains: the maintainer's play-test,
+the question of undo, and the 3D table. Planning was completed on
+2026-10-01:
 
 - `docs/LITERATURE.md`: the literature review (68 sources, the conflict
   matrix, strategy, computed odds), as delivered.
@@ -96,6 +98,26 @@ session's usage limit was reached; everything is committed and pushed):
   the ladder had it (completed by `811f7c5`), and `bc7fae8` carried the
   client's new options without naming them.
 
+## Session of 2026-10-02 (day)
+
+Resumed after the usage limit, with the queue from "Next action": the
+play-test waits for the maintainer, so the engine work went ahead.
+
+- **The review of the overnight work** (`docs/reviews/2026-10-02-overnight.md`):
+  four reviewers, 31 findings, each reproduced; all resolved but one design
+  question. The weightiest: undoing the choice of dealer handed the
+  opponent the hand just seen; two twins on the opponent's table told what
+  it had held (now checked by a twin-symmetry property over whole hands);
+  the state carried the seed; five errors in the narration.
+- **The solver** is now alpha-beta with a table of bounds: the same cards
+  chosen, about four times faster in play and nine times in search.
+- **Rung 5** looks ahead once nine or fewer face-down cards remain: +30.1
+  points a hand over rung 4 on fresh seeds (se 1.3). Levels run 1 to 5.
+- **The personas** hold at rung 4: each within 1.35 points a hand of
+  balanced.
+- **The "To measure" questions** that the anatomy already answered are
+  recorded below.
+
 ## Decisions
 
 ### Settled
@@ -141,15 +163,17 @@ session's usage limit was reached; everything is committed and pushed):
       waits for the terminal client, which needs one (milestone 7).
 - [x] **5. The game**: the cut, alternating deals, the race to 1,000, the
       double game.
-- [ ] **6. Observation and the first rungs**: ~~the view~~ (done; checked
-      for leaks on every position of 25 games); ~~rungs 1–2~~ (done); the
-      mirrored-pair harness and the measurement binaries (to do).
-- [ ] **7. Playable**: ~~the terminal client~~ (done: `cargo run --release
-      -p bezique-cli`, with `--watch` for two computer players); the session
+- [x] **6. Observation and the first rungs**: the view (checked for leaks on
+      every position of random games, and by the twin-symmetry property);
+      rungs 1–2; the mirrored-pair harness and the measurement binary.
+- [x] **7. Playable**: the terminal client (`cargo run --release -p
+      bezique-cli`, with `--watch` for two computer players); the session
       (undo, replay, aids, hints), the protocol and its document, the wasm
-      crate (to do). Play-test the declaring interface here, before the 3D
-      table is built around it.
-- [ ] **8. Rungs 3–5**: memory, watching the table, the exact endgame.
+      crate. The maintainer's play-test of the declaring interface comes
+      before the 3D table is built around it.
+- [x] **8. Rungs 3–5**: memory with the exact endgame; the last stock trick;
+      looking ahead at the end of the stock. Watching the table was tried
+      and dropped.
 - [ ] **9. The 3D table**, adapted from piquet's (`DESIGN.md` §11).
 - [ ] **10. Rungs 6–7, and the finish**: search, the game-level objective,
       hints, the tutorial, celebrations.
@@ -158,42 +182,46 @@ session's usage limit was reached; everything is committed and pushed):
 
 **Start here next session.**
 
-1. **The maintainer's first play-test** (`PLAYTEST.md`), and acting on what
-   it finds. This comes first: the declaring interface is the biggest
-   unknown for fun.
-2. **Re-run the code review on the overnight work** (`a70f478..HEAD`: the
-   twin relabelling in `observation.rs`, `tournament.rs`, the agents' style,
-   skills and leanings, `solver.rs`, `opponent.rs`, `session.rs`,
-   `bezique-wasm`, the client rework). It was launched at the end of the
-   session and stopped by the usage limit before reporting anything.
-3. **Rung 5: looking ahead at the end of the stock.** Designed, not begun.
-   When few face-down cards remain (say five or fewer), sample the hidden
-   cards consistently with the view (`View::unseen`), build each world with
-   `Hand::arranged` (for a reply, arrange at the trick's start and replay
-   the lead), play each candidate card forward with rung-4 play through
-   the remaining stock tricks, and value the endgame with one
-   `Solver::value` call rather than playing it out. Keep it only if it beats
-   rung 4 in mirrored hands. Cost estimate: about 8 candidates by 8 worlds,
-   a few hundred milliseconds a decision.
-4. **The 3D table** (milestone 9): first a conversation about the score
+1. **The maintainer's first play-test** (`PLAYTEST.md`, now with
+   `--level 5`), and acting on what it finds. This comes first: the
+   declaring interface is the biggest unknown for fun.
+2. **Undo** (to decide with the maintainer): undo replays the same stock,
+   so it can show the next card drawn or the opponent's answer to a lead.
+   Keep it as a documented learning aid (as now), or allow it only where
+   nothing new has been revealed since the decision taken back.
+3. **The 3D table** (milestone 9): first a conversation about the score
    display in homage to the period markers ("To discuss with the
    maintainer" below), then `web3d` adapted from piquet (DESIGN §11).
+4. **Engine work that needs no decision**, when the above wait: the anatomy
+   of a game at the top rung; rung 6 (play for the game, not the hand: the
+   race to 1,000 and the double at 500, DESIGN §10.4); a version field for
+   saved records; looking ahead in declarations as well as in play.
 
 ## To measure, once the engine plays
 
 Questions the sources raise or leave open. Each is settled by mirrored
-measurement at the smallest size that answers it.
+measurement at the smallest size that answers it. Answered so far, at rung
+2 against itself (`measurements/anatomy-rung2-final.txt`, 2,000 games):
 
-- Is the first lead an advantage or a burden, in a hand and in a game?
-  Foster says the lead is a disadvantage unless one can declare; the
-  literature review's crude bot found no edge at game level (50.2%).
-- Mean hands per game; how often a game is doubled; how often it ends
-  mid-hand.
+- **The first lead**: no measurable edge either way. The pone, who leads
+  first, scores 224.2 a hand to the dealer's 222.2, and the first dealer
+  wins 50.0% of games (standard error 1.1). Foster's "a disadvantage
+  unless one can declare" is not borne out on average.
+- **Game length**: 4.25 hands a game; 12.4% of games doubled; 95.2% end in
+  the middle of a hand.
+- **Where the points come from**: brisques 35.8%, combinations 58.7% (four
+  aces alone 19.1%), the dix 2.8%, the last trick 2.2%. The literature
+  review's crude bot: melds 60%, brisques 36%.
+- **The last stock trick**: fighting for it is worth +1.8 to +2.5 points a
+  hand (rung 4 over rung 3); its winner out-scores the loser over the hand
+  52.1% of the time.
+
+Still open:
+
 - What the carried-score mechanic is worth against the simpler
-  one-meld-per-trick rule.
-- What winning the last stock trick is worth.
-- Where the points come from (the crude bot: melds 60%, brisques 36%).
+  one-meld-per-trick rule (`measure riders` measures free riders only).
 - Whether declaring at once or holding back to hide the hand matters.
+- The same anatomy at the top rung, where the play is stronger.
 
 ## To discuss with the maintainer, when the table is built
 
