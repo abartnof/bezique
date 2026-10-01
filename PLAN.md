@@ -39,8 +39,21 @@ it lands, with what was found.
    lead, the worth of carried scores and of the last stock trick.
 3. Rungs 3–5: card memory, reading the table, the exact endgame solver;
    each kept only if it measurably beats the rung below.
-4. The session layer: undo, replay, aids, hints; the JSON protocol, its
+4. Difficulty, erraticism and personas (requested 2026-10-01): difficulty
+   1–5 is the ladder; erraticism draws the effective rung per decision;
+   personas are stable styles taken from the period writers' disagreements
+   (brisques or combinations; boldness for double bezique; declaring at once
+   or holding back; hoarding trumps), each measured and calibrated so that a
+   persona is a style, not a handicap. Personas are described by how they
+   play, not given a writer's name (piquet's rule for the opponent; to
+   confirm with the maintainer).
+5. The session layer: undo, replay, aids, hints; the JSON protocol, its
    document and the wasm crate.
+6. The terminal client: `--level 1..5`, `--persona`, and how the opponent is
+   described.
+
+Constraints: nothing large deleted, no history rewritten, nothing drastic.
+Report due 08:45 Los Angeles time, 2026-10-02.
 
 Morning summary: (written at the end of the session).
 
