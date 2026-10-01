@@ -173,12 +173,15 @@ K♥ taken and a K♥ played was told whether another remained. Both are closed
   reduced whenever a card of that type leaves the concealed hand.
 - In a player's view, the twins of a type that player has never held are
   renumbered from what is visible now: a lone visible copy is always copy 0,
-  and two are numbered by where they lie, which is public. Once the stock is
+  and two are numbered by where they lie, which is public (on the opponent's
+  table, by the announcements each card has been in). Once the stock is
   gone, the record of the other player's declarations keeps types only,
   because the cards may be back in hand.
 - Tested on every position of random games: a lone twin the viewer never
   held is always shown as copy 0, and the view agrees with the truth type for
-  type.
+  type. And the stronger property (`tests/twin_symmetry.rs`): swapping the
+  two copies of a type everywhere, in the deal and in every move, leaves the
+  view of a player who never held that type unchanged at every position.
 
 **More packs later.** The layout generalises to `type × packs + copy` (`u128`
 for Rubicon's four packs, three words for six). Nothing is built for it now,

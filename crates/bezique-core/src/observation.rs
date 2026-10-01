@@ -61,7 +61,27 @@ impl View {
         }
         visible.extend(hand.led());
         visible.extend(hand.stock().turn_up());
-        visible.extend(them.shown.cards());
+        // The opponent's table in an order the viewer can see: by the
+        // announcements each card has been in, which are public. Bit order
+        // would number two twins on the table by physical copy, and the
+        // records would then tell which copy was held when (finding O1 of
+        // the review of 2026-10-02).
+        let mut table: Vec<(Vec<usize>, Card)> = them
+            .shown
+            .cards()
+            .map(|card| {
+                let records = them
+                    .announced
+                    .iter()
+                    .enumerate()
+                    .filter(|(_, a)| a.declared.cards.contains(card))
+                    .map(|(i, _)| i)
+                    .collect();
+                (records, card)
+            })
+            .collect();
+        table.sort_by(|x, y| x.0.cmp(&y.0));
+        visible.extend(table.into_iter().map(|(_, card)| card));
         visible.extend(seen.cards());
         let relabel = Relabel::new(hand.handled(seat), &visible);
         // Once the stock is gone, cards declared earlier may be back in hand
@@ -166,7 +186,8 @@ impl View {
 /// renumbered from what is visible now: a lone visible copy is always copy 0;
 /// two visible copies are numbered in the order of where they lie (the
 /// tricks in order, the turn-up, the table, the cards seen in hand), which is
-/// public. Otherwise the copy numbers would tell where a twin lies, or
+/// public. On the opponent's table, cards are ordered by the announcements
+/// they have been in, never by copy. Otherwise the copy numbers would tell where a twin lies, or
 /// whether a card seen and later played was the one seen. Twins of which the
 /// player has held one are left alone: the player can tell its own from the
 /// other.
