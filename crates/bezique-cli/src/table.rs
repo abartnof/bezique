@@ -205,6 +205,9 @@ impl<R: BufRead, W: Write> Table<R, W> {
         session: &Session,
         options: &[DeclareOption],
     ) -> io::Result<Option<String>> {
+        // The table first, so that `t` shows the tricks here too.
+        let view = session.view().expect("a game in progress");
+        self.show_view(session, &view)?;
         if let Some((_, said)) = session.hint() {
             writeln!(self.out, "Hint: {said}")?;
         }
@@ -222,6 +225,7 @@ impl<R: BufRead, W: Write> Table<R, W> {
                 "q" | "quit" => return Ok(None),
                 "u" | "undo" => return Ok(Some("undo".to_string())),
                 "h" | "hint" => return Ok(Some("hints".to_string())),
+                "t" | "tricks" => return Ok(Some("tracker".to_string())),
                 _ => {}
             }
             match answer.parse::<usize>() {
