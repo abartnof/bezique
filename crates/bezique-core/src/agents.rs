@@ -493,17 +493,29 @@ fn endgame_lead(view: &View, legal: &[Action]) -> Card {
 /// The turn of declaring: the announcement scoring most; with `maxims`, the
 /// single bezique before the double and the royal marriage before the
 /// sequence while there is time to win another trick; the dix when nothing
-/// scores more; else pass.
+/// scores more; else pass. Of announcements scoring alike, the one leaving
+/// most to score afterwards: otherwise the choice would fall to which copy
+/// of a twin is which (full review of 2026-10-02).
 fn declaration(view: &View, legal: &[Action], maxims: bool) -> Action {
     let trump = view.trump;
     let points = |a: &Action| match a {
         Action::Declare(x) => x.score.meld.points(trump),
         _ => 0,
     };
+    // What is still to score after an announcement.
+    let to_score = |a: &Action| match a {
+        Action::Declare(x) => {
+            let mut after = view.mine.clone();
+            after.apply(trump, x).map_or(0, |_| {
+                after.carried().iter().map(|d| d.meld.points(trump)).sum::<u32>()
+            })
+        }
+        _ => 0,
+    };
     let mut best = legal
         .iter()
         .filter(|a| matches!(a, Action::Declare(_)))
-        .max_by_key(|a| points(a))
+        .max_by_key(|a| (points(a), to_score(a)))
         .cloned();
     if maxims && view.stock >= 10 {
         if let Some(Action::Declare(x)) = &best {
@@ -518,9 +530,12 @@ fn declaration(view: &View, legal: &[Action], maxims: bool) -> Action {
                 _ => None,
             };
             if let Some((meld, within)) = smaller {
-                let first = legal.iter().find(|a| {
-                    matches!(a, Action::Declare(y) if y.score.meld == meld && y.score.cards.minus(within).is_empty())
-                });
+                let first = legal
+                    .iter()
+                    .filter(|a| {
+                        matches!(a, Action::Declare(y) if y.score.meld == meld && y.score.cards.minus(within).is_empty())
+                    })
+                    .max_by_key(|a| to_score(a));
                 if let Some(first) = first {
                     best = Some(first.clone());
                 }
@@ -772,5 +787,59 @@ mod tests {
             checked += 1;
         }
         assert!(checked > 50, "{checked}");
+    }
+
+    /// Of announcements scoring alike, the one that keeps a carried score:
+    /// whichever copy of a twin is which (full review of 2026-10-02). The
+    /// dealer has K♥ and Q♥ twice on the table, one pair carrying a royal
+    /// marriage "to score", and A♥ T♥ J♥ in hand: every sequence scores 250,
+    /// but only those using the other pair keep the forty.
+    #[test]
+    fn a_carried_score_is_kept_whichever_twin_carries_it() {
+        use crate::deal::{Seat, Stock};
+        use crate::hand::Hand;
+        use crate::melds::{Announced, Declared, Holdings};
+        let c = |code: &str, copy: u8| Card::new(CardType::parse(code).unwrap(), copy);
+        let set = |cards: &[Card]| CardSet::of(cards);
+        for married in [0u8, 1] {
+            let other = 1 - married;
+            let declared = |meld, cards: &[Card], scored| Announced {
+                declared: Declared { meld, cards: set(cards) },
+                scored,
+            };
+            let dealer = Holdings {
+                concealed: set(&[c("AH", 0), c("TH", 0), c("JH", 0), c("AS", 0)]),
+                shown: set(&[c("KH", 0), c("KH", 1), c("QH", 0), c("QH", 1)]),
+                announced: vec![
+                    declared(Meld::Four(Rank::KING), &[c("KH", other), c("KS", 0), c("KD", 0), c("KC", 0)], true),
+                    declared(Meld::Four(Rank::QUEEN), &[c("QH", other), c("QS", 0), c("QD", 0), c("QC", 0)], true),
+                    declared(Meld::Marriage(Suit::HEARTS), &[c("KH", married), c("QH", married)], false),
+                ],
+            };
+            let pone = Holdings::new(set(&[
+                c("7D", 0), c("8D", 0), c("9D", 0), c("7C", 0), c("8C", 0), c("9C", 0), c("7S", 0), c("8S", 0),
+            ]));
+            let gone = set(&[c("KS", 0), c("KD", 0), c("KC", 0), c("QS", 0), c("QD", 0), c("QC", 0)]);
+            let turn_up = c("7H", 0);
+            let pool: Vec<Card> = CardSet::PACK
+                .minus(dealer.cards())
+                .minus(pone.cards())
+                .minus(gone)
+                .without(turn_up)
+                .cards()
+                .take(5)
+                .collect();
+            let hand = Hand::arranged(Suit::HEARTS, Stock::new(&pool, Some(turn_up)), [dealer, pone], Seat::Dealer, 21)
+                .unwrap();
+            let mut game = Game::arranged(1, [0, 0], Side::A, hand).unwrap();
+            game.apply(Action::Play(c("AS", 0))).unwrap();
+            game.apply(Action::Play(c("7D", 0))).unwrap();
+            let view = View::of(&game, Side::A);
+            let action = rung(2).choose(&view, &game.legal());
+            assert!(matches!(&action, Action::Declare(a) if a.score.meld == Meld::Sequence), "{action:?}");
+            game.apply(action).unwrap();
+            let carried = game.hand().holdings(Seat::Dealer).carried();
+            assert_eq!(carried.len(), 1, "married copy {married}: {carried:?}");
+        }
     }
 }
