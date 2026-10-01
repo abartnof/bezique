@@ -213,8 +213,14 @@ impl Holdings {
     /// two choices that differ only in which twin is laid, the one laying the
     /// lower copy is kept.
     pub fn candidates(&self, trump: Suit) -> Vec<Declared> {
+        self.distinct_candidates(&self.every_candidate(trump))
+    }
+
+    /// `every`, with choices that differ only in which concealed twin is laid
+    /// counted once (the lower copy).
+    fn distinct_candidates(&self, every: &[Declared]) -> Vec<Declared> {
         let mut found: Vec<Declared> = Vec::new();
-        for d in self.every_candidate(trump) {
+        for d in every {
             let d = Declared {
                 meld: d.meld,
                 cards: self.canonical(d.cards),
@@ -315,7 +321,7 @@ impl Holdings {
         }
         for (i, x) in melds.iter().enumerate() {
             for y in &melds[i + 1..] {
-                if x.meld.class() == y.meld.class() && !x.cards.intersect(y.cards).is_empty() {
+                if clash(*x, *y) {
                     return Err(format!(
                         "{} and {} share a card, and a card serves only once in a class",
                         name(x.meld, trump),
@@ -394,7 +400,11 @@ impl Holdings {
                 out.push(a);
             }
         };
-        for main in self.candidates(trump) {
+        let guarded = self
+            .carried()
+            .iter()
+            .fold(CardSet::EMPTY, |s, d| s.union(d.cards));
+        for main in self.distinct_candidates(&every) {
             let laid = main.cards.intersect(self.concealed);
             let riders: Vec<Declared> = every
                 .iter()
@@ -407,7 +417,7 @@ impl Holdings {
                 })
                 .collect();
             let mut melds = vec![main];
-            melds.extend(best_riders(&riders, trump));
+            melds.extend(best_riders(&riders, trump, guarded.union(main.cards)));
             for &score in &melds {
                 offer(melds.clone(), score);
             }
@@ -445,10 +455,25 @@ fn clash(a: Declared, b: Declared) -> bool {
 }
 
 /// The free riders worth announcing: the set of greatest value with no two in
-/// one class sharing a card. There are only ever a handful to choose among.
-fn best_riders(riders: &[Declared], trump: Suit) -> Vec<Declared> {
-    let riders = &riders[..riders.len().min(16)];
-    let mut best = (0u32, 0u32);
+/// one class sharing a card; of sets equally valuable, the one that ties the
+/// fewest cards to scores still to come (`guarded`: the cards of combinations
+/// already carried), so that more cards stay free to play. There are only
+/// ever a handful to choose among; past sixteen, riders are taken greedily,
+/// most valuable first, rather than searched.
+fn best_riders(riders: &[Declared], trump: Suit, guarded: CardSet) -> Vec<Declared> {
+    let tied = |chosen: &[Declared]| chosen.iter().fold(guarded, |s, d| s.union(d.cards)).len();
+    if riders.len() > 16 {
+        let mut sorted = riders.to_vec();
+        sorted.sort_by_key(|d| std::cmp::Reverse(d.meld.points(trump)));
+        let mut chosen: Vec<Declared> = Vec::new();
+        for rider in sorted {
+            if chosen.iter().all(|&c| !clash(c, rider)) {
+                chosen.push(rider);
+            }
+        }
+        return chosen;
+    }
+    let mut best: (u32, std::cmp::Reverse<u32>, u32) = (0, std::cmp::Reverse(0), 0);
     for mask in 1u32..(1 << riders.len()) {
         let chosen: Vec<Declared> = (0..riders.len())
             .filter(|i| mask >> i & 1 == 1)
@@ -458,13 +483,17 @@ fn best_riders(riders: &[Declared], trump: Suit) -> Vec<Declared> {
             .iter()
             .enumerate()
             .all(|(i, &x)| chosen[i + 1..].iter().all(|&y| !clash(x, y)));
+        if !compatible {
+            continue;
+        }
         let value: u32 = chosen.iter().map(|d| d.meld.points(trump)).sum();
-        if compatible && value > best.0 {
-            best = (value, mask);
+        let key = (value, std::cmp::Reverse(tied(&chosen)), mask);
+        if (key.0, key.1) > (best.0, best.1) {
+            best = key;
         }
     }
     (0..riders.len())
-        .filter(|i| best.1 >> i & 1 == 1)
+        .filter(|i| best.2 >> i & 1 == 1)
         .map(|i| riders[i])
         .collect()
 }
@@ -1005,6 +1034,81 @@ mod tests {
         h.receive(card("JD", 1));
         assert_eq!(declare(&mut h, Meld::DoubleBezique), 500);
         assert!(!h.carried().iter().any(|d| d.meld == Meld::Bezique));
+    }
+
+    // ---- choosing free riders --------------------------------------------
+
+    /// Of two equally good free riders, the one that leaves more cards free:
+    /// a marriage on the queen of spades that already guards a carried
+    /// bezique, not on the other, which can then be played.
+    #[test]
+    fn a_free_rider_doubles_up_on_a_card_already_guarding_a_score() {
+        let mut h = Holdings::new(set("QS QS QH QD JD 7C 8C 9C"));
+        let queens = Declared {
+            meld: Meld::Four(Rank::QUEEN),
+            cards: set("QS QS QH QD"),
+        };
+        let bezique = Declared {
+            meld: Meld::Bezique,
+            cards: CardSet::of(&[card("QS", 1), card("JD", 0)]),
+        };
+        h.apply(
+            HEARTS,
+            &Announcement {
+                melds: vec![queens, bezique],
+                score: queens,
+            },
+        )
+        .unwrap();
+        assert_eq!(h.carried(), vec![bezique]);
+        for code in ["KS", "KH", "KD", "KC"] {
+            h.receive(card(code, 0));
+        }
+        let kings = h
+            .options(HEARTS)
+            .into_iter()
+            .find(|a| a.score.meld == Meld::Four(Rank::KING))
+            .unwrap();
+        let spades = kings
+            .melds
+            .iter()
+            .find(|d| d.meld == Meld::Marriage(Suit::SPADES))
+            .expect("the spade marriage rides");
+        assert!(
+            spades.cards.contains(card("QS", 1)),
+            "{spades:?}: the queen already guarding the bezique"
+        );
+    }
+
+    /// With more than sixteen possible riders the best set is still found,
+    /// not a truncated one.
+    #[test]
+    fn many_free_riders_are_not_cut_short() {
+        let h = Holdings {
+            concealed: CardSet::of(&[card("QS", 0), card("JD", 0)]),
+            shown: CardSet::of(&[
+                card("QS", 1),
+                card("QH", 0),
+                card("QH", 1),
+                card("QD", 0),
+                card("QD", 1),
+                card("QC", 0),
+                card("JS", 0),
+                card("JH", 0),
+                card("JC", 0),
+            ]),
+            announced: vec![],
+        };
+        let forty = h
+            .options(HEARTS)
+            .into_iter()
+            .find(|a| a.score.meld == Meld::Bezique && a.melds[0].meld == Meld::Bezique)
+            .unwrap();
+        let kinds: Vec<Meld> = forty.melds.iter().map(|d| d.meld).collect();
+        assert!(
+            kinds.contains(&Meld::Four(Rank::QUEEN)) && kinds.contains(&Meld::Four(Rank::JACK)),
+            "{kinds:?}"
+        );
     }
 
     // ---- checking announcements ------------------------------------------

@@ -32,11 +32,15 @@ commit and push each change, leave design decisions (the 3D table, the
 score display) for discussion. The queue, in order; each entry is marked as
 it lands, with what was found.
 
-1. Triage the background code review of the engine and fix confirmed
-   defects, test first.
-2. The mirrored-pair harness (`src/bin/` measurement programs) and first
-   measurements: hands per game, where the points come from, the first
-   lead, the worth of carried scores and of the last stock trick.
+1. ~~Triage the background code review of the engine and fix confirmed
+   defects, test first.~~ **Done**: 20 findings, 18 fixed, 2 efficiencies
+   deferred (`docs/reviews/2026-10-01-engine.md`). The weightiest: twins could
+   tell a player where hidden cards lay (finding 1).
+2. ~~The mirrored-pair harness and first measurements.~~ **Done**:
+   `tournament.rs`, `src/bin/measure.rs`, `measurements/`. The anatomy of a
+   game exposed that rung 2 threw its bezique cards away and would not fight
+   for the lead to declare; tuned by mirrored measurement, rung 2 now wins
+   88% of games against rung 1 (was 72%).
 3. Rungs 3–5: card memory, reading the table, the exact endgame solver;
    each kept only if it measurably beats the rung below.
 4. Difficulty, erraticism and personas (requested 2026-10-01): difficulty
