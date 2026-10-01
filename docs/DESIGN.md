@@ -446,7 +446,7 @@ Once the stock is exhausted both hands are known (§8), the follower's choices
 are forced down hard by follow-and-win, and only brisques and the last trick
 remain to score. An exact alpha-beta search over at most eight tricks is
 small, and a table of bounds on the canonical position (twins merged) makes
-it fast: about a millisecond for a full endgame. It is checked against
+it fast: about 0.12 ms for a full endgame (`examples/solver_bench.rs`). It is checked against
 unmemoised minimax on random short endgames, against unpruned minimax on
 full ones (value and card chosen), and against the engine's own scoring in
 real games. "Exact" is for the hand's points: the solver maximises the
@@ -480,8 +480,9 @@ worlds help steadily (8, 16, 32 at horizon 9: +27.2, +32.8, +35.3); a longer
 horizon helps up to 9–13 face-down cards and then hurts (21: +19.5), as
 rung-4 rollouts from far out become a poor model of the play. The chosen
 setting, at the knee, was confirmed on fresh seeds at +30.1 points a hand
-over rung 4. It cost a ninefold speed-up of the solver to make affordable
-(alpha-beta with a table of bounds, §10.3). The cautions below still stand
+over rung 4. It took a ninefold speed-up of the solver to make affordable
+(alpha-beta with a table of bounds, §10.3), and a further 2.5-fold since
+(moves on the stack, a table sized for the search). The cautions below still stand
 for any search reaching further back.
 
 **The general method.** Determinised Monte Carlo: sample the opponent's concealed cards and the stock

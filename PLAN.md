@@ -193,10 +193,15 @@ the full ladder run. Levels run 1 to 5.
 3. **The 3D table** (milestone 9): first a conversation about the score
    display in homage to the period markers ("To discuss with the
    maintainer" below), then `web3d` adapted from piquet (DESIGN §11).
-4. **Engine work that needs no decision**, when the above wait: the anatomy
-   of a game at the top rung; rung 6 (play for the game, not the hand: the
-   race to 1,000 and the double at 500, DESIGN §10.4); a version field for
-   saved records; looking ahead in declarations as well as in play.
+4. **Engine work that needs no decision**, when the above wait. Done on
+   2026-10-02: the anatomy at rung 5; a record version guarded by a golden
+   game; looking ahead in declarations (measured worse, not kept); the
+   solver 2.5 times faster again. Still open: rung 6, play for the game
+   rather than the hand (the race to 1,000 and the double at 500, DESIGN
+   §10.4). It changes only a game's last hand, about one in four, so a gain
+   in games won would be small: telling a 1–2% gain from noise needs on
+   the order of 10,000 mirrored pairs of games, about three hours on this
+   machine. To agree with the maintainer before running.
 
 ## To measure, once the engine plays
 
