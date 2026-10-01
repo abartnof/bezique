@@ -268,7 +268,11 @@ impl Hand {
             }
             (Phase::Declare, Action::Pass) => self.draw(),
             (Phase::Declare, Action::Dix(seven)) => {
-                if !self.dix_cards(seat).any(|c| c == seven) {
+                // Either twin will do; only the list of moves is deduplicated.
+                let unscored = self.holdings[seat.index()]
+                    .concealed
+                    .minus(self.sevens_scored);
+                if !(unscored.contains(seven) && is_seven_of(seven, self.trump)) {
                     return Err(
                         "only a seven of trumps in your hand, not yet scored, may be exchanged"
                             .to_string(),
@@ -646,6 +650,16 @@ mod tests {
         play(&mut h, "7C");
         play(&mut h, "8S");
         assert!(!h.legal().iter().any(|a| matches!(a, Action::Dix(_))));
+    }
+
+    #[test]
+    fn either_twin_of_the_seven_may_be_exchanged() {
+        let mut h = hand("7H 7H AS 8C 9C 7D 8D 9D", DEALER, "KH", "");
+        play(&mut h, "AS");
+        play(&mut h, "7S");
+        h.apply(Action::Dix(c("7H", 1))).unwrap();
+        assert!(h.holdings(Seat::Pone).concealed.contains(c("7H", 0)));
+        assert_eq!(h.stock().turn_up(), Some(c("7H", 1)));
     }
 
     #[test]
