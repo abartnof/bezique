@@ -11,7 +11,7 @@
 
 use std::collections::BTreeMap;
 
-use bezique_core::agents::{Legal, Maxims, Style};
+use bezique_core::agents::{rung, Maxims, Skills, Style};
 use bezique_core::cards::Suit;
 use bezique_core::deal::Seat;
 use bezique_core::game::{Game, Side};
@@ -28,16 +28,13 @@ fn main() {
         Some("riders") => riders(n(2000)),
         Some("ladder") => ladder(n(1000)),
         Some("tune") => tune(&args[1..]),
+        Some("skills") => skills(n(2000)),
         _ => eprintln!("measure anatomy|riders|ladder [n] | tune <field> <pairs> <value>..."),
     }
 }
 
 fn maxims(_: u64) -> Box<dyn Agent> {
     Box::new(Maxims::default())
-}
-
-fn legal(_: u64) -> Box<dyn Agent> {
-    Box::new(Legal)
 }
 
 /// Rung 2 announcing only the combination it scores: what free riders are
@@ -132,6 +129,7 @@ fn tune(args: &[String]) {
         let variant = move |_: u64| -> Box<dyn Agent> {
             Box::new(Maxims {
                 style: style.clone(),
+                ..Maxims::default()
             })
         };
         report_hands(
@@ -141,15 +139,42 @@ fn tune(args: &[String]) {
     }
 }
 
+/// Each skill alone, added to rung 2, against rung 2.
+fn skills(pairs: u64) {
+    let only = |memory, endgame| {
+        move |_: u64| -> Box<dyn Agent> {
+            Box::new(Maxims {
+                skills: Skills { memory, endgame },
+                ..Maxims::default()
+            })
+        }
+    };
+    for (name, make) in [
+        ("memory", only(true, false)),
+        ("memory and the exact endgame", only(true, true)),
+    ] {
+        report_hands(
+            &format!("rung 2 with {name}, against rung 2"),
+            &tournament::hands(7_000_000, pairs, &make, &maxims),
+        );
+    }
+}
+
+/// Each rung against the one below it, in mirrored hands and games.
 fn ladder(pairs: u64) {
-    report_hands(
-        "rung 2 against rung 1, hands",
-        &tournament::hands(1_000_000, pairs, &maxims, &legal),
-    );
-    report_games(
-        "rung 2 against rung 1, games",
-        &tournament::games(2_000_000, pairs, &maxims, &legal),
-    );
+    for level in 2..=bezique_core::agents::TOP {
+        let upper = move |_: u64| rung(level);
+        let lower = move |_: u64| rung(level - 1);
+        let base = 1_000_000 * u64::from(level);
+        report_hands(
+            &format!("rung {level} against rung {}, hands", level - 1),
+            &tournament::hands(base, pairs, &upper, &lower),
+        );
+        report_games(
+            &format!("rung {level} against rung {}, games", level - 1),
+            &tournament::games(base + 500_000, pairs / 2, &upper, &lower),
+        );
+    }
 }
 
 fn riders(pairs: u64) {

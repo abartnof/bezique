@@ -16,6 +16,7 @@ use crate::game::Game;
 use crate::hand::{Action, Phase};
 use crate::melds::{Class, Meld};
 use crate::observation::{Agent, View};
+use crate::solver::{Endgame, Solver};
 use crate::tricks;
 
 /// Rung 1: legal, and no more.
@@ -89,23 +90,97 @@ impl Default for Style {
     }
 }
 
-/// Rung 2: the maxims of the period books, weighed by a [`Style`].
+/// What a rung can do beyond the maxims. Each is kept only if it measurably
+/// improves the rung below (`measurements/README.md`): watching the
+/// opponent's table (counting its cards as gone, taking tricks to stop it
+/// declaring) was tried on 2026-10-02 and gained nothing measurable, so it
+/// is not here.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct Skills {
+    /// Remembers every card played, and so knows when a combination can no
+    /// longer be made (alone, +1.9 points a hand over rung 2).
+    pub memory: bool,
+    /// Plays the last eight tricks exactly, which needs the memory to know
+    /// the opponent's hand (with memory, +19.9 points a hand over rung 2).
+    pub endgame: bool,
+}
+
+/// Rungs 2 to 5: the maxims of the period books, weighed by a [`Style`],
+/// with the [`Skills`] of the rung.
 #[derive(Clone, Debug, Default)]
 pub struct Maxims {
     pub style: Style,
+    pub skills: Skills,
 }
 
 impl Agent for Maxims {
     fn choose(&mut self, view: &View, legal: &[Action]) -> Action {
         let style = &self.style;
+        let in_endgame = view.stock == 0 && view.turn_up.is_none();
+        if self.skills.endgame && in_endgame && view.phase != Phase::Declare {
+            return Action::Play(solve(view));
+        }
+        let mut gone = CardSet::EMPTY;
+        if self.skills.memory {
+            gone = gone.union(view.played());
+        }
+        let think = Think { view, style, gone };
         let card = match (view.phase, view.led) {
             (Phase::Declare, _) => return declaration(view, legal, true),
-            (Phase::Follow, Some(led)) => follow(view, legal, led, style),
-            _ if view.stock == 0 && view.turn_up.is_none() => endgame_lead(view, legal),
-            _ => cheapest(view, cards(legal), style),
+            (Phase::Follow, Some(led)) => follow(&think, legal, led),
+            _ if in_endgame => endgame_lead(view, legal),
+            _ => cheapest(&think, cards(legal)),
         };
         Action::Play(card)
     }
+}
+
+/// What one decision is weighed with.
+struct Think<'a> {
+    view: &'a View,
+    style: &'a Style,
+    /// Cards known to be out of reach: those played, to a rung that
+    /// remembers them.
+    gone: CardSet,
+}
+
+/// The highest rung built so far. Levels above it play as it does.
+pub const TOP: u8 = 3;
+
+/// The opponent at a level of the ladder.
+pub fn rung(level: u8) -> Box<dyn Agent> {
+    match level {
+        0 | 1 => Box::new(Legal),
+        2 => Box::new(Maxims::default()),
+        _ => Box::new(Maxims {
+            skills: Skills {
+                memory: true,
+                endgame: true,
+            },
+            ..Maxims::default()
+        }),
+    }
+}
+
+/// What the opponent at a level can do, in a player's words.
+pub fn describe(level: u8) -> &'static str {
+    match level {
+        0 | 1 => "plays any legal card, and declares whatever scores most",
+        2 => "plays by the maxims of the old books",
+        _ => "plays by the maxims, remembers every card, and so plays the last eight tricks perfectly",
+    }
+}
+
+/// The best card in the last eight tricks, where both hands are known to a
+/// player who has counted: its own, and every card not yet seen.
+fn solve(view: &View) -> Card {
+    let theirs = view.theirs.cards().union(view.unseen());
+    let position = Endgame {
+        mover: view.mine.cards(),
+        other: theirs,
+        led: view.led,
+    };
+    Solver::new(view.trump).best(position).0
 }
 
 /// The cards among the legal moves.
@@ -117,9 +192,9 @@ fn cards(legal: &[Action]) -> impl Iterator<Item = Card> + '_ {
 }
 
 /// The card least worth keeping.
-fn cheapest(view: &View, cards: impl Iterator<Item = Card>, style: &Style) -> Card {
+fn cheapest(think: &Think, cards: impl Iterator<Item = Card>) -> Card {
     cards
-        .min_by_key(|&c| (keep_value(c, view, style), c.0))
+        .min_by_key(|&c| (keep_value(c, think), c.0))
         .expect("a card to play")
 }
 
@@ -127,7 +202,10 @@ fn cheapest(view: &View, cards: impl Iterator<Item = Card>, style: &Style) -> Ca
 /// while declaring lasts, more for each combination it can still serve in.
 /// A card on the table with no such work left is cheaper, so that of two
 /// alike the shown one goes first.
-fn keep_value(card: Card, view: &View, style: &Style) -> i32 {
+fn keep_value(card: Card, think: &Think) -> i32 {
+    let (view, style, gone) = (think.view, think.style, think.gone);
+    // Copies of a type not known to be out of reach.
+    let available = |t: CardType| 2 - gone.count_of(t) as i32;
     let rank = card.rank();
     let trump = view.trump;
     let mine = &view.mine;
@@ -155,7 +233,9 @@ fn keep_value(card: Card, view: &View, style: &Style) -> i32 {
     let card_type = card.card_type();
     let bezique_card = card_type == CardType::new(Rank::QUEEN, Suit::SPADES)
         || card_type == CardType::new(Rank::JACK, Suit::DIAMONDS);
-    if bezique_card && level(Class::Bezique) < 2 {
+    let bezique_alive = available(CardType::new(Rank::QUEEN, Suit::SPADES)) >= 1
+        && available(CardType::new(Rank::JACK, Suit::DIAMONDS)) >= 1;
+    if bezique_card && level(Class::Bezique) < 2 && bezique_alive {
         value += style.bezique;
         work = true;
     }
@@ -173,17 +253,27 @@ fn keep_value(card: Card, view: &View, style: &Style) -> i32 {
         work = true;
     }
     let sequence = [Rank::ACE, Rank::TEN, Rank::KING, Rank::QUEEN, Rank::JACK];
+    let sequence_alive = sequence
+        .iter()
+        .all(|&r| available(CardType::new(r, trump)) >= 1);
     if card.suit() == trump
         && sequence.contains(&rank)
         && level(Class::Marriages) < 2
         && sequence.iter().filter(|&&r| holds(r, trump)).count() >= 3
+        && sequence_alive
     {
         value += style.sequence;
         work = true;
     }
+    let four_alive = Suit::ALL
+        .iter()
+        .map(|&s| available(CardType::new(rank, s)))
+        .sum::<i32>()
+        >= 4;
     if [Rank::ACE, Rank::KING, Rank::QUEEN, Rank::JACK].contains(&rank)
         && level(Class::Fours) == 0
         && held.cards().filter(|c| c.rank() == rank).count() >= 3
+        && four_alive
     {
         value += style.four;
         work = true;
@@ -206,16 +296,14 @@ fn keep_value(card: Card, view: &View, style: &Style) -> i32 {
 /// which leaves fewer choices): take a brisque, or the lead when there is
 /// something to declare, if it can be done cheaply; otherwise throw the least
 /// valuable card, sparing brisques.
-fn follow(view: &View, legal: &[Action], led: Card, style: &Style) -> Card {
+fn follow(think: &Think, legal: &[Action], led: Card) -> Card {
+    let (view, style) = (think.view, think.style);
     let trump = view.trump;
     let winners: Vec<Card> = cards(legal)
         .filter(|&c| tricks::second_wins(led, c, trump))
         .collect();
-    if let Some(&winner) = winners
-        .iter()
-        .min_by_key(|&&c| (keep_value(c, view, style), c.0))
-    {
-        let cost = keep_value(winner, view, style);
+    if let Some(&winner) = winners.iter().min_by_key(|&&c| (keep_value(c, think), c.0)) {
+        let cost = keep_value(winner, think);
         // What winning would let it declare: the more, the more it may spend.
         let waiting = if view.stock > 0 {
             view.mine
@@ -246,7 +334,7 @@ fn follow(view: &View, legal: &[Action], led: Card, style: &Style) -> Card {
     pool.into_iter()
         .min_by_key(|&c| {
             (
-                keep_value(c, view, style) + if c.is_brisque() { 20 } else { 0 },
+                keep_value(c, think) + if c.is_brisque() { 20 } else { 0 },
                 c.0,
             )
         })

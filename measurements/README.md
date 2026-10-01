@@ -15,6 +15,9 @@ cargo run --release -p bezique-core --bin measure -- <report> [n]
 | `anatomy-rung2-bezique14.txt` | `anatomy 2000` | The same, with bezique cards valued above aces and the table discount kept off cards with work left: doubles 0.8% of player-hands. |
 | `anatomy-rung2-tuned.txt` | `anatomy 2000` | Rung 2 as tuned on 2026-10-02 (bezique 14, urgency 16, take_brisque 20): doubles 1.7%, the sequence 7.8% of player-hands, 4.58 hands a game. |
 | `ladder-rung2-tuned.txt` | `ladder 2000` | Tuned rung 2 against rung 1: +80.5 points a hand (se 2.5); 88.0% of games (se 0.5). |
+| `ladder-rungs-1-5.txt` | `ladder 2000` (as first built) | A first five-rung ladder: memory (+1.2, se 0.7) and watching the table (+0.2, se 0.5) did not beat the rung below; the exact endgame did (+18.9, se 0.3). Kept as the record of why the ladder was rebuilt. |
+| `skills.txt` | `skills 2000` | Each skill added to rung 2 alone: memory +1.9 (se 0.6); memory with the exact endgame +19.9 (se 0.7). |
+| `ladder.txt` | `ladder 2000` | The ladder as rebuilt: rung 2 over rung 1 +79.0 (se 2.4), 87.5% of games; rung 3 (memory and the exact endgame) over rung 2 +19.2 (se 0.8), 58.0% of games. |
 
 ## Tuning rung 2 (2026-10-02)
 
