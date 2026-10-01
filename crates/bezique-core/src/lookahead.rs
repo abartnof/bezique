@@ -7,7 +7,9 @@
 //! opponent's hand and the stock, consistently with its view; the stock
 //! tricks are played out by rung 4 on both sides; and the endgame they lead
 //! into is valued with one call to the solver rather than played. The card
-//! with the best total over the worlds is played.
+//! with the best total over the worlds is played. A world is rebuilt without
+//! the tricks before it, so the rollout players are told what was played
+//! before, by type, and recall it as rung 4 does in play.
 //!
 //! Everything is drawn from the view alone. The worlds are seeded from the
 //! position, so the same position always gets the same decision: replaying
@@ -35,6 +37,11 @@ pub struct Lookahead {
     /// Looks ahead in the turn of declaring too, not only in play. Off at
     /// rung 5: it measured worse (`measurements/lookahead-declarations.txt`).
     pub declarations: bool,
+    /// The rollout players recall the cards played before the world began
+    /// (by type), as rung 4 does in play. Off only to measure what it is
+    /// worth: without it rung 4 in a world chose differently from rung 4 in
+    /// the real game in about one decision in twenty-five.
+    pub rollout_memory: bool,
 }
 
 impl Default for Lookahead {
@@ -44,14 +51,16 @@ impl Default for Lookahead {
             horizon: 9,
             worlds: 16,
             declarations: false,
+            rollout_memory: true,
         }
     }
 }
 
 impl Lookahead {
     /// Rung 4 in the same style: plays everything this rung does not look
-    /// ahead for, and both sides of every world.
-    fn rung4(&self) -> Maxims {
+    /// ahead for, and both sides of every world, recalling `remembered`, the
+    /// cards played before the world began (by type).
+    fn rung4(&self, remembered: [u8; 32]) -> Maxims {
         Maxims {
             style: self.style.clone(),
             skills: Skills {
@@ -59,17 +68,25 @@ impl Lookahead {
                 endgame: true,
                 last_stock_trick: true,
             },
+            remembered,
         }
     }
 
     /// The points `action` is worth to this player, from now to the end of
     /// the hand, in `world`.
-    fn value_of(&self, world: &Game, seat: Seat, action: &Action, solver: &mut Solver) -> i32 {
+    fn value_of(
+        &self,
+        world: &Game,
+        seat: Seat,
+        action: &Action,
+        remembered: [u8; 32],
+        solver: &mut Solver,
+    ) -> i32 {
         let mut game = world.clone();
         if game.apply(action.clone()).is_err() {
             return i32::MIN / 2;
         }
-        let mut agents = [self.rung4(), self.rung4()];
+        let mut agents = [self.rung4(remembered), self.rung4(remembered)];
         while let Some(side) = game.to_move() {
             if game.hand().in_endgame() {
                 break;
@@ -95,7 +112,7 @@ impl Lookahead {
 
 impl Agent for Lookahead {
     fn choose(&mut self, view: &View, legal: &[Action]) -> Action {
-        let mut rung4 = self.rung4();
+        let mut rung4 = self.rung4([0; 32]);
         let usual = rung4.choose(view, legal);
         let candidates: Vec<Action> = legal.to_vec();
         if (view.phase == Phase::Declare && !self.declarations)
@@ -105,6 +122,11 @@ impl Agent for Lookahead {
         {
             return usual;
         }
+        let remembered = if self.rollout_memory {
+            before_the_world(view)
+        } else {
+            [0; 32]
+        };
         let mut rng = Rng::seeded(fingerprint(view));
         let mut solver = Solver::new(view.trump);
         let mut totals = vec![0i64; candidates.len()];
@@ -115,7 +137,7 @@ impl Agent for Lookahead {
             };
             sampled += 1;
             for (total, action) in totals.iter_mut().zip(&candidates) {
-                *total += i64::from(self.value_of(&world, view.seat, action, &mut solver));
+                *total += i64::from(self.value_of(&world, view.seat, action, remembered, &mut solver));
             }
         }
         if sampled == 0 {
@@ -130,6 +152,21 @@ impl Agent for Lookahead {
         }
         candidates[best].clone()
     }
+}
+
+/// The cards played before a world built from `view` begins, counted by
+/// type: every trick taken, but for the one the world replays in the turn of
+/// declaring. Both players saw them, so both rollout players recall them.
+fn before_the_world(view: &View) -> [u8; 32] {
+    let replayed = usize::from(view.phase == Phase::Declare);
+    let taken = view.tricks.len().saturating_sub(replayed);
+    let mut counts = [0u8; 32];
+    for trick in &view.tricks[..taken] {
+        for card in [trick.led, trick.second] {
+            counts[usize::from(card.card_type().0)] += 1;
+        }
+    }
+    counts
 }
 
 /// A game consistent with `view`, its hidden cards dealt at random: the
@@ -290,6 +327,30 @@ mod tests {
                 assert_eq!(world.legal(), game.legal());
             }
         }
+    }
+
+    /// The player at the root of a world sees what it sees in the real
+    /// game, its memory included: rung 4 there chooses as rung 4 does in the
+    /// real game. (Without the cards played before the world, recalled by
+    /// type, it chose differently in about one decision in twenty-five.)
+    #[test]
+    fn in_a_world_rung_4_chooses_as_in_the_real_game() {
+        let mut rng = Rng::seeded(3);
+        let la = Lookahead::default();
+        let mut checked = 0;
+        for (game, view) in positions(30) {
+            let legal = game.legal();
+            if view.phase == Phase::Declare || legal.len() < 2 {
+                continue;
+            }
+            let real = rung(4).choose(&view, &legal);
+            let world = world(&view, &mut rng).unwrap();
+            let seen = View::of(&world, view.side);
+            let mut four = la.rung4(before_the_world(&view));
+            assert_eq!(four.choose(&seen, &world.legal()), real, "{view:?}");
+            checked += 1;
+        }
+        assert!(checked > 150, "{checked}");
     }
 
     #[test]

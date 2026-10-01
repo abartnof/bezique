@@ -135,7 +135,7 @@ pub enum EventKind {
 /// record from before is refused rather than replayed into a different
 /// game. The test `the_golden_game_replays_unchanged` fails when play
 /// changes, as the reminder to bump it.
-pub const RECORD_VERSION: u32 = 1;
+pub const RECORD_VERSION: u32 = 2;
 
 pub struct Session {
     seed: u64,
@@ -979,7 +979,7 @@ mod tests {
         }
         assert_eq!(
             (RECORD_VERSION, fingerprint),
-            (1, 10_493_367_756_294_174_433),
+            (2, 460_755_890_721_319_643),
             "play has changed: bump RECORD_VERSION and pin the new fingerprint"
         );
     }

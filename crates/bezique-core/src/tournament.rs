@@ -59,6 +59,8 @@ fn each_seed<T: Send>(first: u64, count: u64, f: impl Fn(u64) -> T + Sync) -> Ve
 /// Mirrored games between two agents.
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct Games {
+    /// The seed of the first pair; pairs are dealt from consecutive seeds.
+    pub first_seed: u64,
     /// Games won by each agent.
     pub wins: [u32; 2],
     /// Doubles won by each agent (the loser under 500).
@@ -138,7 +140,10 @@ pub fn games(first_seed: u64, pairs: u64, a: Make, b: Make) -> Games {
         }
         pair
     });
-    let mut result = Games::default();
+    let mut result = Games {
+        first_seed,
+        ..Games::default()
+    };
     for pair in played {
         let mut first_won = 0;
         let mut points = 0i64;
@@ -163,6 +168,8 @@ pub fn games(first_seed: u64, pairs: u64, a: Make, b: Make) -> Games {
 /// Mirrored single hands between two agents.
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct Hands {
+    /// The seed of the first pair; pairs are dealt from consecutive seeds.
+    pub first_seed: u64,
     pub pairs: u32,
     /// The first agent's points minus the second's, summed over each pair.
     pub margins: Vec<i64>,
@@ -210,6 +217,7 @@ pub fn hands(first_seed: u64, pairs: u64, a: Make, b: Make) -> Hands {
         margin
     });
     Hands {
+        first_seed,
         pairs: margins.len() as u32,
         margins,
     }
@@ -261,7 +269,10 @@ impl Sequential {
 
 /// Mirrored hands, played in batches until `rule` says stop.
 pub fn hands_until(first_seed: u64, rule: Sequential, a: Make, b: Make) -> (Hands, Stop) {
-    let mut all = Hands::default();
+    let mut all = Hands {
+        first_seed,
+        ..Hands::default()
+    };
     loop {
         let more = hands(first_seed + u64::from(all.pairs), rule.batch, a, b);
         all.pairs += more.pairs;
@@ -275,7 +286,10 @@ pub fn hands_until(first_seed: u64, rule: Sequential, a: Make, b: Make) -> (Hand
 /// Mirrored games, played in batches until `rule` says stop, judged by game
 /// points a game (a double counting two).
 pub fn games_until(first_seed: u64, rule: Sequential, a: Make, b: Make) -> (Games, Stop) {
-    let mut all = Games::default();
+    let mut all = Games {
+        first_seed,
+        ..Games::default()
+    };
     loop {
         let more = games(first_seed + u64::from(all.pairs()), rule.batch, a, b);
         for i in 0..2 {

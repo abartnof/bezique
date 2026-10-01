@@ -143,6 +143,12 @@ pub struct Skills {
 pub struct Maxims {
     pub style: Style,
     pub skills: Skills,
+    /// Cards played before the position it sees, counted by type: what a
+    /// rung with memory recalls in a world rebuilt part-way through a hand
+    /// (rung 5's), whose view holds no tricks from before. Empty in play,
+    /// where the view has every trick. Counted by type because the world's
+    /// view numbers twins afresh.
+    pub remembered: [u8; 32],
 }
 
 impl Agent for Maxims {
@@ -158,10 +164,16 @@ impl Agent for Maxims {
         if self.skills.memory {
             gone = gone.union(view.played());
         }
+        let remembered = if self.skills.memory {
+            self.remembered
+        } else {
+            [0; 32]
+        };
         let think = Think {
             view,
             style,
             gone,
+            remembered,
             last_stock_trick: self.skills.last_stock_trick,
         };
         let card = match (view.phase, view.led) {
@@ -181,6 +193,8 @@ struct Think<'a> {
     /// Cards known to be out of reach: those played, to a rung that
     /// remembers them.
     gone: CardSet,
+    /// More out of reach, by type: played before the view's first trick.
+    remembered: [u8; 32],
     last_stock_trick: bool,
 }
 
@@ -209,10 +223,12 @@ pub fn rung_with(level: u8, style: &Style) -> Box<dyn Agent> {
         3 => Box::new(Maxims {
             style,
             skills: skills(false),
+            ..Maxims::default()
         }),
         4 => Box::new(Maxims {
             style,
             skills: skills(true),
+            ..Maxims::default()
         }),
         _ => Box::new(Lookahead {
             style,
@@ -306,7 +322,9 @@ fn pick(think: &Think, valued: Vec<(Card, i32)>) -> Card {
 fn keep_value(card: Card, think: &Think) -> i32 {
     let (view, style, gone) = (think.view, think.style, think.gone);
     // Copies of a type not known to be out of reach.
-    let available = |t: CardType| 2 - gone.count_of(t) as i32;
+    let available = |t: CardType| {
+        2 - (gone.count_of(t) + u32::from(think.remembered[usize::from(t.0)])).min(2) as i32
+    };
     let rank = card.rank();
     let trump = view.trump;
     let mine = &view.mine;

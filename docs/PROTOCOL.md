@@ -84,7 +84,7 @@ an engine running in the page cannot keep from a person determined to look.
 
 ```jsonc
 {
-  "protocol": 1, "record_version": 1,
+  "protocol": 1, "record_version": 2,
   "level": 4,
   "opponent": "Your opponent remembers every card, ... Its style: ...",
   "phase": "lead",            // choose_dealer, lead, follow, declare, over

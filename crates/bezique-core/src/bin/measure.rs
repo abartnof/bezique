@@ -8,6 +8,7 @@
 //! cargo run --release -p bezique-core --bin measure -- lookahead [pairs] [horizon] [worlds]
 //! cargo run --release -p bezique-core --bin measure -- lookahead-declarations [pairs]
 //! cargo run --release -p bezique-core --bin measure -- lookahead-vs-five [pairs] [horizon] [worlds]
+//! cargo run --release -p bezique-core --bin measure -- rollout-memory
 //! ```
 //!
 //! Each prints a short report, with the seeds it used; the reports kept are
@@ -48,6 +49,7 @@ fn main() {
         Some("lookahead") => lookahead(n(200), &args[2..]),
         Some("lookahead-declarations") => lookahead_declarations(n(500)),
         Some("lookahead-vs-five") => lookahead_vs_five(n(500), &args[2..]),
+        Some("rollout-memory") => rollout_memory(),
         _ => {
             eprintln!("measure: no such report; see the list at the top of measure.rs");
             std::process::exit(2);
@@ -267,6 +269,50 @@ fn lookahead_vs_five(pairs: u64, rest: &[String]) {
     report_hands(
         &format!("rung 5 with horizon {horizon} and {worlds} worlds, against rung 5"),
         &tournament::hands(seeds(13_000_000), pairs, &variant, &five),
+    );
+}
+
+/// Rung 5 with rollouts that recall the cards played before the world
+/// against rung 5 with rollouts that do not, in mirrored hands, sequentially
+/// (DESIGN §10.5): stop when the difference is clear or clearly smaller than
+/// a point a hand.
+fn rollout_memory() {
+    let with = |_: u64| rung(5);
+    let without = |_: u64| -> Box<dyn Agent> {
+        Box::new(Lookahead {
+            rollout_memory: false,
+            ..Lookahead::default()
+        })
+    };
+    sequential_hands(
+        "rung 5 with rollout memory, against rung 5 without",
+        seeds(14_000_000),
+        tournament::Sequential {
+            batch: 250,
+            min: 500,
+            max: 8000,
+            z: 3.0,
+            worth: 1.0,
+        },
+        &with,
+        &without,
+    );
+}
+
+/// A sequential run in mirrored hands, reported with its rule and why it
+/// stopped.
+fn sequential_hands(
+    name: &str,
+    first_seed: u64,
+    rule: tournament::Sequential,
+    a: tournament::Make,
+    b: tournament::Make,
+) {
+    let (h, stop) = tournament::hands_until(first_seed, rule, a, b);
+    report_hands(name, &h);
+    println!(
+        "    sequential: batches of {}, looks from {} pairs, stop at |z| >= {} or when the effect is within ±{} at two standard errors, cap {}; stopped: {stop:?}",
+        rule.batch, rule.min, rule.z, rule.worth, rule.max
     );
 }
 
