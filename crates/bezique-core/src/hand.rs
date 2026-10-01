@@ -126,7 +126,10 @@ impl Hand {
     /// while the stock lasts, a turn-up while face-down cards remain, an even
     /// number to draw, and nothing on the table once the stock is gone. Which
     /// sevens of trumps have already scored is not part of the position; say
-    /// so with [`Hand::with_sevens_scored`].
+    /// so with [`Hand::with_sevens_scored`]. Nor is what each player has seen
+    /// of the other's concealed cards (the card taken by the dix, a seven
+    /// shown): an arranged position starts with nothing seen, and the tricks
+    /// before it are gone.
     pub fn arranged(
         trump: Suit,
         stock: Stock,
@@ -134,8 +137,10 @@ impl Hand {
         leader: Seat,
         tricks_taken: u8,
     ) -> Result<Hand, String> {
-        if tricks_taken > 32 {
-            return Err(format!("{tricks_taken} tricks: a hand has 32"));
+        if tricks_taken >= 32 {
+            return Err(format!(
+                "{tricks_taken} tricks taken: a hand has 32, and one after its last is over"
+            ));
         }
         let held = [holdings[0].cards(), holdings[1].cards()];
         for h in &holdings {
@@ -992,6 +997,14 @@ mod tests {
                 [eight("AS"), eight("7S")],
                 Seat::Pone,
                 255,
+            ),
+            // A hand after its last trick: over, not a position to play.
+            Hand::arranged(
+                trump,
+                Stock::new(&[], None),
+                [Holdings::default(), Holdings::default()],
+                Seat::Pone,
+                32,
             ),
             // A card in two places.
             Hand::arranged(

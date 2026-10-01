@@ -179,7 +179,9 @@ K♥ taken and a K♥ played was told whether another remained. Both are closed
   because the cards may be back in hand.
 - Tested on every position of random games: a lone twin the viewer never
   held is always shown as copy 0, and the view agrees with the truth type for
-  type. And the stronger property (`tests/twin_symmetry.rs`): swapping the
+  type. Copy numbers are per view: a card may be renumbered from one view to
+  the next, so nothing follows a card across views by its id. And the
+  stronger property (`tests/twin_symmetry.rs`): swapping the
   two copies of a type everywhere, in the deal and in every move, leaves the
   view of a player who never held that type unchanged at every position.
 

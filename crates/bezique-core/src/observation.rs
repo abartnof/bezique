@@ -180,6 +180,11 @@ impl View {
     }
 }
 
+/// Copy numbers are per view: the same physical card may be numbered
+/// differently in a later view (a K♠ on the table is copy 0 until the other
+/// K♠ is played, when the order of where they lie may renumber it). Nothing
+/// should follow a card from one view to the next by its id.
+///
 /// Which physical copy of a twin appears is the engine's choice, not
 /// something a player can see: real twins cannot be told apart. So in a
 /// player's view the twins of a type that player has never held are
