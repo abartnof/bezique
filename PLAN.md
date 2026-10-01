@@ -222,7 +222,10 @@ Still open:
 - What the carried-score mechanic is worth against the simpler
   one-meld-per-trick rule (`measure riders` measures free riders only).
 - Whether declaring at once or holding back to hide the hand matters.
-- The same anatomy at the top rung, where the play is stronger.
+- (Answered: the same anatomy at rung 5, `anatomy-rung5.txt`. Much the
+  same game: 4.19 hands, 13.1% doubled, no seat advantage; stronger play
+  makes more of the sequence and the dix, and the last stock trick, now
+  fought for by both, is worth less to its winner.)
 
 ## To discuss with the maintainer, when the table is built
 
