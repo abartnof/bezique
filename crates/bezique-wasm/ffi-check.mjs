@@ -1,13 +1,13 @@
 // Drives a whole game through the WebAssembly exports, as a page would.
 //
 //   cargo build --release -p bezique-wasm --lib --target wasm32-unknown-unknown
-//   node crates/bezique-wasm/ffi-check.mjs target/wasm32-unknown-unknown/release/bezique_wasm.wasm
+//   node crates/bezique-wasm/ffi-check.mjs target/wasm32-unknown-unknown/release/bezique_wasm.wasm [level]
 import { readFileSync } from 'node:fs';
 
 const bytes = readFileSync(process.argv[2]);
 const { instance } = await WebAssembly.instantiate(bytes, {});
 const ex = instance.exports;
-ex.bezique_new(4, 42, 0, 0);
+ex.bezique_new(Number(process.argv[3] ?? 4), 42, 0, 0);
 // Read memory.buffer afresh after every call: the module may grow its memory.
 const state = () =>
   JSON.parse(new TextDecoder().decode(new Uint8Array(ex.memory.buffer, ex.bezique_state(), ex.bezique_state_len())));

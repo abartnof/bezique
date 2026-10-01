@@ -14,6 +14,7 @@
 use crate::cards::{Card, CardSet, CardType, Rank, Suit};
 use crate::game::Game;
 use crate::hand::{Action, Phase};
+use crate::lookahead::Lookahead;
 use crate::melds::{Class, Meld};
 use crate::observation::{Agent, View};
 use crate::solver::{Endgame, Solver};
@@ -136,7 +137,7 @@ pub struct Skills {
     pub last_stock_trick: bool,
 }
 
-/// Rungs 2 to 5: the maxims of the period books, weighed by a [`Style`],
+/// Rungs 2 to 4, and rung 5 away from the end of the stock: the maxims of the period books, weighed by a [`Style`],
 /// with the [`Skills`] of the rung.
 #[derive(Clone, Debug, Default)]
 pub struct Maxims {
@@ -184,7 +185,7 @@ struct Think<'a> {
 }
 
 /// The highest rung built so far. Levels above it play as it does.
-pub const TOP: u8 = 4;
+pub const TOP: u8 = 5;
 
 /// The opponent at a level of the ladder, in the balanced style.
 pub fn rung(level: u8) -> Box<dyn Agent> {
@@ -209,9 +210,13 @@ pub fn rung_with(level: u8, style: &Style) -> Box<dyn Agent> {
             style,
             skills: skills(false),
         }),
-        _ => Box::new(Maxims {
+        4 => Box::new(Maxims {
             style,
             skills: skills(true),
+        }),
+        _ => Box::new(Lookahead {
+            style,
+            ..Lookahead::default()
         }),
     }
 }
@@ -222,7 +227,8 @@ pub fn describe(level: u8) -> &'static str {
         0 | 1 => "plays any legal card, and declares whatever scores most",
         2 => "plays by the maxims of the old books",
         3 => "plays by the maxims, remembers every card, and so plays the last eight tricks perfectly",
-        _ => "remembers every card, plays the last eight tricks perfectly, and fights for the last trick before the stock runs out",
+        4 => "remembers every card, plays the last eight tricks perfectly, and fights for the last trick before the stock runs out",
+        _ => "remembers every card, plays the last eight tricks perfectly, and near the end of the stock looks ahead at what you might hold",
     }
 }
 

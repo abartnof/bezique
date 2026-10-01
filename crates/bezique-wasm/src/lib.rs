@@ -350,7 +350,7 @@ pub mod ffi {
         })
     }
 
-    /// Sits down at a new table, discarding any old one: level 1 to 4; persona
+    /// Sits down at a new table, discarding any old one: level 1 to 5; persona
     /// 0 to draw one, else its place in the list from 1; erraticism in
     /// thousandths.
     #[no_mangle]

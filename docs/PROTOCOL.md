@@ -20,11 +20,11 @@ The engine runs the opponent between the person's decisions, so after an
 accepted command the state is already at the person's next decision (or the
 end of the game).
 
-The person is always side A. `level` is 1 to 4 (`agents::TOP`); `persona` is
+The person is always side A. `level` is 1 to 5 (`agents::TOP`); `persona` is
 0 to draw one from the seed, else its place in `opponent::personas()` from 1
 (balanced, concentrates, close, bezique); `erraticism` is in thousandths. The
 same arguments always give the same sitting. Out-of-range arguments are not
-refused: the level is clamped to 1–4, erraticism to 0–1,000, and a persona
+refused: the level is clamped to 1–5, erraticism to 0–1,000, and a persona
 number past the list is drawn from the seed as 0 is. Before `bezique_new`
 the state is empty (`bezique_state_len()` is 0).
 
@@ -190,6 +190,8 @@ const send = (command) => {
 ```
 
 Read `memory.buffer` afresh after every call: the module may grow its
-memory. `crates/bezique-wasm/ffi-check.mjs` plays a whole game this way.
-Built with `cargo build --release -p bezique-wasm --lib --target
-wasm32-unknown-unknown`, the module is about 207 KB.
+memory. `crates/bezique-wasm/ffi-check.mjs` plays a whole game this way
+(at level 4 by default, or the level given after the module's path): in
+Node, a game takes about 0.3 s at level 4 and 1.2 s at level 5. Built with
+`cargo build --release -p bezique-wasm --lib --target
+wasm32-unknown-unknown`, the module is about 258 KB.

@@ -12,10 +12,12 @@ If `cargo` is not found, run `source ~/.cargo/env` first.
 
 Options (all listed by `--help`):
 
-- `--level 1` to `--level 4`: how strong your opponent is (2 is the default).
+- `--level 1` to `--level 5`: how strong your opponent is (2 is the default).
   1 plays legally and no more; 2 plays by the maxims of the old books; 3 also
   remembers every card and plays the last eight tricks perfectly; 4 also
-  fights for the last trick before the stock runs out.
+  fights for the last trick before the stock runs out; 5 also, near the end
+  of the stock, tries each card against guesses at your hand and the stock,
+  and plays the one that does best.
 - `--persona balanced|concentrates|close|bezique`: its style, drawn at random
   unless you choose. Each plays about as well as the others; they differ in
   how they look.

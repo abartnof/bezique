@@ -5,6 +5,7 @@
 //! cargo run --release -p bezique-core --bin measure -- riders [pairs]
 //! cargo run --release -p bezique-core --bin measure -- ladder [pairs]
 //! cargo run --release -p bezique-core --bin measure -- tune <field> <pairs> <value>...
+//! cargo run --release -p bezique-core --bin measure -- lookahead [pairs] [horizon] [worlds]
 //! ```
 //!
 //! Each prints a short report; the reports kept are in `measurements/`.
@@ -17,6 +18,7 @@ use bezique_core::deal::Seat;
 use bezique_core::game::{Game, Side};
 use bezique_core::hand::{Action, Hand, Phase, Source};
 use bezique_core::melds::{self, Announcement, Meld};
+use bezique_core::lookahead::Lookahead;
 use bezique_core::observation::{Agent, View};
 use bezique_core::opponent;
 use bezique_core::tournament;
@@ -32,6 +34,7 @@ fn main() {
         Some("skills") => skills(n(2000)),
         Some("last-stock-trick") => last_stock_trick(n(2000)),
         Some("personas") => personas(n(1000)),
+        Some("lookahead") => lookahead(n(200), &args[2..]),
         _ => eprintln!("measure anatomy|riders|ladder [n] | tune <field> <pairs> <value>..."),
     }
 }
@@ -195,6 +198,30 @@ fn last_stock_trick(pairs: u64) {
             &fighting,
             &three,
         ),
+    );
+}
+
+/// Rung 4 looking ahead near the end of the stock, against rung 4:
+/// `lookahead <pairs> [horizon] [worlds]`.
+fn lookahead(pairs: u64, rest: &[String]) {
+    let horizon = rest.first().and_then(|s| s.parse().ok()).unwrap_or(5);
+    let worlds = rest.get(1).and_then(|s| s.parse().ok()).unwrap_or(8);
+    let ahead = move |_: u64| -> Box<dyn Agent> {
+        Box::new(Lookahead {
+            horizon,
+            worlds,
+            ..Lookahead::default()
+        })
+    };
+    let four = |_: u64| rung(4);
+    let start = std::time::Instant::now();
+    report_hands(
+        &format!("rung 4 looking ahead (horizon {horizon}, {worlds} worlds), against rung 4"),
+        &tournament::hands(seed_base() + 7_000_000, pairs, &ahead, &four),
+    );
+    println!(
+        "    {:.2} s a hand",
+        start.elapsed().as_secs_f64() / (2 * pairs) as f64
     );
 }
 
