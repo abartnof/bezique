@@ -29,6 +29,7 @@ fn main() {
         Some("ladder") => ladder(n(1000)),
         Some("tune") => tune(&args[1..]),
         Some("skills") => skills(n(2000)),
+        Some("last-stock-trick") => last_stock_trick(n(2000)),
         _ => eprintln!("measure anatomy|riders|ladder [n] | tune <field> <pairs> <value>..."),
     }
 }
@@ -141,23 +142,54 @@ fn tune(args: &[String]) {
 
 /// Each skill alone, added to rung 2, against rung 2.
 fn skills(pairs: u64) {
-    let only = |memory, endgame| {
+    let only = |memory, endgame, last_stock_trick| {
         move |_: u64| -> Box<dyn Agent> {
             Box::new(Maxims {
-                skills: Skills { memory, endgame },
+                skills: Skills {
+                    memory,
+                    endgame,
+                    last_stock_trick,
+                },
                 ..Maxims::default()
             })
         }
     };
     for (name, make) in [
-        ("memory", only(true, false)),
-        ("memory and the exact endgame", only(true, true)),
+        ("memory", only(true, false, false)),
+        ("memory and the exact endgame", only(true, true, false)),
     ] {
         report_hands(
             &format!("rung 2 with {name}, against rung 2"),
             &tournament::hands(7_000_000, pairs, &make, &maxims),
         );
     }
+}
+
+/// Rung 3 fighting for the last stock trick, against rung 3.
+fn last_stock_trick(pairs: u64) {
+    let fighting = |_: u64| -> Box<dyn Agent> {
+        Box::new(Maxims {
+            skills: Skills {
+                memory: true,
+                endgame: true,
+                last_stock_trick: true,
+            },
+            ..Maxims::default()
+        })
+    };
+    let three = |_: u64| rung(3);
+    report_hands(
+        "rung 3 fighting for the last stock trick, against rung 3",
+        &tournament::hands(
+            std::env::var("MEASURE_SEED")
+                .ok()
+                .and_then(|s| s.parse().ok())
+                .unwrap_or(8_000_000),
+            pairs,
+            &fighting,
+            &three,
+        ),
+    );
 }
 
 /// Each rung against the one below it, in mirrored hands and games.

@@ -103,6 +103,9 @@ pub struct Skills {
     /// Plays the last eight tricks exactly, which needs the memory to know
     /// the opponent's hand (with memory, +19.9 points a hand over rung 2).
     pub endgame: bool,
+    /// Wins the last trick before the stock runs out whenever it can: the
+    /// winner makes the last declaration and leads into the endgame.
+    pub last_stock_trick: bool,
 }
 
 /// Rungs 2 to 5: the maxims of the period books, weighed by a [`Style`],
@@ -124,7 +127,12 @@ impl Agent for Maxims {
         if self.skills.memory {
             gone = gone.union(view.played());
         }
-        let think = Think { view, style, gone };
+        let think = Think {
+            view,
+            style,
+            gone,
+            last_stock_trick: self.skills.last_stock_trick,
+        };
         let card = match (view.phase, view.led) {
             (Phase::Declare, _) => return declaration(view, legal, true),
             (Phase::Follow, Some(led)) => follow(&think, legal, led),
@@ -142,6 +150,7 @@ struct Think<'a> {
     /// Cards known to be out of reach: those played, to a rung that
     /// remembers them.
     gone: CardSet,
+    last_stock_trick: bool,
 }
 
 /// The highest rung built so far. Levels above it play as it does.
@@ -156,6 +165,7 @@ pub fn rung(level: u8) -> Box<dyn Agent> {
             skills: Skills {
                 memory: true,
                 endgame: true,
+                last_stock_trick: false,
             },
             ..Maxims::default()
         }),
@@ -303,6 +313,9 @@ fn follow(think: &Think, legal: &[Action], led: Card) -> Card {
         .filter(|&c| tricks::second_wins(led, c, trump))
         .collect();
     if let Some(&winner) = winners.iter().min_by_key(|&&c| (keep_value(c, think), c.0)) {
+        if think.last_stock_trick && view.stock == 1 {
+            return winner;
+        }
         let cost = keep_value(winner, think);
         // What winning would let it declare: the more, the more it may spend.
         let waiting = if view.stock > 0 {
