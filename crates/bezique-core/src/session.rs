@@ -275,9 +275,7 @@ impl Session {
     }
 
     pub fn can_undo(&self) -> bool {
-        self.record
-            .iter()
-            .any(|r| !r.starts_with('*') && !r.starts_with("set "))
+        self.record.iter().any(|r| undoable(r))
     }
 
     pub fn seed(&self) -> u64 {
@@ -468,7 +466,7 @@ impl Session {
         let last = self
             .record
             .iter()
-            .rposition(|r| !r.starts_with('*') && !r.starts_with("set "))
+            .rposition(|r| undoable(r))
             .ok_or("there is nothing to undo")?;
         let mut record: Vec<String> = self.record[..last].to_vec();
         record.extend(
@@ -760,6 +758,15 @@ impl Session {
     }
 }
 
+/// Whether undo may take back this entry of the record: a decision of the
+/// person's own, not one the table made for them, not a change of aid, and
+/// not the choice of dealer. The first deal comes from the seed, and the
+/// choice decides only which of its hands is whose: taking it back would
+/// show the person the hand the opponent then holds.
+fn undoable(entry: &str) -> bool {
+    !entry.starts_with('*') && !entry.starts_with("set ") && !entry.starts_with("dealer ")
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -844,6 +851,21 @@ mod tests {
         assert!(s.can_undo());
         assert!(s.send("undo"));
         assert_eq!(format!("{:?}", s.view()), before);
+    }
+
+    /// The first deal comes from the seed; choosing the dealer only decides
+    /// which of its two hands is whose. Undoing the choice would show the
+    /// person the hand the opponent then holds.
+    #[test]
+    fn the_choice_of_dealer_cannot_be_undone() {
+        let seed = (0..50)
+            .find(|&s| Session::new(s, Settings::default()).prompt() == Prompt::ChooseDealer)
+            .expect("a seed where the person cuts higher");
+        let mut s = Session::new(seed, Settings::default());
+        assert!(s.send("dealer you"));
+        assert!(!s.can_undo());
+        assert!(!s.send("undo"));
+        assert_ne!(s.prompt(), Prompt::ChooseDealer);
     }
 
     #[test]

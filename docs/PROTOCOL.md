@@ -50,7 +50,8 @@ declare is never put to the person.
 **Reloading and undo.** `record` lists every command from the person's seat,
 `*` marking what the table did for them. `Session::replay(seed, settings,
 record)` rebuilds the sitting exactly; undo is a replay without the last
-decision.
+decision. The choice of dealer cannot be undone: the first deal comes from
+the seed, and the choice decides only which of its two hands is whose.
 
 ## The state
 
