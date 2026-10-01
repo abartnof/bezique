@@ -86,7 +86,9 @@ Morning summary: (written at the end of the session).
 - [x] **1. The pack**: card types and physical cards, bitboards, codes, the
       seeded generator and shuffle, the deal (3-2-3) and the turn-up. A
       statistical test of the deal and draw against the exact odds, shown
-      to catch an unshuffled pack and a naive shuffle.
+      to catch an unshuffled pack. (It was also credited with catching a
+      naive shuffle; the review showed its power there is slight. Shuffle
+      bias is the permutation test's job, in `rng.rs`.)
 - [x] **2. Tricks**: who wins a trick; the follow-and-win rule of the last
       eight tricks, checked against Foster's sentence on random endgames.
 - [x] **3. Declarations**: combinations, class levels, the new-card rule,

@@ -45,17 +45,37 @@ fn every_hand_ends_after_thirty_two_tricks_with_every_card_taken() {
 
 #[test]
 fn the_log_reconciles_brisques_make_160_and_the_last_trick_10() {
-    for seed in 0..2000 {
+    for seed in 2000..4000 {
         let hand = random_hand(seed);
-        let total = |seat: Seat| -> u32 {
-            hand.log()
+        // The score rebuilt without the log: brisques from the cards taken,
+        // combinations from what was announced and scored, the last trick
+        // from the tricks. Only the sevens are counted from the log.
+        let rebuilt = |seat: Seat| -> u32 {
+            let brisques = 10 * hand.won(seat).cards().filter(|c| c.is_brisque()).count() as u32;
+            let melds: u32 = hand
+                .holdings(seat)
+                .announced
                 .iter()
-                .filter(|s| s.seat == seat)
-                .map(|s| s.points)
-                .sum()
+                .filter(|a| a.scored)
+                .map(|a| a.declared.meld.points(hand.trump()))
+                .sum();
+            let last = if hand.tricks()[31].winner == seat {
+                10
+            } else {
+                0
+            };
+            let sevens = 10
+                * hand
+                    .log()
+                    .iter()
+                    .filter(|s| {
+                        s.seat == seat && matches!(s.source, Source::Dix | Source::TurnedSeven)
+                    })
+                    .count() as u32;
+            brisques + melds + last + sevens
         };
         for seat in Seat::BOTH {
-            assert_eq!(hand.score(seat), total(seat));
+            assert_eq!(hand.score(seat), rebuilt(seat), "seed {seed}");
             let brisques: u32 = hand
                 .log()
                 .iter()
@@ -94,7 +114,7 @@ fn the_log_reconciles_brisques_make_160_and_the_last_trick_10() {
 
 #[test]
 fn declaring_happens_only_while_the_stock_lasts_and_play_follows_the_rules() {
-    for seed in 0..500 {
+    for seed in 4000..4500 {
         let mut deal_rng = Rng::stream(seed, 0);
         let mut choose = Rng::stream(seed, 1);
         let mut hand = Hand::new(Deal::shuffled(&mut deal_rng));

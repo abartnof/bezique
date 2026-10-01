@@ -8,6 +8,12 @@
 //! combination's cards exactly, and these tests hold the shuffle, the deal and
 //! the draw to those figures.
 //!
+//! These tests check the deal and the draw: that the pone's positions in the
+//! pack, whatever the play, add up to a uniformly random half. They have
+//! little power against a subtly biased shuffle (review finding 10): that is
+//! the job of the permutation test in `rng.rs`, which is shown to reject the
+//! classic wrong shuffles.
+//!
 //! The winners here are coin flips from a stream of their own. Each figure may
 //! stray 4.5 standard errors, which a correct implementation does about once
 //! in 150,000 tries; the seeds are fixed, so the test is deterministic anyway.

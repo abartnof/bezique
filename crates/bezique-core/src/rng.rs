@@ -204,8 +204,19 @@ mod tests {
         }
     }
 
-    /// Chi-square over six faces, 60,000 throws: the 1-in-100,000 critical
-    /// value for five degrees of freedom is 28.3.
+    /// The chi-square value that six cells (five degrees of freedom) exceed
+    /// by chance once in 100,000 trials.
+    const CRITICAL: f64 = 30.86;
+
+    /// Chi-square of six cell counts expected at 10,000 each.
+    fn chi_square(counts: &[u32; 6]) -> f64 {
+        counts
+            .iter()
+            .map(|&c| (f64::from(c) - 10_000.0).powi(2) / 10_000.0)
+            .sum()
+    }
+
+    /// Chi-square over six faces, 60,000 throws.
     #[test]
     fn below_is_uniform_on_a_die() {
         let mut g = Rng::seeded(7);
@@ -217,7 +228,7 @@ mod tests {
             .iter()
             .map(|&c| (f64::from(c) - 10_000.0).powi(2) / 10_000.0)
             .sum();
-        assert!(chi2 < 28.3, "{counts:?}, chi-square {chi2:.1}");
+        assert!(chi2 < CRITICAL, "{counts:?}, chi-square {chi2:.1}");
     }
 
     /// Each of the six orders of three items, 60,000 shuffles.
@@ -242,7 +253,53 @@ mod tests {
             .iter()
             .map(|&c| (f64::from(c) - 10_000.0).powi(2) / 10_000.0)
             .sum();
-        assert!(chi2 < 28.3, "{counts:?}, chi-square {chi2:.1}");
+        assert!(chi2 < CRITICAL, "{counts:?}, chi-square {chi2:.1}");
+    }
+
+    /// How often each of the six orders of three items comes out of
+    /// `shuffle`, over 60,000 shuffles.
+    fn orders_of_three(mut shuffle: impl FnMut(&mut [u8; 3])) -> [u32; 6] {
+        let orders = [
+            [0, 1, 2],
+            [0, 2, 1],
+            [1, 0, 2],
+            [1, 2, 0],
+            [2, 0, 1],
+            [2, 1, 0],
+        ];
+        let mut counts = [0u32; 6];
+        for _ in 0..60_000 {
+            let mut items = [0, 1, 2];
+            shuffle(&mut items);
+            counts[orders.iter().position(|o| *o == items).unwrap()] += 1;
+        }
+        counts
+    }
+
+    /// The uniformity test has the power to catch the classic wrong shuffles:
+    /// the textbook naive one (swap each place with any place) and Sattolo's
+    /// (which makes only cycles).
+    #[test]
+    fn the_uniformity_test_rejects_the_classic_wrong_shuffles() {
+        let mut g = Rng::seeded(12);
+        let naive = orders_of_three(|items| {
+            for i in 0..3 {
+                let j = g.below(3) as usize;
+                items.swap(i, j);
+            }
+        });
+        assert!(chi_square(&naive) > CRITICAL, "naive: {naive:?}");
+        let mut g = Rng::seeded(13);
+        let sattolo = orders_of_three(|items| {
+            for last in (1..3).rev() {
+                let j = g.below(last as u64) as usize;
+                items.swap(last, j);
+            }
+        });
+        assert!(chi_square(&sattolo) > CRITICAL, "Sattolo: {sattolo:?}");
+        let mut g = Rng::seeded(14);
+        let ours = orders_of_three(|items| g.shuffle(items));
+        assert!(chi_square(&ours) < CRITICAL, "ours: {ours:?}");
     }
 
     #[test]
