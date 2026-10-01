@@ -7,12 +7,13 @@
 
 ## Where we are
 
-**2026-10-01: the game is playable in a terminal.** Milestones 1–5 (the rules
-engine) are done; milestone 6 is done but for the measuring harness (the
-view, rungs 1 and 2); milestone 7 is done but for the session layer (the
-terminal client exists; undo, replay, the protocol and wasm do not). Rung 2
-beats rung 1 in 721 of 1,000 mirrored games. Planning was completed the same
-day:
+**2026-10-02: a playable game with a measured four-level opponent, ready for
+its first play-test.** The rules engine (milestones 1–5), observation and
+the opponent's rungs 1–4 with personas and erraticism (milestone 6, and 8
+in part), the session, the JSON protocol and the wasm module (milestone 7)
+are done; the terminal client runs on the session. 147 tests. What remains:
+the maintainer's play-test, a rung 5, and the 3D table. Planning was
+completed on 2026-10-01:
 
 - `docs/LITERATURE.md`: the literature review (68 sources, the conflict
   matrix, strategy, computed odds), as delivered.
@@ -72,7 +73,28 @@ it lands, with what was found.
 Constraints: nothing large deleted, no history rewritten, nothing drastic.
 Report due 08:45 Los Angeles time, 2026-10-02.
 
-Morning summary: (written at the end of the session).
+**Summary of the session** (stopped at about 02:40 Los Angeles time, when the
+session's usage limit was reached; everything is committed and pushed):
+
+- The code review's 20 findings: 18 fixed, 2 efficiencies deferred. The
+  weightiest, a twin channel that told a player where hidden cards lay, is
+  closed and tested (`docs/reviews/2026-10-01-engine.md`).
+- Measuring found and fixed two large weaknesses in rung 2 (it threw its
+  bezique cards away; it would not fight for the lead to declare) and tuned
+  seven weights, each confirmed on fresh seeds. Rung 2 now beats rung 1 in
+  92% of games.
+- The ladder was rebuilt by measurement: rung 3 is memory with an exact
+  endgame solver (+18.7 points a hand), rung 4 fights for the last stock
+  trick (+2.3). Two proposed rungs failed and were dropped.
+- Four personas, each within 1.24 points a hand of balanced, and
+  erraticism. The lesson, recorded in DESIGN §10.1: on a tuned default a
+  style must break near-ties, not shift weights.
+- The session, the JSON protocol (with a leak test that catches a planted
+  leak), a 207 KB wasm module, `docs/PROTOCOL.md`; the terminal client on
+  the session, with undo, hints and a trick tracker.
+- Two process slips, both recorded: commit `bf275e3` claimed rung 4 before
+  the ladder had it (completed by `811f7c5`), and `bc7fae8` carried the
+  client's new options without naming them.
 
 ## Decisions
 
@@ -134,18 +156,28 @@ Morning summary: (written at the end of the session).
 
 ## Next action
 
-1. **Triage the code review** of the engine (run 2026-10-01): verify each
-   finding, label it (defect, interpretation, lead, preference), and fix the
-   confirmed ones test first. Already known: `best_riders` silently caps at
-   16 riders (unreachable in measured play, but unguarded); DESIGN §6.2 does
-   not say that options vary which combination is scored; RULES.md does not
-   say that a carried combination may be scored while new ones are
-   announced.
-2. **The maintainer's first play-test** in the terminal (to do; the
-   instructions and checklist are in `PLAYTEST.md`), and acting on what it
-   finds.
-3. **The mirrored-pair harness** and the first measurements from "To
-   measure" below.
+**Start here next session.**
+
+1. **The maintainer's first play-test** (`PLAYTEST.md`), and acting on what
+   it finds. This comes first: the declaring interface is the biggest
+   unknown for fun.
+2. **Re-run the code review on the overnight work** (`a70f478..HEAD`: the
+   twin relabelling in `observation.rs`, `tournament.rs`, the agents' style,
+   skills and leanings, `solver.rs`, `opponent.rs`, `session.rs`,
+   `bezique-wasm`, the client rework). It was launched at the end of the
+   session and stopped by the usage limit before reporting anything.
+3. **Rung 5: looking ahead at the end of the stock.** Designed, not begun.
+   When few face-down cards remain (say five or fewer), sample the hidden
+   cards consistently with the view (`View::unseen`), build each world with
+   `Hand::arranged` (for a reply, arrange at the trick's start and replay
+   the lead), play each candidate card forward with rung-4 play through
+   the remaining stock tricks, and value the endgame with one
+   `Solver::value` call rather than playing it out. Keep it only if it beats
+   rung 4 in mirrored hands. Cost estimate: about 8 candidates by 8 worlds,
+   a few hundred milliseconds a decision.
+4. **The 3D table** (milestone 9): first a conversation about the score
+   display in homage to the period markers ("To discuss with the
+   maintainer" below), then `web3d` adapted from piquet (DESIGN §11).
 
 ## To measure, once the engine plays
 
