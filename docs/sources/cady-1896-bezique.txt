@@ -1,0 +1,1639 @@
+# Cady, *Bézique: A Treatise on the Game in Its Several Varieties* (1896)
+
+- **Work:** A. Howard Cady, *Bézique* (New York: American Sports Publishing Co., copyright 1896). Public domain.
+- **Text:** archive.org OCR, retrieved 2026-10-01 from
+  https://archive.org/stream/beziquetreatiseo00adya/beziquetreatiseo00adya_djvu.txt
+- **Extent:** the whole treatise: history, the ordinary game, three- and four-handed play,
+  Rubicon (with laws condensed from Cavendish's Portland Club laws), Polish Bezique, hints.
+  Literature review source S4.
+- **Caveat:** uncorrected OCR. Whitespace was collapsed; nothing else was changed.
+
+---
+
+1 T<iOiS' 
+...SPALDING'S... 
+Illustrated Catalogue 
+OF 
+...SPRING SPORTS su™^ 
+PUBLISHED ABOUT FEBRUARY FIRST. 
+BASE BALL, LAWN TENNIS^ 
+GOLF, ATHLETIC GOODS.^ 
+BICYCLE SUNDRIES^ 
+UNIFORMS and ACCESSORIES 
+¥ 
+Handsomely and profusely illustrated, the recognized 
+authority for standard goods, and the most complete cata- 
+logue of its kind published. Mailed free to any address. 
+A. Q. SPALDING & BROS. 
+JMEW YORK CHICAGO PHILADELPHIA 
+A TREATISE ON THE GAME 
+In Its Several Varieties, with Some Historical Notes. 
+By Jf. l)owara e^ay. 
+ILLUSTRATED. 
+PUBLISHED BY THE 
+AMERICAN SPORTS PUBLISHING COMPANY, 
+241 BROADWAY, NEW YORK. 
+Copyrighted, 1896, by the American Sports Publishing Company. 
+PREFACE. 
+J. 
+Bezique ranks among the most popular games of the day, 
+and it is fitting, therefore, that it should have place among the 
+first numbers of the Home Library. In the following pages 
+I have condensed and amplified by turn, as occasion seemed to 
+require, the excellent information gathered from the works of 
+Cavendish, Berkeley and other eminent authorities on this 
+pastime. I can but hope that this simple treatise will prove 
+an "open sesame" to all novices who, interested in Bezique, 
+have not as yet undertaken to study it seriously, perhaps, be- 
+cause the laws and regulations as presented in more preten- 
+tious volumes than this little pamphlet have seemed too numer- 
+ous and too complex for a beginner. After learning the sim- 
+pler methods of the game from this brochure, a study of Cav- 
+endish will give the finishing touch which helps to render 
+practice perfect and will enable the student to acquire the 
+various shadings, if one may use that word in connection with 
+the somewhat elaborate technique of the game. Every game 
+added to the home circle renders one's surroundings more 
+attractive and draws the various members of the household 
+into closer communion, because their sympathies and tastes are 
+thus working in the same groove and to the same end — unity 
+and content. 
+New York, April, 1890. A. Howard Cady. 
+( 
+Introductory — With Historical Notes* 
+Although Bezique, in its present form, is quite modern, it 
+may make the usual claim to antiquity that other pastimes of a 
+similar character do; for it is, unquestionably, the outcome of 
+several very old card games. 
+Just how it attained the name it bears, is, more or less, a 
+matter of conjecture, for which, of course, there are many 
+theories. 
+For instance, on one hand, we are told that bezique is doubt- 
+less from the Spanish, besico^ meaning a little kiss," and in 
+allusion to the meeting of the queen and knave, a very import- 
+ant feature in the game. Again, we are informed that the title, 
+as well as manner of play, if not actually derived from, are 
+certainly very similar to the Italian game, Bazzica, and the 
+Spanish, Baza^ a trick at cards." 
+Above and beyond these, however, it bears a strong resemb- 
+lance to many of the older games formerly played in France, 
+where, we assume from their nomenclature, they originated. 
+Indeed, Larousse in his Dictionnaire Universelle (1867), recog- 
+nized its similarity to mariage, probably the oldest of the group, 
+and then in turn to brusquembille, V ho7fi?ne de brou, briscan or 
+brisque^ and finally, cinq-cents. He says of it: **Ce jeu est ne 
+en France, mais on ignore a quelle epoque. On sait seulement 
+qu 'il etait deja connu depuis longtemps dans les anciens prov- 
+inces de Poitou, de Saintange et d'Angoumois, quand on V a 
+introduit, il-y-a une quarantaine d'annees, dans les cafes de 
+Paris, d'ou il a penetre dans les salons .... mais, pourquoi 
+donne-t-on le nom de bezique au valet de carreau et a la dame 
+de pique? Tous les dictionnaires, meme ceux qui s'occupent 
+exclusivement d'etymologie se taisent a ce sujet? nous croyous 
+que ce mot d'une forme bizarre, est une corruption du Latin 
+bijugu7?iy qui designe deux objets marchant de paire, ce que 
+serait une allusion au resultat produit par la reunion, dans la 
+4 
+BEZIQUE. 
+main du meme joneur, des deux valets de carreaux et des deux 
+dames de piques. . . 
+According to Murray's JVew English Dictiona7y Bezique is a 
+corruption of French besique, besy^ of unknown origin." 
+Be that as it may, it will not be out of place here to give a 
+brief description of some of the old games from which bezique 
+has derived many of its most salient points, and which, there- 
+fore, may be regarded as its a^icestors. 
+Beginning with the very oldest, Mariage^ we know that this 
+game was played with a pack of thirty-two cards, the cards 
+ranking as in Bezique. Twelve cards were dealt, six to each 
+player, and the thirteenth turned up for trumps. The manner 
+of play, drawing from the talo^i (or stock), declaring of trumps 
+or plain suit marriages, with noting of scores for the same, were 
+like Bezique. Added to this was an extra score for the declar- 
+ation of ace and ten, known as amotir. This counted sixty in 
+trumps, and thirty in plain suits. The final trick counted ten; 
+and when the best six tricks were made by one player, he could 
+score twenty instead of ten. 
+In other respects, Cavendish tells us, it bore a strong resemb- 
+lance to the game we know to-day as sixty-six. The winning 
+score being sixty-six, the aces in the tricks counting eleven 
+each; tens, ten each; kings, four; queens, three; and knaves, 
+two. Here, as at the game of sixty-six, the player might stop — 
+i. e., finish drawing from the stock — if he thought he could 
+make sixty-six. This was subject, of course, to the penalty of 
+losing if he did not succeed in making the number, or again, if 
+his adversary accomplished this first. 
+The game next in order is called Brusque^nbille. This was 
+also played by two persons and with a pack of thiny-two cards. 
+The ten ranked after the ace, and only three cards were dealt 
+to each player, the seventh being turned up for trumps. Here, 
+too, playing and drawing from the stock were like Bezique. 
+Seven of trumps could be exchanged for the turn-up card. 
+Aces and tens were called brusquembilles. 
+It is inferred by more than one authority that the modern 
+term, brisqtte^ is derived from brisquenibille, just as at billiards 
+the word carom is corrupted from the French term cai'aiiibole. 
+No one writer seems able to furnish the exact etymology of 
+hrusqueinbille^ which, in itself conveys so little to the reader. 
+The mode of play was simple enough; the player who won a 
+trick with an ace in it, received two counters; and with a ten, 
+one counter. The player who made the greater number of 
+points in his tricks won the game, and the scoring was similar 
+to that in 7)ia7'iage^ aces counting eleven, and so on, down to 
+knaves, at two. 
+BEZIQUE. 
+Similar to the above games, was briscan, better known a:3 
+brisque, and like them, played with a pack of thirty-two cards, 
+which ranked with Bezique. 
+In this variation, six cards each were dealt to the players, the 
+thirteenth turned up for trumps. Again here, the playing, 
+drawing from the stock, with also, declarations and scores for 
+marriages, were like Bezique. Beyond these, there was also a 
+so-called mariage de renconU^e, that is, where the king and queen 
+of the same suit were played to one trick, the player who won it 
+scored a trump or plain-suit marriage, according to quality of 
+the cards. 
+The counting was as follows: four aces, one hundred and 
+fifty; four tens, one hundred; four kings, eighty; four queens, 
+sixty; and four knaves, forty. As in Brusquembille, seven of 
+trumps could be exchanged for the turn-up card, which was 
+often, of course, an advantage. 
+The game was six hundred up. Although there were quite a 
+variety of scores, we do not find that there was one for brsican 
+or brisque. 
+The dealer, turning up an ace, a ten or face card, could mark 
+ten, while a player, having five court or picture cards dealt him 
+added twenty to his score, and he could continue to count 
+twenty after each picture card drawn. Carte blanche counted ten 
+only. 
+Unless already reckoned in previous scoring combinations, 
+the ace of trumps counted thirty during the play of the hand, 
+while sequences, w^hen declared, scored as follows: quint major 
+in trumps, six hundred {i. <?., game); quint to a king, three 
+hundred; quint to a queen, two hundred, and quint minor, one 
+hundred. Quarts, two hundred; one hundred and sixty; one 
+hundred and twenty; eighty and sixty, respectively. Tierces, 
+one hundred and twenty; one hundred; eighty; sixty forty and 
+twenty, in turn. In the plain suits, the sequences scored just 
+half the above; a card, after being declared in one sequence 
+could not be used in any other combination of sequences; it 
+could, however, form part of marriage, or of four equal cards. 
+Ten was scored by the player who took the last card of the 
+stock. 
+In this game the last trick did not score- and Cavendish 
+suggests that it is this rule which caused the dispute in Bezique 
+later as to which was the *<last trick" — that is, the last, prior 
+to changing of rules, or absolute last of the hand. Incident- 
+ally, it may be here noted that the authorities of the London 
+and Paris clubs have settled the matter by declaring that "the 
+last trick at Bezique is the absolute last." 
+The player who won the last five tricks or six, scored twenty; 
+6 
+BEZIQUE. 
+if beheld all the trumps and won all the last tricks, thirty; 
+while the player who won the greater number scored ten. It 
+was not essential that the last trick should be among them. 
+Finally, after the play of the hand, the aces, tens, and so on, 
+were reckoned as at viariage. 
+Cinq-cents was very much like brisque, 5CO being the game. 
+The score for cards in the tricks being as in the other; but 
+only two sequences counted, namely: quint major in trumps, 
+250; and quint major in any other suit, 125. Four aces, 100; 
+four tens, 80; four kings, 60; four queens, 40; four knaves, 30; 
+marriage in trumps, 40; and in other suits, 20. 
+The exchange of the seven of trumps, 10. Brisque, which 
+odd as it may seem, did not exist in the old game of brisque 
+itself, was the knave of diamonds and queen of spades, 40. 
+Brisque was occasionally played in what one might call a half- 
+and-half M ay between briscan and cinq-cents. 
+In view of these various points of resemblance, it is scarcely 
+a matter of doubt that these two latter games were the immedi- 
+ate progenitors of bezique. 
+Brisque and bezique, it has been suggested, bear the same 
+relationship to each other that the ancient games of trump and 
+whist do. 
+Summing up these various old games, and noting the resemb- 
+lance existing among them all, it is easy to accept the assertion 
+of the acade7)iie des jeux, which says quite conclusively .... 
+' ' Mariage gave birth to briscan or brisque, and 7na7'iage or 
+brisque was the parent of besi or besigne (in English bezique). 
+In any case, as already pointed out, it is a self-evident fact 
+that bezique has borrowed very freely some of the most salient 
+points from these games. 
+Paul Boiteau d'Ambley has stated in his work on playing 
+cards, that is impossible to say of any game whatever, that it 
+was invented in such a year and by such a person; for, more 
+often than not, it is simply a question of adding rules and 
+changing the name of an old gr.me, by some one player, which 
+alterations are adopted first by friends, then by some societies, 
+and behold an " inveiitionS' 
+Following this view it is not difficult to understand that the 
+scores of brisque, for instance, were too complicated, and the 
+cards in the hands of the players and in the pack, too few for 
+a good illustration of its prevailing laws; hence it was natural 
+to try and modify the game by such alterations as seemed most 
+pertinent thereto. 
+The first step in the change, therefore, seems to have been 
+the simple expedient of shuffling two packs together, then deal- 
+ing eight cards, instead of seven to each player. After these 
+BEZIQUE. 
+alterations, Cavendish explains at some length, the simplifying 
+of the score by omitting all sequences, save quint majors, and 
+substituting the scores from equal declared cards for those of 
+king, queen, and knave in the trick." Then the aces and tens 
+in the tricks (called brisques) were made to score ten each, in 
+place of the previous reckoning of eleven and ten. This made 
+It easier to reckon the game. Again, instead of the amour of 
+7nariage, the flirtation of the queen of spades and the knave of 
+diamonds — known to us as bezique — was introduced, and as a 
+natural sequence, the double pack of cards suggested double 
+bezique. The scoring was by tens, and the game, 1,000 up. 
+This is, in brief, the outline of what d'Ambley would call 
+the invention." The game was played in France sometime 
+before it found votaries in England. 
+It was not until 1869 that Bezique, played with two packs 
+and eight cards in hand, became popular in England, and half 
+a score of years later, before the four-pack game, called Rubi- 
+con ox y<2/^rt:?^^j-d' Bezique, developed in the interval, and, accepted 
+in the French clubs and drawing rooms, was adopted by the 
+English. 
+It was in 1880 that the players of the clubs in Paris agreed 
+upon a set of laws, which was published under the title of 
+Regie diL Bezique Jap07tais, 
+In 1887, Bezique having become established as a " clul) 
+game" in London, it was considered advisable to issue an 
+English code for the game. The "Portland Club" rules are, 
+therefore, the accepted standard all over the English speaking 
+world to-day, and it is these we shall cite in the following 
+pages. 
+8 
+BEZIQUE. 
+Ube (5ame 
+And How to Play It in Its Several Varieties^ 
+This variety, sometimes called ''ordinary" or "common 
+bezique ; " or '* bezique proper," again, simply beziqtie, is less 
+popular to-day than the more elaborate game of Rubicon or 
+Japanese Bezique, but being the form originally made known 
+to us, claims first place here. 
+The description is as follows: 
+It is usually played by two persons, and two packs of cards 
+with similar backs are requisite. 
+The cards rank here as in the other forms of the game, viz. : 
+Ace, highest, then ten, king, queen, knave, nine, eight and 
+last, seven — the lowest, the sixes, fives, fours, threes and 
+twos are discarded, thus leaving a double pack of sixty-four 
+cards, or two single packs of thirty-two each. 
+After the shuffling the players cut for the deal. A cut must 
+consist of not less than five cards, and that number at least, 
+must remain in the lower packet. In cutting, as in playing, the 
+cards raiik : Ace, highest, down to seven, lowest, and the player 
+cutting the highest card has the choice of seats and markers. 
+If, when cutting for the deal a player expose more than one 
+card, he must cut again, but the cut for deal holds good, even 
+if the pack be incorrect. There must also be fresh cut, if, in 
+cutting to the dealer, or in reuniting the two packets after the 
+same, a card be exposed or there be any confusion of the cards. 
+Eight cards are dealt to each player, the usual way being to 
+deal first three, then ^.wo, then three again. Sometimes this 
+method is varied by tne dealing of one at a time to each. 
+The seventeenth card is turned up for trumps, and if it hap- 
+pens to be a seven, the dealer scores ten. Sometimes, how- 
+ever, the game is played without a trump card being turned up; 
+the trump, in this case, is determined by the first marriage or 
+se([uence scored. When this is done no score for the seven of 
+trumps is allowed. 
+The non-dealer begins by playing any card from his hand. 
+BEZIQTJE. 
+9 
+and the dealer plays to it. The two cards played constitute a 
+trick, the highest card of the suit led, winning it. 
+The second player, it is worthy of special note, as difTering so 
+radically from other card games, is not obliged to follow suit, 
+nor to win a trick. He can, if he likes, win the trick by 
+trumping, even though he may hold cards of the suit led. 
+The player who wins the trick leads next ; but before pro- 
+ceeding with the play both must draw one card from the 
+stock, the winner taking the one on the top of the pack, and 
+the other the next. Thus, the number of cards in each player's 
+hand is restored to eight, as at the beginning. This alternate 
+playing and drawing goes on until the stock is exhausted. At 
+this point the rules of play undergo a change, as each player 
+then takes up any cards on the table, which belong to his hand, 
+and which have been shown when making declaration. The 
+winner of the last trick leads, and his adversary is now obliged 
+to follow suit if possible, and win the trick if he can. If un- 
+able to follow suit he must trump if he can. The aces and 
+tens still count ten each, and the winner of the last trick scores 
+ten. 
+Brisqtte — an ace or a ten — scores ten ; and when the trick is 
+two aces or two tens, or again, one of each, the player scores 
+twenty. 
+As a rule, brisques are scored as the trick is taken ; but 
+sometimes they are not counted until the end of the hand. 
+When this is the case the player winning a trick containing a 
+brisque takes up the cards, lying face upwards on the table, 
+and turns them face downwards in a pile near himself. At the 
+close of the play of the hand (including, of course, the last 
+eight tricks) efch player will add to his score the tens for his 
+brisques. N. B. — If both of the players can count out, the one 
+who has the highest score is the winner of the game ; if, how- 
+ever, it is a tie, after both have added their brisques, the game 
+is "null and void." 
+In this variation of the game, declarations can only be made 
+after winning a trick ; but any number may be made at the 
+same time. Only one declaration can be scored after each 
+trick won, however. Cards can be scored once only in the 
+same kind of combination. 
+For instance : A king or a queen already declared in one 
+marriage cannot be declared in another ; or if declared one of 
+four kings, or one of four queens, cannot be declared a second 
+time as one of these. Also, the same bezique cards can be 
+used only once for single bezique ; but the four bezique cards 
+which have been already declared in two single beziques can 
+be declared as double bezique. In brief, cards once declared 
+lO 
+BEZIQUE. 
+can be declared again, under a given condition only, that is, 
+provided the combinations in which they afterward appear are 
+of a different class. 
+A king or a queen, for example, declared in marriage, may, 
+after that, form part of a sequence, or of four kings or of four 
+queens. When the queen is the queen of spades it can, further- 
+niore, be declared single or double bezique, or both, or, if it 
+lias been used as a bezique card it can afterwards form a part 
+of marriage, four queens or sequence. 
+During the play of the hand, a player holding various com- 
+Ivi nations of cards, and declaring them, has the right to count 
+a certain number of points, according to value of the given 
+combinations. These are as follows : 
+V ^ No. III. 
+A A; 
+Seven of trumps. (Hearts are shown here, but any suit maybe made trumps 
+according to the turn-up card.) 
+. When turned up, the dealer scores 10. 
+The other player, if holding seven of trumps, and exchanging it for the 
+turned-up card, scores 10. 
+. No. IV. 
+'-'"King and Queen of any sultV not Irym^ys (called marriage), and when the 
+filalyer declares the marriaga hp scores 20. 
+: King and Queen of the trump suit (called royal marriage, or marriage in 
+trumps/. and when the player declares marriage in trumps, scores 40. 
+BEZIQUE. 
+II 
+No. V. 
+Sequence of the five best trumps. 
+Ace, Ten, King, Queen and Knave of Trumps, called sequence. 
+The player declaring sequence, scores 250. 
+No. VI. 
+Queen of Spades and Knave of Diamonds (called Bezique), when declared, 
+scores 40. 
+Double Bezique — When Bezique is declared twice in one deal (called Double 
+Bezique) by one player, he scores in addition to the 40 twice, if previously 
+counted for the two single beziques, 500. 
+N, B. — If the four cards are declared together, 500 only can be counted. 
+No. VII. — Four Equal Cards. 
+Foiir ^iQ^fi'-^irrespective pf suit — sgor^ 100, 
+12 
+BEZIQUE. 
+No. VIII. 
+No. IX. 
+Four queens- 
+^^irrespective of suit- 
+No. X. 
+Four knaves- 
+^irrespective of mt-^^"^^^^ 
+BEZIQUE. 
+13 
+ACES AND TENS. 
+Each player, for each one he holds, adds to his score 20. 
+LAST TRICKS. 
+The making of the last trick scores 10. 
+The making and scoring of declarations will seem rather 
+complicated to the novice; but after a little practice, will be 
+found to be quite easy. 
+The method and rules of procedure in these are cited and 
+explained with such brevity as the case permits. 
+1. A declaration is made by placing the card declared face 
+upwards on the table, and separate from the tricks, save in the 
+case of seven of trumps, which is only shown to the adversary, 
+and not put there. The declared cards still constitute part of the 
+player's hand; but when not required to lead or be played to a 
+trick, they must remain on the table, face upwards, uniil the 
+stock is exhausted. 
+2. A player is not obliged to declare unless he wishes to, 
+although he may have a scoring combination in his hand. 
+3. A declaration can be scored only on winning a trick, and 
+prior to drawing from the stock; and the exchange of the seven 
+of trumps may be made also, only on winning a trick and before 
+drawing. A card cannot be declared at the same time it is led 
+or played to a trick; for when played it no longer constitutes 
+part of the hand. 
+4. A declared card may not be declared a second time in an 
+equal or inferior combination of the same class; but it can be 
+in a superior combination. 
+Example: A king or queen already declared in one marriage, 
+cannot afterwards form part of another marriage, but the one 
+or the other can later form part of a sequence. A player has 
+the right to declare sequences without first declaring marriage; 
+if he does so, however, he only scores 250, in place of the 40 
+and 250, for he cannot afterward declare the inferior combina- 
+tion of marriage. 
+Also, a card declared in single bezique, cannot later be used to 
+make part of another single bezique; two single beziques, how- 
+ever, can be united afterwards to make a double bezique. A 
+player may add an undeclared single bezique to a declared one, 
+and immediately declare double bezique without first declaring 
+the second single bezique. If he does this, he can only score 
+40 and 500, instead of 40 twice (80) and 500; for he cannot 
+afterwards declare the single bezique. 
+Again, when a player declares double bezique at once, and 
+without first declaring either of the single beziques, he only 
+pcgreg 500, a^? neither pf the single beziques can afterwards be 
+declared, 
+BKZiQUE. 
+A card cannot be declared a second time in an equal combin- 
+ation of the same class, therefore a card declared in four equal 
+cards cannot later form part of another set of four. A declared 
+card can be declared again, though, if the combination in which 
+it stands, is of a different class. 
+For instance: A king declared in marriage or sequence can- 
+not be declared in another marriage; but can, afterwards, form 
+part of four kings, or vice versa. Again, if the queen is the 
+queen of spades it can be declared in single and double bezique 
+also, or even both; and, too, having been used as a bezique 
+card, it may form afterwards part of marriage, sequence, or 
+four queens. 
+Sometimes, in consequence of the power of declaring the 
+same card more than once, it will happen that more than one 
+declaration is made to a trick. 
+Example: A player will have declared four kings, including 
+a king of spades, and this latter remains unplayed on the table. 
+He has bezique in hand, and on winning the trick declares and 
+secures it. He has also, now, plain suit marriage in spades on 
+the table; but this he cannot score at the same time, as only one 
+declaration can be scored to one trick; he can, however, score 
+it on winning another trick. A player having a declaration to 
+score should repeat after every trick what he has to score. As 
+in the case above, for instance, the player who declares bezique, 
+would say ''Forty, and twenty to score," for the plain suit 
+marriage. On winning another trick, but making no fresh 
+declaration, he says, score twenty." 
+Another example: A player having declared four kings, wins 
+a trick with one of them, and declares four queens, three of 
+the queens match the kings on the table as to suit, while one of 
+the kings is the king of trumps. The player says then: « 'Sixty 
+and forty, and twenty, and twenty to score," which, classified, 
+means: Sixty for queens, forty and twenty and twenty to score 
+for marriages. On winning another trick he says: "Score 
+forty, and twenty, and twenty to score." 
+A player having a declaration to score, can, when he wins a 
+trick, make and score a fresh declaration, leaving unscored, 
+declaration still to score until another trick is won. 
+When a player having a declaration to score, plays a card of 
+It, before scoring it, he loses the score. For instance: he has 
+marriage in trumps to score, and on winning a trick adds to 
+the marriage, ace, ten, and knave of trumps, thereby losing 
+the score for the marriage. Again, if the player has single 
+bezique to score, and on winning a trick adds the other bezique 
+cards, he loses the single bezique score. 
+As long as a card remains in stock, the winner of a trick may 
+BEZIQUE. 
+15 
+declare and score, according to the preceding direction and rules. 
+The winner of the previous trick draws the last card in the 
+stock, and the turn-up card — or seven exchanged for it — is 
+drawn by the loser of the same. With the drawing of these last 
+two cards all declarations cease, and any declarations to score 
+are lost. 
+The stock being now exhausted, each player takes up such 
+cards on the table as belong to his hand, and which, in the 
+course of the game, have been shown in declaring, and the 
+play of the final eight tricks begins, the winner of the preceding 
+trick leading. The second player must follow suit, if he can, 
+and win the trick, if possible. If he cannot follow suit, but 
+has a trump, he must win the trick by trumping. 
+The winner of the trick leads to the following, and so on 
+to the end. The aces and tens still count ten each, and the win- 
+ner of these last eight tricks scores ten. 
+The game is 1,000 up, the players dealing alternately. 
+If one player scores 1,000, prior to his opponent obtaining 
+500, the game counts double. 
+Kpai'tie is the best of three games out of five, a double reck- 
+oning as two games. 
+The points of difference between the Ordinary and Rubicon 
+games of Bezique may be briefly summed up as follows: 
+I. In the latter, four packs of cards are used instead of two, 
+and nine cards, instead of eight, dealt to each player. 
+II. There is no turn-up card for trumps, the first marriage 
+in sequence scored determining the trump suit. 
+III. Caj'te blanche, i.e., a. hand without a single court card, 
+scores 50 to the holder, and is declared immediately, and before 
+the player has drawn a card. 
+IV. If a declared combination is broken up by the playing 
+of any of the cards declared, but is reformed by substituting 
+cards of the same class, the combination maybe again declared. 
+V. There is no score for the seven of trumps, and the game 
+is complete in one hand. 
+As already noted, the amount of the scores and method of 
+computing the game are different. (See Rubicon Bezique 
+Tables. ) 
+In everything else the rules of Rubicon Bezique govern the 
+simpler variation of the game. 
+THREE-HANDED BEZIQUE. 
+In this variation three packs of cards are used, and three 
+persons play all against one another. 
+Eight cards are dealt to each, and the player on the left of 
+the dealer leads off. 
+i6 
+BEZIQUE. 
+The game proceeds exactly in the same manner as \^ hen 
+played by two persons. 
+Triple bezique scores 1,500, and the game is generally 2,000 
+up. 
+FOUR-HANDED BEZIQUE. 
+There are two ways of playing this, either two againt two, 
+that is, with partners, or all against all. 
+Four packs of cards are used and eight cards are dealt to 
+each player. 
+Triple bezique counts 1,500. Double bezique can be declared 
+twice with different cards, and counts 500 each time. 
+The game is generally 2,000. When two partners are play- 
+ing together, declarations may be made by any one of the play- 
+ers, when he or his partner wins a trick. 
+A player may also make up combinations with his own cards, 
+and those of his partner, which have been declared, but are 
+still on the table. For instance, if both partners declare 
+bezique, either of them may, when he wins a trick, declare 
+double bezique. 
+As a rule the players generally divide in playing the last 
+eight tricks, each partner playing with one of his opponents. 
+RUBICON OR JAPANESE BEZIQUE. 
+DESCRIPTION OF THE GAME. 
+This game is played by two persons and four packs of cards, 
+and backs of the same pattern are necessary. The packs should 
+be well shuffled together and made to form one pack. The 
+sixes, fives, fours, threes and twos are thrown out, as in the 
+ordinary game, thus reducing the packs, singly, to thirty-two 
+cards each; together, to one hundred and twenty-eight. 
+The players begin by cutting for the deal, and the one who 
+cuts the higher card has the choice of the deal. 
+The cards rank here, as in the preceding varieties of the 
+game, both in cutting and playing, viz.: Ace (highest); ten, 
+king, queen, knave, nine, eight, seven (lowest). 
+The cards are cut to the dealer, who deals nine cards to his 
+adversary and nine to himself, either by one each at a time or 
+three at a time. 
+The remainder of the pack, known as the stock or talon, is 
+placed face downwards in .one packet and to the left of the 
+dealer. It should be loose rather than compact, so that the 
+players can take the cards therefrom easily. 
+No cards are turned up, the first marriage or sequence de- 
+termining the trump suit. 
+BEZIQUE. 
+17 
+After the cards have been dealt each player should look over 
+his hand, and if he discovers that it has neither king, queen 
+nor knave, he may declare carte blanche before playing a card. 
+He must show his carte blanche by dealing out the cards, one 
+by one, on the table. This may be done quickly, so that the 
+opponent will have little time to study the exact nature of the 
+hand. 
+Carte blanche scores fifty. As shown by the preceding di- 
+rections, it scores before playing, and independent of winning 
+a trick. The holder of the carte blanche may continue to score 
+it again and again after each trick until he draws a "picture 
+card" ; but he must show each card in turn as he draws it. 
+Following the carte blanche — provided either of the players 
+have it — the non-dealer leads a card and the dealer plays a card 
+in return. The two cards played thus constitute a trick. 
+When both players play cards of the same suit, the higher of 
+the two cards wins the trick. If tie cards of the same suit are 
+played the one which led wins the trick. If cards of different 
+suits are played the leader wins. After trumps have been 
+made, however, a trump will win any plain suit card. 
+As it is not obligatory with the second player to follow suit, 
+or even win the trick, he will get rid of any useless card he 
+holds and permit his opponent to win the trick, unless he has 
+a declaration to make, or the elder hand leads an ace or a ten, 
+in which case the dealer will take the trick, if he has a small 
+trump or an ace of the same suit as the ten led. 
+A card of course is taken by a higher card of the same suit, 
+or by playing a trump of any value whatever. 
+If the trick is not taken by the second player it belongs to 
+the first, who leaves it face upwards on the table. When a 
+trick has an ace or ten in it the winner takes it up, and also all 
+the cards already played and places them by him face down- 
+wards. The winner of the trick may also, if he have the cards 
+in hand, make a declaration and score for it. 
+The player winning the trick draws the top card of the stock, 
+the other player the next, and thus the cards in hand are 
+restored to the original number of nine. The winner of the 
+trick then leads to the next. 
+The game goes on thus, the cards drawn from the stock 
+after each trick until there are none left, the winner of the last 
+trick taking up the last card, and the other player, the trump. 
+At this point the method of play changes, as already described 
+in preceding variation — the winner of the last of the nine tricks 
+scores fifty. 
+The scores of Rubicon Bezique differ somewhat from those 
+of the Ordinary Bezique, and will be given in full here — even 
+i3 
+BEZIQUE. 
+at the risk of repetition — as thus the student can learn this 
+variation quite independent of any other, and without the in- 
+evitable confusion which must naturally result from referring 
+to one game for the illustrations of another. 
+During the play of one hand, a player holding certain combi- 
+nations of cards, and declaring the same, has the right to score 
+a given number of points. 
+The table of the scores may be divided into three classes, 
+as follows : 
+Class I. — Marriage and Sequence. 
+No. XI. 
+King and Queen of the trump suit. 
+Called marriag:e in trumps, scores 40. 
+No. XII. 
+King and Queen of Hearts (or any suit not trumps). 
+Marriage in plain suit scores 20. 
+BEZTQUE. 
+No. XIII. 
+19 
+Sequence in trumps scores 250 in addition to the 40 (if already scored) for 
+the royal marriage. N. B. — If, however, the sequence is declared prior to 
+declaration of the royal marriage, the 40 is forfeited. 
+No. XIV. 
+Single Bezique scores 40. 
+20 
+BEZIQUE. 
+Double Bezique — When bezique is declared twice in one deal by the same 
+player it is called double bezique, and he scores 500 in addition to the 40 
+twice (if already scored) for the two single beziques. 
+Triple Bezique scores 1,500. Quadruple Bezique scores 4,500. 
+To score the double, triple or quadruple it is essential that 
+the four, six or eight cards should be on the table at the one 
+time. 
+Class III. — Four Equal Cards. 
+No. XVI. 
+BEZIQUE. 
+21 
+No. XIX. 
+Preceding these is: Carte Blanche (a hand without a single court or 
+picture card) scores 50. 
+(As previously stated carte blanche is scored at the beginning 
+of the game and prior to the drawing of a card by the player. 
+Carte blanche cannot be scored after the player has once had 
+a court or picture card.) 
+In addition to these scores the brisques, which are the aces 
+and tens contained in the tricks of each player, score lo each, 
+under conditions herewith given. They are counted only when 
+the tricks of each player are equal, or nearly so, as thus the 
+addition of the brisques are necessary to determine who is the 
+winner. 
+Example: If one player scores I,I20 and the other i,i6o,. 
+but the first has twenty brisques and the latter twelve only, the 
+score of the first player will be 1,320 and that of the second 
+1,280, which, of course, makes the former the winner. 
+Save in cases similar to the one cited, brisques are not taken 
+into account unless the loser can make his score up to 1,000 by 
+counting them in, in which event the winner will also add his 
+brisques. 
+If the loser's score, including his brisques, is less than 1,000, 
+he is rubiconed, and he does not add them (the brisques) to his. 
+score. His score then, exclusive of the brisques, is added tO' 
+that of the winning player, who may also add 1,000 for the 
+game and 300 for the brisques (the odd 20 not being reckoned 
+— i. e., 320 is the total value of the brisques). 
+For instance : The winner scores 1,520 and the loser 640. 
+The latter is rubiconed. The fractions of a hundred are not 
+computed in the final summing up ; therefore the winner counts 
+1,500 plus 600 equals 2,100, plus 30Q for the beziques and 100 
+for the game. Total, 3,4^. 
+When the difference between the sco^esj is less thau. a hundred 
+22 
+BEZIQUE. 
+— the loser is always considered to have more than that number, 
+although in reality it may be less — the player who Avins may 
+add loo to the score of 500 for the game. 
+As seen from the description of this system of scoring, as 
+presented by Cavendish, Berkeley and others, it is not always 
+essential to play the last nine tricks. For example : If, when 
+the last cards are drawn from the stock, the score amounts re- 
+spectively to 1,1 20 and 630, there will be no need of counting 
+the brisques, for the total score of the winning player will not 
+be affected by the 50 for the last trick being counted to his 
+opponent or himself. 
+HINTS AND SUGGESTIONS FOR PLAY. 
+A few suggestions regarding the method of play may be of 
+service to the novice, although practice is the best guide, as 
+after the initial games, the student will readily see what is to 
+be avoided and what attempted. 
+The player must bear in mind that tricks are of no value 
+unless he has cards to declare, or for the sake of brisques they 
+contain. 
+In taking up his hand the player should first look for carte 
+hlanche^ then lead the lowest card in his hand, a seven instead 
+of an eight, for instance. He should throw away his worthless 
+cards, unless he has a sound reason for winning a trick. 
+It is not possible to lay down general rules for discarding, as 
+this depends upon the state of the player's hand at the time, 
+and also upon what cards have already been played. 
+Unless trumps are made at once it will be best to get rid of 
+all the small cards prior to the declaration of trump suit. The 
+player can then decide which suit or suits he will go for and 
+discard from the others ; or if he has duplicate cards he can 
+temporize by playing one of them. As to choosing between 
+suits of equal value, it will be best to discard from what are 
+regarded as ' ' unfashionable suits ' ' — hearts or clubs. As a rule 
+the player should play his declared cards and thus avoid show- 
+ing liis opponent more than is actually necessary of the condi- 
+tion of his hand ; beyond this he will be able in this way to re- 
+form his combination. 
+In the beginning the player should be very careful about 
+making trumps ; in fact only a very strong suit will justify his 
+doing so, and he \\\\\ be wise to note what cards his opponent 
+is discarding, as this will enable him to divine what suit he is 
+keeping back. Indeed, throughout the game he should watch 
+carefully his opponent's cards, thereby getting an insight into 
+his hand, Ijut at llie same time conceal his hand as far as 
+BEZIQUE. 
+23 
+possible. This is especially necessary if the whereabouts of 
+three of any of the sequence or beziqiie cards are known and 
+he holds the fourth. 
+If by this manoeuvre he conveys the impression that tlie 
+fourth is not yet drawn the probabilities are that his adversary 
+will sacrifice other combinations in the hope of completing his 
+bezique or double sequence. 
+The player should not score brisquc::; but remember, rather, 
+that if he does not win, his opponent will; hence, it will make 
+a difference of twenty to the score. He should not lead a ten 
+if he can avoid doing so, but keep it instead to win tricks with. 
+As the game nearsthe end, if the player sees from the state 
+of his score that he cannot save the rubicon, he must score as 
+little as possible, as his score will be added to his opponent's. 
+Often the play of the last nine tricks is of greatest import- 
+ance, for to play them advantageously, the player must bear in 
+mind what trump and bezique cards are in. It is impossible, 
+in view of the rapidity of the play, to remember all tlie small 
+cards ; but a fairly competent player will take note of the im- 
+portant cards which are out. As the opponent must beat the 
+card led, if possible, the other player, in his turn, should, in 
+leading, play a high card of a plain suit to thus force a trump. 
+If he is reduced to trumps, then he must lead his lowest trump. 
+Naturally, if he has counted trumps, and knows that a brisque 
+must fall to the lead of an ace — and that the scores are close — 
+he ^^ ill act accordingly. It is not possible to make a rule for 
+this, as the actual result depends upon how well the player 
+remembers what cards are out. 
+The player who wins the last trick is obliged to score it; 
+hence, when one player is under the rubicon, it may be the 
+game of the other to play to lose the last trick. 
+Finally, the cards should be well shuffled before beginning a 
+second game, as often, the last nine cards in the hand of each 
+player are mainly of trumps and bezique cards. 
+LAWS OF RUBICON BEZIQUE. 
+The laws are based upon and condensed from the " Laws of 
+Rubicon Bezique," by Cavendish, and adopted by the Portland 
+Club. 
+SHUFFLING. 
+I. This game is played with four packs of cards, of thirty- 
+two each, and shuffled together. 
+II. Both players have a right to shuffle the cards, it being the 
+prerogative of the dealer to shuffle last, however. 
+24 
+BEZIQUE. 
+CUTTING. 
+III. The cut must consist of five cards at least, five or more 
+remaining in the lower packet. 
+IV. The player cutting the higher card has choice of deal, 
+seats and markers throughout the play. A player who plays 
+a la chouette has the choice without cutting. 
+V. If, in cutting for the deal, more than one card is exposed, 
+the player must cut again. 
+VI. The incorrectness of a pack does not affect the validity 
+of the cut. 
+DEALING. 
+VII. The cards are dealt either one at a time, the top card 
+being given to the non-dealer, the next to himself (the dealer), 
+or the three top cards to opponent and then three to himself, 
+and so on until each player has received his quota of nine 
+cards. The cards remaining, called talo7i or stock, are placed 
+face downward in one packet in the centre of the table to the 
+dealer's left. 
+VIII. When there is a misdeal it can be rectified by permis- 
+sion of the opponent if discovered before the deal is completed. 
+The deal is completed upon the turning up of the trump card. 
+IX. If, upon the completion of the deal, but prior to the first 
+trick being played to, it is discovered that one or the other of 
+the players has more cards than belong to him, there must be 
+a new deal; if, however, it is found that one or the other of 
+the players has too few cards, his hand may be completed from 
+the siock by mutual consent, or otherwise there shall be a new 
+deal. 
+X. If the dealer expose any of his own cards, the deal can 
+stand, but if he expose a card belonging to his adversary or to 
+the stock the non-dealer may require a fresh deal. 
+XI. If a player plays with more cards than he should have 
+in his hand he is rubiconed, but the adversary cannot add more 
+than 900 to his score, or 300 for brisque and 1,000 for the 
+game. When both of the players play with too many cards 
+the game will be considered null and void. 
+XII. If one or both players play with too few cards, either 
+one or the other — whoever made the mistake — shall keep that 
+number throughout the hand and score after the usual fashion. 
+When only one of the players does this the other wiil neces- 
+sarily win the last trick. 
+XIII. When one player plays with too many and the other 
+v/ith too few cards, the deal holds good, the former being 
+rubiconed and the latter cannot score the last trick. 
+BEZIQUE. 
+25 
+XIV. A card led in turn shall not be taken up after it has 
+been played to; if, however, more than one card be played at 
+the same time, all but one may be taken up. A card led out 
+of turn shall be taken up unless it is covered, in which case 
+the trick shall hold good. 
+XV. Either of the players may count the stock at any time, 
+and when he finds that twelve cards or less remain therein, 
+either of the players may count the brisques in his own tricks. 
+DRAWING. 
+XVI. If, in drawing, either player sees cards to which he 
+has no right, he must show them to his opponent, and when 
+the winner of a trick sees the second card the loser may see 
+the top card. If the loser draw first and the winner, without 
+observing the mistake, draws second, both must retain the 
+cards dra\^'n. 
+XVII. If the loser of the trick, when it is his turn to draw, 
+see two cards of the stock, the player who has won may choose 
+either of the cards after the next trick, whether he win it or 
+not. Thus, if either player see any number of cards, his adver- 
+sary shall always choose which one he prefers, after each trick, 
+as long as any card seen by the other is undrawn. When there 
+is an odd number in the stock the last card is not drawn. 
+DECLARING. 
+XVIII. Declared cards must be placed face upwards on the 
+table always, and separate from the tricks, and — save in the 
+case of ca7'fe blanche — must stay there until played, or the stock 
+be exhausted. Bezique combinations can be declared separ- 
+ately, and later, be united to form a superior combination. 
+SCORING. 
+XIX. When a player scores for a combination to which he 
+has no right, and his opponent does not discover the error until 
+a card has been played to the subsequent trick, the error can- 
+not be corrected. When a score is marked wrong it can be 
+rectified at any time during the progress of the game. 
+THE LAST NINE TRICKS. 
+XX. If a player, while the last nine tricks are being jDlayed, 
+fails to follow suit or win the trick, though he could have done 
+so, immediately the mistake is discovered, the tricks must be 
+played over again, beginning from the one in which the error 
+occurred. 
+26 
+BEZIQUE. 
+BYSTANDERS. 
+XXI. When a bystander, inadvertantly or otherwise, calls 
+attention to any error or oversight, and thereby affects the 
+score, he can be called upon to pay all stakes and bets of the 
+player whose interest he has prejudicially influenced. 
+THE LAWS OF BEZIQUE. 
+Save in exceptions given below, the laws of Rubicon Bezique 
+govern this game too. The exceptions are : 
+1. If a player plays with more cards than he should have in 
+his hand, he cannot rectify the error, nor can he score anything 
+during that hand. 
+2. When both of the players play w^ith too many cards, they 
+must both continue to play without drawing until the mistake 
+is put right. 
+3. When one player plays with too many, and the other 
+with too few cards, the deal holds good ; the first cannot score 
+at all, and the latter may not count the last trick. 
+4. For "during the progress of the game," put during tlie 
+deal. 
+POLISH BEZIQUE OR FILDINSKI. 
+This variation is very similar to the ordinary game, hence is 
+not difficult to acquire. The method of scoring is quite 
+different, however, and often for this reason proves a pleasing 
+change. 
+The game is played by two or four people. In the first, two 
+packs of cards are used and eight cards dealt to each player, 
+the seventeenth card being turned up for trumps. 
+The same methods are pursued here as in ordinary Bezique. 
+The principal difference between the games lies in the fact 
+that, whereas in Bezique proper, cards played to a trick are no 
+longer of any value, in the Polish variety the winner of the 
+trick takes all the scoring cards it contains, that is, all court 
+cards and aces, and the ten of trumps, and aranges them face 
+upwards before him, and scores for any combinations they may 
+make together. 
+The cards of no value are cast aside; but the winner of each 
+trick scores the brisques it may contain. Brisques can be scored 
+after every trick and not left to the end of the hand. 
+The cards gained by a player in tricks and placed systemat- 
+ically before him, do not belong to his hand, of course, and 
+cannot be played; they can only be declared in scoring com- 
+binations; therefore, whether declared or not, remain on the 
+table until the end of the hand. 
+BEZIQUE. 
+27 
+The scoring combinations are the same as in ordinary bezique. 
+Brisques contained in tricks count ten each, and the winner 
+of the trick before the last cards are drawn also counts ten. 
+The bezique cards are queen of spades and l^nave of dia- 
+monds; but when spades or diamonds are trumps it is generally 
+considered better to make the queen of hearts and knave of 
+clubs for bezique. 
+As in the other games, declarations can only be made on 
+winning a trick and prior to drawing, but in Polish Beziqu,e a 
+declaration cannot be made unless one of the cards, at least, 
+which were just gained form part of the combination. 
+When a player draws a card he forthwith loses the score for 
+all the declarations he may have failed to score. 
+Declarations may be made and scored in any number and at 
+the same time, and^ in any order whatever; but no card is 
+allowed to be declared more than once in the same combina- 
+tion. All cards declared remain on the table till the end of the 
+hand, even though they may not form part of any more com- 
+binations, and both of the players have a right to see all the 
+declared cards. 
+The seven of trumps is declared or exchanged at the same 
+time other cards are; i.e., when it is in the trick after which 
+the declaration is made. 
+It can be declared by the player taking the trick, whether he 
+takes it with a seven or takes the seven led by his opponent 
+with a higher card. When the seven is exchanged for the 
+turned-up card, the latter is put with the declared cards which 
+belong to the player. If, however, it is not exchanged, but 
+simply declared, the seven is put aside M^ith the cards of no 
+value. 
+In the last eight t?'ieks, Polish Bezique is like the ordinary 
+game, as regards following suit, leading the trick when able, 
+and so on. It differs in this: The declarations can continue to 
+be made just as before, until the end of the hand. 
+When the seven of trumps has been exchanged, the player 
+drawing it at the end may not declare it again during the last 
+eight tricks. 
+Generally the game is 2,000 up, as the scoring combinations 
+are so much easier to attain than in the ordinary game. 
+In other things the rules of the ordinary game govern this. 
+A variety of the game, preferred by some players to the one 
+described above, is played by two persons with three packs of 
+bezique cards instead of two. 
+The rules and method of play are like those with two packs, 
+but in consequence of the extra number of cards employed in 
+this the game is 2,500 or 3,000 up, and triple bezique scores 
+28 
+BEZIQUE. 
+150, The scores of sequences, double and triple bezique can 
+be lowered by agreement to 150, 300 and 1,000 respectively. 
+FOUR-HANDED POLISH BEZIQUE. 
+This can be played, as in the ordinary game, two against 
+two or all against all. The former is probably the better plan. 
+Four or even five packs of bezique cards are used, and the game 
+is usually 2,000 up or 3,000 up respectively. 
+The scoring combinations are like those of the two-handed 
+game ; and, in addition, triple bezique counts 1,500 and quad- 
+ruple bezique wins the game itself. 
+A double, triple or quadruple bezique can be declared by 
+either partner, after the winning of the card or cards making 
+up with his open cards a single or double bezique, and then — 
+not prior to this — he can add the single or double bezique 
+among his partner's open cards. 
+Example : Y and Z are partners ; Y wins a queen of spades, 
+and can add it to an open knave of diamonds before him and 
+declare bezique; then, if Z has an open single or double 
+bezique, YandZ can score a double or triple bezique as the case 
+may be. 
+If, however, Z has three open queens of spades and Y wins a 
+trick -which contains one or more knaves of diamonds, Y and Z 
+cannot join together to score single, double or triple bezique. 
+In short, save in the case of double, triple or quadruple 
+bezique, each partner can score a combination only of cards 
+won by himself. 
+As a rule, in playing the last eight cards, the players divide, 
+the one who won the last trick playing against the opponent to 
+his left, and his partner against the other one. Each player 
+must score his own brisques and other scoring combinations 
+separately, save, as already stated, in double, triple or quad- 
+ruple bezique. At the end of the game the partners add their 
+respective scores. 
+When there is a disagreement as to which side won the game 
+it must be settled by examining which score accrued the first. 
+For instance, if one player makes the game by scoring after the 
+third trick, and his partner's opponent after winning the fourth, 
+the former of course wins the game. 
+When l3oth sides ''reach game," as it is called, by the win- 
+ning of the third trick, the side scoring most points over and 
+above game would win. 
+Still another way of playing tliis game is for the cards won 
+by either of the partners to remain in front of them ; and then, 
+if either of them should v. in a trick which contained a scoring 
+BEZIQUE. 
+29 
+combination, or a card or cards which, with an open card or 
+cards, would also make a combination, he could count it, 
+whether the open card employed for the purpose had been 
+previously gained by himself or his partner. 
+In this variety the partners do not as a rule divide in the play 
+of the last eight cards, but continue to play throughout the 
+game as in the earlier stages. 
+A FEW HINTS. 
+I. It must be borne in mind that the tricks are valuable for 
+the cards contained therein and not alone for brisques or dec- 
+larations. The player, however, should not be too anxious to 
+take tricks, as thus he puts himself under a great disadvantage 
+in having to lead. 
+II. The player should be careful, too, not to lead small cards 
+of the bezique suits, as thus he gives his opponent the chance 
+of making a bezique knave or queen. He should lead from the 
+suit of no value, that is, one which is neither the trump suit 
+nor one of the bezique cards. 
+III. If possible the player must keep his aces of the bezique 
+suits for use in the last eight tricks, unless double bezique will 
+have been already declared, which is not very probable ; and 
+he must always retain as many sequence cards as possible, 
+unless he has no chance of making a sequence, in which event 
+he must do his best to spoil his opponent's chance of doing so. 
+IV. This four-handed game is governed by the same general 
+principles, but the player must bear in mind that he is playing 
+for his partner as well as for himself, and must therefore throw 
+him cards that will be of advantage to him whene^fer he can. 
+In this variety the fourth player has a great advantage. Tricks 
+are more valuable here than in the two-handed game, contain- 
+ing four cards as they do, this fact often compensating for a 
+disadvantageous lead. 
+LAWS FOR POLISH BEZIQUE. 
+Here also the laws of Rubicon Bezique apply, with the fol- 
+lowing exceptions : 
+XI. I. If a player play with more cards than he should have 
+in his hand he forfeits 200 points and must give the extra cards 
+to his adversary, who can add them to his declared cards. 2. 
+When both of the players play with too many cards they shall 
+continue to play without drawing until the error is rectified. 
+XIII. When one player plays with too many and the other 
+with too few cards, the deal holds good ; the former forfeits 200 
+points and the latter cannot score the last trick. 
+30 
+BEZIQUE. 
+XIX (extra). Any score which is unclaimed prior to the lead- 
+ing of the next card is forfeited. When a player scores too 
+many points for any combination he shall be subject to have 
+the overscore deducted from his score and added to his adver- 
+sary's. After the latter lias played another score the error must 
+go uncorrected. When, however, a player scores too few points 
+for any combination he can rectify the error as long as he has 
+no further scoring coming. 
+XX. If a player, while the last eight tricks are being played, 
+fails to follow suit or win the trick, though he could have done 
+so, he shall forfeit all scores made in the last eight tricks, and 
+give all the cards to his opponent. 
+CHOUETTE BEZIQUE. 
+W^hen a player is willing to take all the stakes, he may de- 
+clare to play a la chouette, which, in euchre would be called a 
+" lone hand." He has choice of the deal. The other players 
+play in consultation against him. 
+If the chouette wins, then one of his adversaries takes the 
+loser's place, and thus it continues with the other adversaries 
+in rotation. When the chouette loses, he simply goes on play- 
+ing against the same adversaries as at the beginning. 
+If three players (X, Y and Z) wisht o join in the game, the 
+one who cuts highest (X) plays one game against Y and Z ; the 
+player cutting the lowest (Z) sits out and advises Y. The 
+single player, of course, has choice of deal. 
+If X wins, he goes on playing against the other two, Z simply 
+taking Y's place. When X loses a game, then Z takes his 
+place, and thus the game continues in natural rotation of 
+players. 
+If four take part in this variety, say J, K, Y and'Z, two of 
+them, J and Y, for instance, play against each other, the other 
+two advising their respective partners. The same rule for 
+changing about of players maintains here as in the other variety 
+of chouette. 
+In these foregoing pages are presented the many and varied 
+games of Bezique, from among which, the student will doubt- 
+less make a choice, and then proceed to learn the one which 
+appeals especially to him most. After mastering one of the 
+varieties the others will be found easy; thus, it is to be hoped, 
+all will become familiar to him in time, for it is a game in 
+each and every one of the varieties of which there is a distinct 
+and unending charm. 
+THE SFflLDINQ 
+A practical, simple and efficient Home Exerciser, and one specially adapted 
+for ladies and children, but at the same time can be profitably used by the 
+strongest athlete. It is readily attached to door frame, window casing or 
+any convenient place in room; is absolutely noiseless and takes up very 
+little space. 
+A hook top and bottom is all that is required to suspend it, and it can be 
+quickly removed when not in use, and as readily replaced. 
+The variety of exercise this little apparatus is capable of is simple endless, 
+and permits of the uniform development of the muscles instead of the uneven 
+one so common to all the usual home exereises. Our Manual No. 29, on 
+Physical Culture (price, postpaid, 10 cents), will give many valuable hints 
+as to the most beneficial exercises, and by simply reversing the apparatus, 
+all the lower movements shown may be adapted to this outfit 
+No. I . Single strength elastic cords $ ( .QO 
+No. 2. Double strength clastic cords 2.00 
+Our complete Illustrated Catalogue of all athletic sports, uniforms and 
+gymnasium goods for home use mailed free to any address. 
+Q. SPALDING & BROS., 
+NEW YORK. CHICAGO. PHILADELPHIA. 
+sPALDiNo^s CALISTHENIC «»»»^ 
+£% Nickel-PlatedRubberBandDumbBells 
+Finely polished and nickel-plated, with rubber bands 
+around ends to prevent chipping and rendering them noiseless. 
+Weight, lib., 2 lbs., 3 lbs., 4 lbs., 5 lbs.. 
+Per pair, SQC- 750. $ I .OO $1.15 $1.25 
+Nickel=Plated Dumb Bells. 
+Nicely and smoothly finished and handsomely nickel-plated 
+and polished. 
+Weight, lib., 21bs., -31bs.,^ 41bs., 51bs., 
+Per pair, 25C. 50C. 65C. 85C. $ I .OO 
+Iron Dumb Bells. 
+Our iron bells are made on approved models, nicely bal- 
+anced and finished in japan. 
+Sizes, 2 to 40 lbs., . . Per lb., 5c. 
+ASH BAR BELLS. 
+Made of selected material, highly polished. 
+No. I. 4K feet long, . . Per doz., $5.00 
+No. 2. o feet long, ..." 6.00 
+SCHOOL WANDS. 
+Made of straight grain maple and nicely finished. 
+No. 3. feet long, %-inch diameter, Per doz., $ | ,25 
+I 1 CALISTHENIC WANDS. 
+N .4. 4M feet long, 1 inch diameter. Per doz., $ | .50 
+Our complete Illustrated Catalogue mailed free to any address. 
+A. Q. SPALDING & BROS., 
+NEW YORK. CHICAGO. PHUADELPHIA. 
+Bicycle Sundries = = =• 
+carry a 
+COMPLETC 
+LINE of BICYCLE 
+SUNDRIES and 
+shall be pleased 
+to send Catalogue 
+upon application. 
+Lamps 
+Bells 
+Enamel 
+Tire Cement 
+Rubber Cement 
+*'3in("Comoound 
+*'R R" Comoound 
+Illuminating Oil 
+Lubricating on 
+Repair Kits 
+Cvclometers 
+Bicycle Watches 
+Cork Crips 
+Oil Cans 
+Trouser Cuards 
+Wrenches 
+Chains 
+Bundle Carriers 
+Pumps 
+Saddles 
+Bicycle Stands 
+Toe Clips 
+Tool Bags 
+Foot Brakes 
+Whistles 
+Screw Drivers 
+In fact, everything which 
+is of use to Bicyclists, 
+A. Q. SPALDING & BROS. 
+N£W YORK, PHILADELPHIA. CHICAGO. 
+^ ^ ^ 
+^ ^ ^ ^ 
+^ * ^ ^ 
+SPALDING'S INDIAN CLUBS. * 
+Our Trade Mark Indian Clubs are of selected material ^ 
+and perfect in shape. They are finely polished, with 
+ebonite centre band and gilt stripe top and bottom. ^ 
+Each pair wrapped in paper bag. ^ 
+TRADE HARK CLUBS. * 
+Weight. Per Pair. 
+1=2 pound, . $ .40 ^ 
+3=4 . .45 ^ 
+1 . .50 ^ 
+1 1-2 . .60 ^ 
+2 . .70 ^ 
+2 1=2 . .75 ^ 
+3 . .80 ^ 
+4 . 1.00 ^ 
+5 . 1.25 ^ 
+WOOD DUriB BELLS. ^ 
+Our Trade Mark Bells are made of selected material, ^ 
+neatly decorated, well finished and of perfect balance. ^ 
+Weight. Per Pair. ^ 
+1=4 pound, . $ .35 . 
+1=2 
+3=4 
+1 
+1 1=2 
+2 
+3 
+4 
+.35 
+.45 
+.50 
+.60 
+.65 
+.85 
+1.00 
+ts, Uniforms and Gym- 
+Our complete Catalogue for all Athletic Spo 
+jiasium Goods mailed free to any address. 
+A, Q. SPALDING & BROS., 
+NEW YORK. CHICAGO. PHILADELPHIA. 
+)^ SPALDING'S ^ 
+^ ...Adjustable Trapeze ^ 
+AND- 
+Swinging Rings. ^ 
+Adjustable Trapeze. Adjustable Swinging Rings. 
+Furnished complete, with bar and everything necessary for sus- 
+pending. The supports are made of extra strong webbing. Perfectly 
+safe under all conditions, and with the adjustable buckle may be adapted 
+to any ceiling from 16 feet down. 
+No. 201. Trapeze, . . . Complete, $3.0O 
+No. 301 , Swinging Rings, . . " 3.00 
+Our Complete Catalogue for all Athletic Sports, Uniforms and 
+Gymnasium Apparatus for Home Use Mailed 
+Free to any Address. 
+& BROS., 
+PHILADELPHU, 
+NEW YORK, 
+A. G. SPALDING 
+CHICAGO. 
+DUPLICATE WHIST, 
+This method is purely a game of skill, and 
+KALAMAZOO METHOD, most perfect system yet introduced. 
+The maxims of the standard game are not 
+interfered with in any way, and under its workings no pica of poor hands 
+as a cause of defeat can be made, and the score is a proof of superior 
+skill of the victors. 
+DUPLICATE WHIST TRAYS. 
+Set No. 8.. Containing 8 Trays, best cloth covered board, gold embossed, 
+"6 celluloid poker chips and 25 score cards, .... $3.00 
+Set No. 8 A. Same as Set No. 8, with 8 packs of enameled cards, 4.00 
+Set No. I 2« 12 Trays, 26 celluloid chips and 25 score cards, . 4.C0 
+Set No. f 2 A. Same as Set No. 12, with 12 packs of enameled cards, 5.50 
+Set No. IQ, 16 trays, 26 celluloid poker chips and 25 poker chips, 5.00 
+Set No. I 6 A. Same as Set No. 16, with 16 packs of enameled cards, 7.00 
+Set No. 20« 20 Trays, 26 celluloid poker chips and 50 score cards, CaCO 
+Set No. 20A» Same as Set No. 20, with 24 packs of enameled cards, 8.50 
+Set No. 24. 24 Trays, 26 celluloid poker chips and 50 score cards, 7.00 
+Set No. 24 A. Same as Set No. 24, with 24 packs of enameled cards, f O.OO 
+Book of Rules and Instruction sent with each set. 
+Score cards, bristol board, Per 100, ( ,50 
+Score books and rules, Per dozen, ,75 
+A. G, Spalding & Bros., New York, p,^,;',^-,^"?,',,. 
+Exhibition... 
+lubs. H 
+Handsomely finished in ebonite and made 
+for exhibition and stage purposes. The 
+clubs are hollow, witk a kirge body, and 
+although extremely light, represent a c^ub 
+weighing three pounds or more. 
+No. A. Ebonite finish, 
+Per Pair, $3.50 
+No. AA. With German Sil- 
+ver bands. . . Per Pair, $5cOO 
+i 
+I 
+Spalding's Class Clubs. 
+This Club is made of extremely light wood and 
+has the length of a regular one pound with the 
+body of a two pound club. It is after the design of 
+Professor Anderson and specially adapted for calis- 
+thenic work. 
+Per Pair, 60c. 
+....Indian Club Hanger.... 
+Made of iron, japanned, and nicely 
+finished. Will screw in wood partition or 
+plastered wall and hold any size club or 
+dumb bell. 
+Per Pair, 20c. 
+Our Complete Catalogue of all Athletic Sports, Uniforms and 
+Gymnasium Goods, Mailed Free to Any Address. 
+A. Q. SPALDING & BROS., 
+NEW YORK. CHICAGO. PHILADELPHIA. 
+THE SPALDINQ 
+Bowling 
+Alleys 
+In writing for esti- 
+mates always state 
+the character of the 
+foundation, w^hether 
+on the ground floor 
+or across joists. In 
+building alleys on a 
+concrete floor, the 
+" sleepers " should 
+be imbedded in the 
+concrete and placed 
+20 inches apart from 
+centre to centre. The 
+size of sleepers should 
+be 3 inches by 8 
+inches, with the first 
+sleeper 4 feet from 
+the pit end of the 
+alley. 
+H 9 Prices on n 
+I application 
+A. G. SPALDING & BPOS. 
+NEW YORK :: CHICAGO :: PHILADELPHIA 
+Spalding's Home Gymnasium. 
+Combining Swinging Rings, Trapeze, Stirrups and Swing. 
+The apparatus is supported by two strong screwhooks in the celling, 
+about 18 inches apart and screwed 5 inches into the joist. It can also be 
+used out of doors, by erecting a framework, such as is used for swings. The 
+straps are of extra strong webbing, and adjustable to any desired height. 
+The rings are of the patent bent wood, about 6 inches in diameter. The 
+apparatus can be put up in any room, and removed in a moment, leaving only 
+the two small small ey^s in the ceiling visible. A space 6 or 8 feet wide is 
+ample for any of the exercises. The various combinations can be quickly and 
+easily made. We furnish, in addition, a board, adjustable to the stirrups 
+which form an excellent swing for the little ones. 
+No. I , Complete, ready to put np, $5.00 
+Our Complete Illustrated Catalogue 
+1 ^S^^^ For all Athletic Sports, Uniforms and Gymnasium 
+^-^^^ goods, will be mailed Free to any address 
+A G. SPALDING & BROS. 
+New York Chicago Philadelphia 
+^ ^ iit< i>t< lAt iA« »fa »i<t »t< >i< lii^^ hV; »t* it^ liKfAx^M^ 0, ^ 
+Which 
+Catalogue 
+Shall We Send You? 
+We issue Special Catalogues for the various de- 
+partments mentioned below and shell be pleased 
+to mail copies free to any address. If a dealer* 
+ask for Trade prices. 
+Spring and Summer Sports*^ 
+Devoted to Base Ball, Tennis, Cricket, Archery, Golf, Uni- 
+forms, Athletic Implements, Calisthenic Goods, Boxing Gloves, 
+and everything needed for indoor or outdoor sports and pastimes. 
+Profusely illustrated. 
+The Spalding Bicycke^ 
+The models for 1896 of our Spalding and Credenda Bicycles 
+are handsomely illustrated in this Cata!" gue. It is replete with 
+much other interesting matter. 
+Bicycle Sundries*^ 
+The biggest and best assortment ever gotten together in one 
+Catalogue. Many new and interesting articles for the bicyclist. 
+Boatse^ 
+A handsoineij- i'histrated Catalogue of the various products of 
+the Spalding St. i.awrence Boat Co. of Ogdensburg, _N. Y., form- 
+erly at Clayton. Valuable to anyone interested in boats for 
+pleasure or profit. 
+Hunting EquipmentSe^ 
+Coats, Leggings, (iun Cases and Bags — in fact, everything for 
+sportsmen's wear and comfort. 1'he goods are made by the well- 
+known firm of Geo. Barnard & Co., Brookl^'n and Chicago. We 
+market the entire product of their two large factories. 
+Gymnasium Apparatuses^ 
+Devoted exclusively to Gymnasium Apparatus and Appliances. 
+Of interest only to those especially interested in these goods and 
+not intended for genei al distribution. We invite correspondence 
+relative to Gymnasium Outfitting. 
+Pneumatic Boatse^ 
+We manufacture the Layman Pneumatic Boat, the most novel 
+and original Hunting, Pleasure and Fishing Craft yet invented. 
+Safe in all waters. 
+A. G. SPALDING & BR05., 
+NEW YORK. CHICAGO. PHILADELPHIA. 
+"The Christy'' 
+Price, $5.00- 
+YOU will have never appreciated true saddle comfort until 
+you have tried the Christy Saddle, and the pleasure oi 
+cycling is increased two-fold by its use. 
+It is Made of Aluminum, therefore maintains its shape. 
+Cannot draw or warp and hurt the rider. 
+It has a short horn which does not project through betweer 
+the legs, leaving the clothing in proper and comfortable posi- 
+tion ; and there is no chafing of the limbs. The pads receive 
+the weight of the body, and the open centre protects those 
+tender parts that are susceptible to injury. Endorsed and 
+recommended by many prominent physicians. 
+This saddle has been thoroughly tried, and is already a 
+favorite. For lady riders it has no equal. The saddle weighs 
+but a pound, and will last the rider a lifetime. 
+Our booklet on the Christy Saddle will tell you 
+more about it. Free to any address. 
+A. Q. Spalding & Bros., 
+NEW YORK. CHICAGO. PHILADELPHIA 
+Me BuUb... 
+Strictly high grade pleasure, racing or cruising craft of 
+all kinds, from a canoe to a sail yacht or steam launch. 
+We are the only builders of the GENUINE 
+Famous 
+St. Lawrence River Skiffs. 
+Me JSmlt 
+(from the design of Mr. W. 
+P. Stephens} the half-raier 
+" Etbelwpnn," 
+winner of the Seawanhaka- 
+Corinthian Yacht Club's In- 
+ternational Cup. 
+Our One Raters, Half Raters, 
+and Sailing Canoes show a 
+long winning list for '94 and 
+'95 seasons. 
+> 
+Send for Illustrated 
+Catalogue. 
+JCPALDINQ ST. LAWRENCE BOAT CO., 
+Formerly the St. Lawrence River r\r.r\nMCI^I TDn M V 
+. .Skiff, Canoe and Steam Launch Co. ViUUl:ll^r)t3UKU, 1^. Y. 
+ennis 
+Racket 
+FRAME of finest quality white 
+ash, handsomely polished, the 
+stringing- of the highest quality 
+gut and specially made for this 
+Racket; throat-piece of rosewood, handle 
+cane spliced and cane extendin|^ through 
+throat-piece, giving additional strength 
+and greatly increasing the resiliency and 
+driving power. It is hand-made throughout and 
+of the finest workmanship, as indicated by our 
+special trade mark of Highest Quality." 
+• Price, $8.00 
+Illustrated Catalogue of Spring and Summer 
+Sports Free to Any Address. 
+A. a SPALDING & BROS., 
+NEW YORK. 
+CHICAGO, 
+PHILADELPHIA. 
+Champion Jas. J. Corbett... 
+USED "^"P — 
+"CORBETT" 
+(Trade Mark) 
+Manufactured 
+^nSIBif^'- Boxing Gloves 
+...In Ms Fi.Ht with MITCHELL -'m^'^-' 
+The REACH Trade Mark is on the Wrist of Every Glove. 
+An Exact Duplicate 
+of the Gloves used by Corbett 
+will be sent upon receipt of price. 
+Per Set, $7.50 
+If you cannot get them in your city, 
+address 
+A. J. Reach Co., 
+"^"""sueetef""" PHILADELPHIA, PA. 
+T^"^ "LADY SPALDING" 
+FOR 1896, 
+MODEL L. 
+FRAME— Double Tube, standard height 19 inches, dropped, of 1%' 
+inch tubing, swaged and tapered to one inch at connections. 
+FRONT FORK— Tubular throughout, Side Forks of large section, 
+re-enforced both ends. No forgings. 
+WHEELS— 28 inch Front, 26-inch Rear. 
+BEARINGS — Tool Steel cut from bar, tempered, ground and pol- 
+ished. Removable Ball Races throughout. 
+TIRES— 28 X Ifi-inch front, 26 x l^-inch rear. 
+RIMS— Rock Elm, coach finish. 
+SPOKES— Straight Tangent, Swaged, Nickeled. 
+CRANKS— 6-inch Round Spring Steel. Detachable. 
+PEDALS—" Spalding" Rubber. Dust proof. 
+HANDLE BAR— Steel Tube of large section, upturned. "Spald- 
+ing" Handles with white celluloid tips. 
+BRAKE — Direct Plunger, witk Rubber Friction Blocks, readily de- 
+tachable. 
+SADDLE— Sager, Model XI 2. 
+GEAR— 63 inches. 
+FITTINGS— Tool Bag, Wrench, Oil Can, Air Pump, Repair Kit and 
+Detachable Lamp Bracket. 
+GUARDS —Wood, coach finish, laced. 
+WEIGHT — With wood rims, rubber pedals, chain guard, dress guard 
+and Brake, all on, 26 pounds. 
+TREAD— 5K inches. 
+OPTIONS— High Frame, height 22 inches. Extreme Upturned, 
+Dropped or Adjustable Handle Bars, Rat-trap Pedals, "Spalding'* 
+Adjustable Goose Neck Post. Q% or 7-inch Cranks. 26-inch Front 
+Wheel. 28-inch Rear Wheel. Gears— With 26-inch Rear Wheel, 55, 
+5854, 65, 67, 74. Gears with 28-inch Rear Wheel, 55. 5854, 66>^, 68, 70, 
+72, 76. " Si)alding,*' " Hartford," " Dunlop " or " Morgan & Wright" 
+Tires. Christy Saddle. 
+Note — Brake not furnished with Adjustable Handle Bars. 
+THE ""LADY SPALDING," MODEL L, $100. 
+A. G. SPALDING & BROS., 
+New Yqrk. Chicago. Phiuadeuphiai 
+..Spalbing's.. 
+Dome Xibrar^. 
+Published Monthly and Devoted to all Games 
+and Pastimes of Interest to the Home Circle. 
+Each Number is Fully Illustrated with Diagrams 
+Explanatory of the Game. 
+No. I. Chess. 
+No. 2. Whist. 
+No. 3. Dominoes and Dice. 
+No. 4. Poker. 
+No. 5. Backgammon 
+No. 6. Euchre. 
+No. 7. Billiards. 
+No. 8. Ecarte. 
+No. 9. Checkers. 
+No. 10. Bezique. 
+No. II. Pool. 
+PER COPY, 10 CENTS. 
+American Sports Publishing Company, 
+241 Broadway, New York. 
+WRIGHT & DITSON 
+. . . riANUFACTURERS OF... 
+Our 
+This racket is endorsed and used 
+by HR. FRED H. HOVEY, 
+Champion of the United States, 
+and is the one with which he won 
+the championship. 
+... CHAMPIONSHIP BALL ... 
+Adopted by the U. S. National, 
+Intercollegiate, Pacific States, 
+Southern and Canadian Lawn 
+Tennis Associations for 
+ 1896 
+The ^^Scars^^ 
+Racket* 
+Boston, April 1, 1896. 
+Messrs. Wright & Ditson, 
+Boston, Mass. 
+Gentlemen : Your Sears Special Racket has been my stand- 
+by for several years. Althou,2:h I have tried all the other makes, 
+I have always returned to the Special as the only one which 
+affords perfect satisfaction. 
+Yours sincerely, 
+Fred'k H. Hovey. 
+WRIGHT & DITSON'S TENNIS GUIDE. By mail, 
+Our goods are for sale by all first-class dealers. 
+Catalogue, containing Latest Official Rules, Free. 
+15c. 
+WRIGHT & DITSON, « Boston, Mass, 
+SPALDING'S 
+Athletic Library 
+No. Published Monthly 
+1. Life and Battles of James J. Corbett. 
+2. Indian Clubs and Dumb Bells. 
+4. How to Become a Boxer. 
+5. Gymnastics. [Campbell. 
+6. How to Play Lawn Tennis, B^'- Champion 
+7. How to Play Base Ball. Just the thing for 
+Boys. B}^ Walter Camp. 
+9. The Athlete's Guide. How to Run, Sprint, 
+Jump, Walk, and Throw Weights. 
+12. Association Foot Ball. 
+13. Hand Ball. 
+14. Curling, Hockey and Polo. 
+15. Indoor Base Ball. 
+16. Skating. A very practical book. By Champion 
+17. Basket Ball. [Geo. D. Phillips. 
+18. Fencing. 
+20. Cricket Guide. By _Geo_. Wright. 
+21. Rowing. By E. J. Giannini, Champion Amateur 
+23. Canoeing. By C. Bowyer Vaux. [Oarsman. 
+25. Swimming. By Walter G. Douglas. 
+icG. How to Play Foot Ball. Walter Camp. 
+27. College Athletics. C. Murphy, Yale Trainer. 
+23. Exercising with Pulley Weights. By H. S. 
+Anderson. 
+30. How to Play Lacrosse. W. H. Corbett. 
+3,2. Practical Ball Playing. By Arthur A. Irwin. 
+35. Intercollegiate A. A. A. A. Guide. 
+30. How to Play Golf. Edited by L. B. Stoddart. 
+37. All Around Athletics. 
+38. Official Croquet Guide. 
+39. Lawn Bowls. By Henry Chadwick. 
+40. Archery. By James S. Mitchel. 
+41. Official Foot Ball Guide for 1895. Edited by 
+Walter Camp. Portraits of all prominent play- 
+ers. Official Rules. 
+42. How to Use the Punching Bag. 
+43. Bowling. Latest Rules and Instructions. 
+44. Official Roller Polo Guide. 
+45. Official Cycle Guide. _ Instructions to Cyclists; 
+Portraits of all leading riders; complete list of 
+46. Athletic Almanac. J. E. Sullivan. [records. 
+47. Official Handbook of the A. A. U. 
+48. Spalding's Official Base Ball Guide for 1896. 
+50. Spalding's Lawn Tennis Guide for 1896. 
+Per copy, 10 cents, postpaid 
+American Sports Publishing Co., 
+241 Broadway^ New York^ 
+SPALDING'S... 
+Hlustrated (Catalogue 
+Fall and Winter 
+SPORTS... 
+Published about August First. 
+Foot Ball Ice Skates 
+Golf and Polo 
+ATHLETIC AND GYMNASIUM OUTFITS. 
+Sweaters, Hunting Clothing and 
+Equipments, and all Accessories 
+for Fall and "Winter Wc&t^^J^ 
+Handsomely illustrated, and the recognized authority for standard and up-to- 
+date goods. Mailed free to any address. 
+A* G* Spalding & Bros* 
+NEW YORK CHICAGO PHILADELPHIA 
+BKYCLC CATALOOUC PQ£E. 
+A 0 5PALDIN0 6-E)I?05- 
+CHICAGO- PMILADELPfflA- NEV VORK- 
+l*h7eiM9 WAB^AVe-i CHE3TAfUT ^T. 126-130 HA5i3AU5t

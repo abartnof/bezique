@@ -1,0 +1,406 @@
+# Foster's Complete Hoyle (1897): Bezique, pp. 337-345
+
+- **Work:** R. F. Foster, *Foster's Complete Hoyle* (New York: F. A. Stokes, copyright 1897). Public domain.
+- **Text:** archive.org OCR of the Google scan of the 1897 edition, retrieved 2026-10-01 from
+  https://archive.org/stream/fosterscomplete00fostgoog/fosterscomplete00fostgoog_djvu.txt
+- **Extent:** from "The Bezique Family" to the start of Cinq-Cents: the ordinary two-hand game,
+  its irregularities and scoring, four- and three-handed Bezique, and Polish Bezique.
+  Literature review source S47.
+- **Caveat:** uncorrected OCR (e.g. "B^zique", "i86t" for 1861). Whitespace was collapsed;
+  nothing else was changed. Quote from the scan, not from this file, when exact wording matters.
+
+---
+
+(Bcdqu^) 337 
+THE BEZIQUE FAMILY. 
+This family includes three of our most popular games ; B^zique 
+itself, Binocle, and Sixty-Six. These are all comparatively modern 
+games, but are descended from very old stock, the best known of 
+the ancestors being Marriage, Matrimony, and Cinq-Cents. The 
+etymology of the word Bezique is very much disputed. Some 
+claim that it is from the Spanish basa, afterwards basico, a little 
+kiss ; referring to the union of the spade Queen and the diamond 
+Jack, and the various marriages in the game. This was afterwards 
+Basique, transformed by the French to Besique, and by the Eng- 
+lish to Bezique. One English writer thinks the word is from 
+besaigne, the double-headed axe. 
+Judging from the rank of the cards, which is peculiar to German 
+games, B<§zique may have originated in an attempt to play Binocle 
+with a piquet pack, for Binocle seems to have been originally 
+played with a full pack of fifty-two cards. One German writer 
+says the game is of Swiss origin, and that they probably got it from 
+Spain. In one writer's opinion, the name Binocle, is derived from 
+bis^ until, and knochle, the knuckle, which would imply that the 
+original meaning was, until some one knuckled ; /. ^r., stopped the 
+game by knocking on the table with his knuckles. This interpreta- 
+tion seems far-fetched, but if correct, it would sustain the opinion 
+that Binocle was derived from the old game of Cinq-Cents, in which 
+the player knocked with his knuckles to announce that he had made 
+enough points to win the game. It is much more probable that the 
+word Binocle is from the Latin binus, double, and oculus, an eye, 
+meaning to see double ; which may have referred in some way to 
+the double combinations which are frequently seen in the game. 
+Stopping the play is a prominent feature in Sixty-Six, another 
+variation of Bezique, and the connecting link between Binocle and 
+Skat. In Sixty-Six, the combination known as bezique, or binocle, 
+is omitted ; so is the sequence in trumps. Sixty-four-card Binocle 
+is simply Bezique, with a slight difference in the counting value of 
+the various combinations. Sometimes twelve cards are given to 
+each player. 
+Great confusion seems to have existed when the game of Bezique 
+was introduced to England, in the winter of 1868-9, owing to the 
+(act that so many persons rushed into print with their own private 
+opinions of the rules, which were first given by Dr. Pole, in i86t, 
+338 (Biziqae.) THE B^ZIQVE FAMILY. 
+No one knew whether " the last trick " was the absolute last, or 
+the last before the stock was exhausted. Whether the highest or 
+lowest cut dealt was also a matter of dispute. *' Cavendish " got 
+both these wrong in the first edition of his " Pocket Guide." but 
+corrected himself without explanation or apology in the second 
+edition. It was then the custom of many players to attach no 
+value to the trump suit until the stock was exhausted ; so that 
+until the last eight tricks there was no such thing as trumping a 
+trick in order to win it. Disputes also arose as to counting double 
+combinations, many contending that a double marriage should be 
+as valuable as a double bezique. Time and experience have 
+finally settled all these points, and the rules of the game are now 
+practically uniform in all countries. 
+BtoQUE, 
+OR SDCTY-FOUR^IARD BINOCLE. 
+There are two forms of Bezique in common use ; the ordinary 
+game, which will be first described, and the variation known as 
+Rubicon Bezique, which is to Bezique proper what Railroad 
+Euchre is to Euchre. 
+CARDS* Bezique is played with two packs of thirty-two 
+cards each, all below the Seven being deleted, and the two packs 
+being then shuffled together and used as one. It is better to have 
+both packs of the same colour and pattern, but it is not absolutely 
+necessary. The cards rank, A10KQJ987; the Ace being the 
+highest, both in cutting and in play. 
+COUNTERS. Special markers are made for scoring at 
+Bezique ; but the score may easily be kept by means of counters. 
+Pull-Up Bezique Marker. 
+Each player should be provided with four white, four blue, and 
+one red, together with some special marker, such as a copper cent 
+or a button. The button stands for 500 points, each blue counter 
+for 100, the red for 50, and the white ones for 10 each. At the 
+beginning of the game the counters are placed on the left of the 
+player, and are passed from left to right as the points accrue, ex- 
+changing smaller denominations for higher when necessary. 
+DEALING. (B^sique.) 339 
+Many persons tind it more convenient to peg the game on a 
+pull-up cribbage board, starting at 21, counting each peg as 10 
+points, and going twice round to the game hole. 
+STAKES. B^zique is played for so much a game, 1,000 
+points up ; or for so much a point, the score of the loser being 
+deducted from that of the winner. When a partie of five games 
+is agreed upon, it is usual to have an extra stake upon the odd 
+g^anie, and when three games have been won by the same player. 
+the partie is at an end. It is usual to count it a double game if 
+the loser has not reached 500 points. 
+T^LAYERSm B^zique is played by two persons, one of 
+whom is known as the detUer^ and the other as the pone. 
+They cut for choice of seats and deal, the player cutting the 
+highest card having the first choice, and electing whether or not 
+to deal himself. In cutting, the cards rank as in play, and the ace 
+is the highest. If a player exposes more than one card, he must 
+cut again. 
+DEALINGm The cards are thoroughly shuffled, and pre- 
+sented to the pone to be cut. At least five cards must be left in 
+each packet. The cards are then dealt three at a time for the first 
+round, two for the next, and three for the last, each player receiv- 
+ing eight cards. The seventeenth is then turned up lor the trump. 
+If this card is a Seven, the dealer scores 10 points for it at once. 
+The trump card is laid on the table by itself, the remainder of the 
+pack, which is died the stock or talon, is slightly spread, to 
+facilitate the process of drawing cards from it, and to be sure that 
+none of the cards remaining in the undealt portion are exposed. 
+In sixty-four-card Binocle twelve cards are sometimes dealt to 
+each player. 
+Misdetding. A misdeal does not lose the deal, but in some 
+cases a new deal is at the option of the adversary. If the dealer 
+exposes a card belonging to the adversary or to the stock, the pone 
+may demand a new deal ; but if either player exposes any of his 
+own cards, the deal stands good. If too many cards are given to 
+cither player, there must be a new deal. If too few, the pone may 
+claim a fresh deal, or allow the dealer to supply the missing cards 
+from the top of the stock, without changing the trump card. If 
+any card but the trump is (found faced in the pack, there must be a 
+new deal. If a card faced in the stock is not discovered until the 
+first trick has been played to, the exposed card must be turned 
+face down, without disturbing its position. If a pack is found to 
+be imperfect, the deal in which the error is discovered is void, but 
+all previous cuts or scores made with that pack stand good. 
+METHOD OF PL A YINQ. The pone begins by leading 
+any card he chooses, to which his adversary may play any card he 
+pleases. A player is not obliged to follow suit, nor to trump ; but 
+340 (fiiaqut.) METHOD OF PLAYING. 
+may renounce or trump at pleasure until the stock is exhausted, 
+after which the method of play undergoes a change. If a player 
+follows suit, the higher card wins the trick, and if identical cards 
+are played to the same trick, such as two Jacks of clubs, the leader 
+wins. Trumps win plain suits. The winner of the trick takes in 
+the cards, turning them face down ; but before he leads for the 
+next trick he has the privilege of announcing and scoring any one 
+of certain combinations that he may hold in his hand. After, or 
+in the absence of any such announcement, and before leading for 
+the next trick, he draws a card from the top of the stock and places 
+it in his hand, without showing or naming it. His adversary draws 
+the next card, so that each player restores the number of cards in 
+his hand to eight. This method of drawing from the stock is 
+open to many objections, and in France the pone always draws 
+first, no matter who wins the trick. 
+All combinations announced and scored must be laid face up- 
+ward on the table ; but the cards still form part of the player's 
+hand, and may be led or played at any time, although they must 
+not again be taken in hand until the stock is exhausted. 
+OBJECTS OF THE GAME. The reasons for winning 
+or not winning certain tricks will be better understood in connec- 
+tion with the description of the various combinations that count 
+toward game, and the manner of scoring them. 
+Hrisques. The aces and Tens of each suit are called brisques, 
+and count ten points each towards game. Except for the purpose 
+of getting or keeping the lead, there is no object in winning any 
+trick which does not contain a brisque. Every brisaue taken in 
+should be scored at once by the player winning the trick; lo points 
+for an ace or Ten ; 20 points if there are two such cards in the 
+same trick. 
+A player holding or drawing the Seven of trumps has the privi- 
+lege of exchanging it for the turn-up trump, and scoring 10 points 
+at the same time ; but he must make the exchange immediately 
+after winning a trick, and before drawing his card from the stock. 
+Should the turn-up card be a Seven, or one exchange have already 
+been made, the exchange can still be made and scored. He can- 
+not score the Seven and make a declaration at the same time. 
+DECLARATIONS* The combinations which may be an- 
+nounced and scored during the play of the hand are divided into 
+three classes : Marriages and Sequences ; B^ziques ; and Fours of 
+a kind. Only one combination can be scored at a time, and it 
+must be announced immediately after the player holding it has 
+won a trick, and before he draws his card from the talon. If he 
+draws without announcing, it is equivalent to saying he has no 
+declaration to make. Having drawn his card, even it he has not 
+looked at it, he cannot score any declaration until he wins another 
+trick. 
+DECLARATIONS. (Bdjiqtic) 341 
+The combinations and their values are as follows : — 
+CLASS A 
+King and Queen of any plain suit, Marriage . 20 
+King and Queen of trumps, Royal Marriage 40 
+Sequence of live highest trumps, Sequence . 250 
+CLASS B. 
+Spade Queen and diamond Jack, B^zique . 40 
+Two spade Queens and diamond Jacks, Ihmbie 
+B^zique ..... 500 
+CLASS C. 
+Any four Aces . • • • . 100 
+Any four Kings, .... 80 
+Any four Queens . . . . .60 
+Any four Jacks .... 40 
+The four court cards in class C may be all of different suits, or 
+any two of them may be of the same suit. 
+A great many misunderstandings arise with respect to the man- 
+ner and order of making declarations, most of which may be 
+avoided by remembering the following rules : 
+The player making the declaration must have won the previous 
+trick, and must make his announcement before drawing his card 
+from the stock. When the stock is exhausted, so that there is no 
+card to be drawn, no announcement can be made. 
+Only one declaration can be scored at a time, so that a trick 
+must be won for every announcement made, or the combination 
+cannot be scored. This does not prevent a player from making 
+two or more announcements at the same time, but he can score 
+only one of them. 
+A player cannot make a lower declaration with cards which form 
+part of a higher one already made in the same class. For in- 
+stance : Marriages and sequences belong to the same class. If 
+the sequence has been declared, a player cannot take from it the 
+King and Queen and score a marriage ; neither can he add a new 
+Queen to the King already in the sequence, and announce a mar- 
+riage ; because the higher combination was scored first. But if 
+the marriage is first announced, the A 10 J may be added and the 
+sequence scored, after winning another trick. 
+Cards once used in combination cannot again be used in com- 
+binations of equal value of the same class. For instance : Four 
+Kings have been declared, and one of them afterward used in the 
+course of play. The player cannot add a new Kin^ to the three 
+remaining, and announce four Kings again. A marriage in spades 
+has been declared, and the King got rid of in play. A new King 
+i 
+342 (B^tic) 
+DECLARATIONS, 
+of spades will not make another marriage with the old Queen. A 
+b^zique has been scored, and the Jack got rid of in play ; a new 
+Jack of diamonds will not make another b^zique with the old 
+Queen. 
+Some judgment is necessary in making announcements, the 
+question of time being often important. Suppose hearts are 
+trumps, and the winner of the trick holds double b^zique, sixty 
+Queens, and a royal marriage : — 
+He cannot lay all these cards down at once, and claim 600 
+points. Neither can he lay down four Queens and two Jacks, 
+and score $60 ; nor four Queens and a King and score 100. He 
+may announce them if he chooses to expose his hand in that man- 
+ner, but he can score only one combination, and must win a sepa- 
+rate trick to score each of the others. It would be better for him 
+to select some one of the combinations, and declare it, waiting un- 
+til he won another trick to declare the next one. A beginner 
+would be apt to declare the highest count first, 500 for the double 
+b^zique : but under the rule which prevents a player from making 
+a declaration which forms part of a higher one of the same class 
+already made, he would lose the 40 points for the single b6zique. 
+It would be better to declare the single bezique first, scoring 40 
+points for it, and after winning another trick to show the other 
+bezique, scoring 500 points more for the double combination. A 
+player is not allowed to score 40 for the second bezique, and then 
+500 for the two combined; because if new announcements are 
+made in the same class, at least one new card must be added 
+from the player's hand when the announcement is made, even if it 
+is not scored until later. 
+Ikouble Det^araiians. It frequently happens that a player 
+is forced to make two declarations at the same time, although he 
+can score only one of them. For instance: A player has an- 
+nounced and shown four Kings, one of them being the King of 
+spades. On winning another trick he shows and scores bezique. 
+One of the bezique cards forms a marriage with the spade King, 
+and as the combinations belong to different classes, both may be 
+scored, although the same card is used in each ; but the player 
+cannot score the second combination until he wins another trick. 
+Under such circumstances it is usual to declare both combinations, 
+scoring the more valuable, and repeating the one left over until 
+an opportunity arises to score it. In this case the player would 
+DECLARATIONS. (B^uc*) 343 
+say : " Forty for b^zique, and twenty to score." If he lost the 
+next trick he would continue to repeat at every trick : " Twenty to 
+score," until he won a trick. 
+A player having a score in abeyance in this manner is not 
+obliged to score it if he has anything else to announce. A player 
+mrith twenty to score might pick up the sequence in trumps before 
+he won another trick, and he would be very foolish to lose the chance 
+to score 250 for the sake of the 20 already announced. If he had 
+time, he would probably declare : '* Royal Marriage, forty, and 
+twenty to score." On winning another trick he would add the A 
+10 J of trumps, and announce, " Two-fifty in trumps, and twenty 
+to score," still carrying on the small score for a future opportunity. 
+A player may lay down and score eighty Kings, and afterward 
+sixty Queens, the remaining Kings forming marriages. In such a 
+case he would score the sixty points first, and declare the two or 
+three marriages remaining. In the same manner he may have 
+announced four Kings, and after playing away two of them, leav- 
+ing two Kings of spades, he may declare double b^zique, and 
+claim the two marriages "to score." In all such cases it must 
+be remembered that the cards declared must still be on the table 
+when the time comes to score them. If, in the case just given, one 
+of the cards forming either of the marriages was got rid of in the 
+course of play, that marriage could not afterward be scored, 
+although it had been properly announced. If the stock is ex- 
+hausted before the player with a score in abeyance can win another 
+trick, the score is lost. 
+It is often very important for a player to know how much time 
+he has to score. When the talon is spread it is comparatively easy 
+to judge how many more tricks remain to be played. The Eng- 
+lish laws allow a player to count the stock, the French do not. A 
+trick once turned and quitted cannot again be seen, and the 
+players are not allowed to count the number of tricks they have 
+won. 
+The last card of the stock is taken by the player winning the 
+trick, and the turn-up trump goes to his adversary. 
+The lAJUt Eight Tricks. When the stock is exhausted, the 
+players take back into their hands all the cards remaining of the 
+combinations which have been laid on the table. The winner of 
+the previous trick then leads any card he pleases, but his adver- 
+sary must now not only follow suit,'but must win the trick if he can, 
+either with a superior card of the same suit, or with a trump. 
+The same rule applies to all the remaining tricks. Brisques still 
+count for the winner of the trick containing them, and should be 
+scored as soon as made. The winner of the last trick of all scores 
+ten points for it immediately, in addition to any brisques that it 
+may contain. 
+3 44 (B^^ique.) IRREQ ULARITIES. 
+Irregularities in Play. If a player leads out of turn* and 
+his adversary plays to the lead, whether intentionally or otherwise, 
+the trick stands good. If the adversary calls attention to the 
+error, the card led out of turn may be taken back without penalty. 
+If a player has too many cards after playing to the first trick, 
+his adversary may either claim a fresh deal or may compel him to 
+play without drawing from the talon, until the number of cards in 
+his hand is reduced to eight ; the player with too many cards not 
+being allowed to make any announcements until he has his right 
+number of cards. If a player has too few cards, his adversary may 
+either claim a fresh deal, or may allow him to make good the defi- 
+ciency by drawing from the stock. 
+After the stock is exhausted, any player failing to follow suit or 
+to win a trick, when able to do so, may be compelled to take back 
+his cards to the point where the error occurred, and to replay the 
+hand. In France he is penalised by counting nothing from that 
+point on, either for brisques or for the last trick. 
+Irregularities in IHrawing. If a player has forgotten to 
+take a card from the talon, and has played to the next trick, his 
+adversary may elect to call the deal void, or to allow him to draw 
+two cards next time. 
+If a player has drawn two cards from the stock, instead of one, 
+he must show the second one to his adversary if he has seen it 
+himself. If he has not seen it, he may put it back without penalty. 
+If he draws out of turn, he must restore the card improperly 
+drawn ; and if it belongs to his adversary the player in error must 
+show his own card. If both players draw the wrong cards there 
+is no remedy. 
+If the loser of any trick draws and looks at two cards from the 
+stock, his adversary may look at both cards of the following draw, 
+and may select either for himself. If he chooses the second card* 
+he need not show it. 
+If, on account of some undetected irregularity, an even number 
+of cards remain in the stock, the last card must not be drawn. 
+The winner of the trick takes the last but one, and the loser takes 
+ihe trump card. 
+Irregular Announcements. Should a player announce 
+four of a kind, having only three ; as, for instance, laying down 
+three Kings and a Jack, and declaring four Kings, his adversary 
+can compel him not only to take down the score erroneously 
+marked, but to lead or play one of the three Kings. A player, 
+may be called upon to lead or play cards from any other erroneous 
+declarations in the same manner ; but if the player has the right 
+card or cards in his hand, he is permitted to amend his error, pro- 
+vided he has not drawn a card from the stock in the meantime. 
+SCORING. (B^dqae.) 345 
+SCOMING. It is better to score all points as soon as they 
+are made. The game is usually looo points. Some players do 
+not count the brisques until the last trick has been played, but the 
+practice is not to be recommended. Scores erroneously marked 
+must be taken down, and the adversary may add the points to his 
+own score. 
+Suggestions fw Good Blay will be found in Binocle. 
+FOUR-HANDED BfeZIQUE. 
+In this variation, four persons may play ; each for himself or 
+two against two, partners sitting opposite each other. Four packs 
+of thirty-two cards each are shuffled together and used as one. 
+Triple b^ique counts 1500. When a player wins a trick, either he 
+or bis partner may declare everything in the hand, but only one 
+combination can be scored at a time. The advantage of showing 
+all the combinations in the hand is that they may be built up by 
+either partner. For instance : One partner has declared b^zique 
+and royal marriage, scoring the marriage only. His partner wins 
+the next trick and adds A 10 J to the marriage, scoring the se- 
+quence ; or perhaps shows three Kings or Queens, making fours. 
+The players usually divide after the stock is exhausted, and for 
+the last eight tricks each takes one of his former adversaries for a 
+partner, but without changing seats. The game is usually 2000 
+points up. 
+THREE-HANDED BfeZIQUE. 
+Three persons play, each for himself. Two packs of thirty-two 
+cards each and one of thirty-one cards are shuffled together. 
+Triple bezique counts 1 500, and the game is usually 2000 points. 
+The deleted card from the third pack should be an Eight. 
+POLISH BlfeZIQUE. 
+This differs from the ordinary game only in the value of the 
+tricks taken. The winner of each trick, instead of turning it down 
+after counting the brisques, takes from it any court cards it may 
+346 (Qn^Ceiils.) POLISH BEZIQUE. 
+contain, and the Ten of trumps. He lays these cards face up on 
+the table, but apart from those declared from his own hand, and 
+uses them to form combinations, which may be scored in the usual 
+way. The chief difference is that cards so taken in tricks cannot 
+be led or played to subsequent tricks, nor can they be taken in 
+hand at the end of the stock. Combinations may be completed 
+either by cards in the player's hand, or by cards won in subsequent 
+tricks.
