@@ -1,0 +1,17 @@
+# Rust build output
+target/
+
+# The table's libraries: pinned by web3d/package-lock.json, restored by `npm ci`
+node_modules/
+
+# Python caches (analysis scripts and the browser test)
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+
+# Editor and OS clutter
+*.swp
+*.swo
+*~
+.DS_Store
