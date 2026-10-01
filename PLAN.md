@@ -90,7 +90,9 @@ day:
    not say that options vary which combination is scored; RULES.md does not
    say that a carried combination may be scored while new ones are
    announced.
-2. **The maintainer's first play-test** in the terminal, and what it finds.
+2. **The maintainer's first play-test** in the terminal (to do; the
+   instructions and checklist are in `PLAYTEST.md`), and acting on what it
+   finds.
 3. **The mirrored-pair harness** and the first measurements from "To
    measure" below.
 
