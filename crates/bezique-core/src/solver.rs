@@ -96,7 +96,8 @@ impl Solver {
             canonical(position.other),
             position.led.map_or(255, |c| c.card_type().0),
         );
-        if let Some(&(value, bound)) = self.table.get(&key) {
+        let known = self.table.get(&key).copied();
+        if let Some((value, bound)) = known {
             match bound {
                 Bound::Exact => return value,
                 Bound::Lower => alpha = alpha.max(value),
@@ -121,6 +122,13 @@ impl Solver {
             Bound::Lower
         } else {
             Bound::Exact
+        };
+        // A stored bound and the bound just proved can meet: at least v
+        // before, at most v now (the window's floor was v), is exactly v.
+        let bound = match (known, bound) {
+            (Some((v, Bound::Lower)), Bound::Upper) if floor == v => Bound::Exact,
+            (Some((v, Bound::Upper)), Bound::Lower) if beta == v => Bound::Exact,
+            _ => bound,
         };
         self.table.insert(key, (best, bound));
         best
