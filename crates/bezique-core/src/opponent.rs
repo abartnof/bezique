@@ -110,6 +110,15 @@ impl Erratic {
     }
 }
 
+impl Erratic {
+    /// Makes a decision already known (replaying, for undo) without thinking
+    /// it again: only the draw of the rung, so that its stream stays where
+    /// it would have been. The rungs themselves keep no state.
+    pub fn replay(&mut self) {
+        self.draw_rung();
+    }
+}
+
 impl Agent for Erratic {
     fn choose(&mut self, view: &View, legal: &[Action]) -> Action {
         let rung = self.draw_rung();

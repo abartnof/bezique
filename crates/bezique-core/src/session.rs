@@ -143,7 +143,14 @@ pub struct Session {
     settings: Settings,
     cut: Cut,
     game: Option<Game>,
-    opponent: Box<dyn Agent>,
+    opponent: Erratic,
+    /// Every move the opponent has made, in order.
+    moves: Vec<Action>,
+    /// Moves known from before an undo, replayed rather than thought again:
+    /// the replay passes through the very positions it passed through the
+    /// first time, so the opponent would choose the same. Cleared once the
+    /// replay is done.
+    script: Vec<Action>,
     persona: Persona,
     record: Vec<String>,
     events: Vec<Event>,
@@ -155,6 +162,11 @@ impl Session {
     /// Sits down: the cut is made, and if the opponent cut higher it deals
     /// first and the game begins.
     pub fn new(seed: u64, settings: Settings) -> Session {
+        Session::with_script(seed, settings, Vec::new())
+    }
+
+    /// [`Session::new`], the opponent's first moves taken from `script`.
+    fn with_script(seed: u64, settings: Settings, script: Vec<Action>) -> Session {
         let cut = cut_for_deal(&mut Rng::stream(seed, purpose::CUT));
         let persona = settings
             .persona
@@ -165,18 +177,20 @@ impl Session {
                 let mut rng = Rng::stream(seed, purpose::PERSONA);
                 all[rng.below(all.len() as u64) as usize].clone()
             });
-        let opponent = Box::new(Erratic::new(
+        let opponent = Erratic::new(
             settings.level,
             &persona,
             settings.erraticism,
             Rng::stream(seed, purpose::agent(Side::B.index())),
-        ));
+        );
         let mut session = Session {
             seed,
             settings,
             cut: cut.clone(),
             game: None,
             opponent,
+            moves: Vec::new(),
+            script,
             persona,
             record: Vec::new(),
             events: Vec::new(),
@@ -211,7 +225,7 @@ impl Session {
     /// refused rather than replayed into another game (a second guard
     /// beside `RECORD_VERSION`).
     pub fn replay(seed: u64, settings: Settings, record: &[String]) -> Result<Session, String> {
-        let session = Session::rebuild(seed, settings, record)?;
+        let session = Session::rebuild(seed, settings, record, Vec::new())?;
         if session.record != record {
             return Err("the record replays differently: it was made by another version".to_string());
         }
@@ -220,8 +234,13 @@ impl Session {
 
     /// Replays the person's entries of `record`, the table making its own:
     /// undo's replay, whose record may lack the table's entries after it.
-    fn rebuild(seed: u64, settings: Settings, record: &[String]) -> Result<Session, String> {
-        let mut session = Session::new(seed, settings);
+    fn rebuild(
+        seed: u64,
+        settings: Settings,
+        record: &[String],
+        script: Vec<Action>,
+    ) -> Result<Session, String> {
+        let mut session = Session::with_script(seed, settings, script);
         for entry in record.iter().filter(|e| !e.starts_with('*')) {
             if !session.send(entry) {
                 return Err(format!(
@@ -464,8 +483,14 @@ impl Session {
             let Some(side) = game.to_move() else { return };
             let legal = game.legal();
             if side == Side::B {
-                let view = View::of(game, Side::B);
-                let action = self.opponent.choose(&view, &legal);
+                let action = match self.script.get(self.moves.len()) {
+                    Some(known) => {
+                        self.opponent.replay();
+                        known.clone()
+                    }
+                    None => self.opponent.choose(&View::of(game, Side::B), &legal),
+                };
+                self.moves.push(action.clone());
                 self.apply(Side::B, action)
                     .expect("the opponent moves legally");
                 continue;
@@ -499,7 +524,13 @@ impl Session {
                 .filter(|r| r.starts_with("set "))
                 .cloned(),
         );
-        let mut again = Session::rebuild(self.seed, self.settings.clone(), &record)?;
+        let mut again = Session::rebuild(
+            self.seed,
+            self.settings.clone(),
+            &record,
+            self.moves.clone(),
+        )?;
+        again.script.clear();
         again.error = None;
         // An aid switched on since can make the table play the decision just
         // taken back (a forced card, with play_forced): then there was no
@@ -1043,6 +1074,40 @@ mod tests {
         assert!(Session::replay(11, Settings::default(), &record).is_err());
     }
 
+    /// Undo replays the opponent's known moves rather than thinking them
+    /// again: at level 5, with slips, taking back and resending every
+    /// decision gives exactly the sitting played straight through, and the
+    /// one a full replay rebuilds; and an undo is quick.
+    #[test]
+    fn undo_reuses_the_opponents_moves_and_changes_nothing_else() {
+        let settings = Settings {
+            level: 5,
+            persona: None,
+            erraticism: 0.3,
+        };
+        let mut straight = Session::new(31, settings.clone());
+        let mut undone = Session::new(31, settings.clone());
+        let mut slowest = std::time::Duration::ZERO;
+        while let Some(command) = first(&straight) {
+            assert!(straight.send(&command));
+            assert!(undone.send(&command));
+            if undone.can_undo() {
+                let start = std::time::Instant::now();
+                assert!(undone.send("undo"));
+                slowest = slowest.max(start.elapsed());
+                assert!(undone.send(&command), "{command}: {:?}", undone.error());
+            }
+            assert_eq!(format!("{:?}", undone.view()), format!("{:?}", straight.view()));
+            assert_eq!(undone.events(), straight.events());
+            assert_eq!(undone.record(), straight.record());
+        }
+        let replayed = Session::replay(31, settings, straight.record()).unwrap();
+        assert_eq!(replayed.events(), straight.events());
+        // A full replay at level 5 takes most of a second; reusing the
+        // opponent's moves, an undo is a small fraction of that.
+        assert!(slowest < std::time::Duration::from_millis(200), "{slowest:?}");
+    }
+
     #[test]
     fn a_refused_command_changes_nothing_and_says_why() {
         let mut s = Session::new(14, Settings::default());
@@ -1146,7 +1211,9 @@ mod tests {
             settings: Settings::default(),
             cut: cut_for_deal(&mut Rng::stream(seed, purpose::CUT)),
             game: Some(Game::arranged(seed, banked, dealer, hand).unwrap()),
-            opponent: Box::new(Erratic::new(2, &persona, 0.0, Rng::stream(seed, purpose::agent(1)))),
+            opponent: Erratic::new(2, &persona, 0.0, Rng::stream(seed, purpose::agent(1))),
+            moves: vec![],
+            script: vec![],
             persona,
             record: vec![],
             events: vec![],
