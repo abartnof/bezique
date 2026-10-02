@@ -12,6 +12,7 @@ pub mod lookahead;
 pub mod melds;
 pub mod observation;
 pub mod opponent;
+pub mod race;
 pub mod rng;
 pub mod session;
 pub mod solver;

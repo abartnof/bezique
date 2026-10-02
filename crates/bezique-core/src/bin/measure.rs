@@ -9,6 +9,7 @@
 //! cargo run --release -p bezique-core --bin measure -- lookahead-declarations [pairs]
 //! cargo run --release -p bezique-core --bin measure -- lookahead-vs-five [pairs] [horizon] [worlds]
 //! cargo run --release -p bezique-core --bin measure -- rollout-memory
+//! cargo run --release -p bezique-core --bin measure -- hand-logs [hands]
 //! ```
 //!
 //! Each prints a short report, with the seeds it used; the reports kept are
@@ -50,6 +51,7 @@ fn main() {
         Some("lookahead-declarations") => lookahead_declarations(n(500)),
         Some("lookahead-vs-five") => lookahead_vs_five(n(500), &args[2..]),
         Some("rollout-memory") => rollout_memory(),
+        Some("hand-logs") => hand_logs(n(2000)),
         _ => {
             eprintln!("measure: no such report; see the list at the top of measure.rs");
             std::process::exit(2);
@@ -296,6 +298,62 @@ fn rollout_memory() {
         },
         &with,
         &without,
+    );
+}
+
+/// The library of whole hands' score logs that `race` replays: rung 4
+/// against rung 4, every hand finished (a hand cut short by the end of a
+/// game is left out), written to `crates/bezique-core/data/hand-logs.bin`.
+fn hand_logs(hands: u64) {
+    let mut logs: Vec<Vec<i16>> = Vec::new();
+    let mut seed = seeds(20_000_000);
+    while (logs.len() as u64) < hands {
+        let mut game = Game::new(seed, Side::A);
+        let mut agents = [rung(4), rung(4)];
+        while let Some(side) = game.to_move() {
+            let view = View::of(&game, side);
+            let action = agents[side.index()].choose(&view, &game.legal());
+            let number = game.hand_number();
+            game.apply(action).unwrap();
+            if game.hand_number() > number || game.hand().phase() == Phase::Over {
+                let hand = if game.hand_number() > number {
+                    game.previous_hand().unwrap()
+                } else {
+                    game.hand()
+                };
+                logs.push(
+                    hand.log()
+                        .iter()
+                        .map(|s| {
+                            let points = s.points as i16;
+                            if s.seat == Seat::Dealer {
+                                points
+                            } else {
+                                -points
+                            }
+                        })
+                        .collect(),
+                );
+                if game.hand_number() == number {
+                    break;
+                }
+            }
+        }
+        seed += 1;
+    }
+    logs.truncate(hands as usize);
+    let path = concat!(env!("CARGO_MANIFEST_DIR"), "/data/hand-logs.bin");
+    std::fs::write(path, bezique_core::race::pack(&logs)).expect("the library written");
+    let points: f64 = logs
+        .iter()
+        .map(|h| h.iter().map(|&s| f64::from(s.abs())).sum::<f64>())
+        .sum::<f64>()
+        / logs.len() as f64;
+    println!(
+        "{} hands from rung 4 against rung 4 written to {path} ({:.1} points a hand, both players; seeds from {})",
+        logs.len(),
+        points,
+        seeds(20_000_000)
     );
 }
 

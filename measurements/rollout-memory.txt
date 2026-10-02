@@ -1,0 +1,2 @@
+rung 5 with rollout memory, against rung 5 without: -0.22 points a hand for the first (8000 mirrored pairs, standard error 0.42; seeds 14000000-14007999)
+    sequential: batches of 250, looks from 500 pairs, stop at |z| >= 3 or when the effect is within ±1 at two standard errors, cap 8000; stopped: Cap
