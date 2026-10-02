@@ -575,21 +575,37 @@ fn is_seven_of(card: Card, trump: Suit) -> bool {
     card.rank() == Rank::SEVEN && card.suit() == trump
 }
 
-/// The cards of `allowed`, with concealed twins counted once (the lower copy):
-/// they are the same move. Cards on the table are all listed, since their
-/// histories may differ.
+/// The cards of `allowed`, twins that are the same move counted once (the
+/// lower copy): concealed twins, which have no history, and twins on the
+/// table that have been in exactly the same announcements, which nothing
+/// that follows can tell apart. Table twins with different histories are
+/// both listed.
 fn distinct(holdings: &Holdings, allowed: CardSet) -> impl Iterator<Item = Card> {
     let concealed = allowed.intersect(holdings.concealed);
     let shown = allowed.intersect(holdings.shown);
-    let mut seen = CardSet::EMPTY;
+    let history = |card: Card| -> Vec<usize> {
+        holdings
+            .announced
+            .iter()
+            .enumerate()
+            .filter(|(_, a)| a.declared.cards.contains(card))
+            .map(|(i, _)| i)
+            .collect()
+    };
     let mut once = CardSet::EMPTY;
     for card in concealed.cards() {
-        if seen.intersect(card.card_type().twins()).is_empty() {
+        if once.intersect(card.card_type().twins()).is_empty() {
             once = once.with(card);
         }
-        seen = seen.with(card);
     }
-    once.union(shown).cards()
+    for card in shown.cards() {
+        let twin = Card::new(card.card_type(), 1 - card.copy());
+        let same = once.contains(twin) && shown.contains(twin) && history(twin) == history(card);
+        if !same {
+            once = once.with(card);
+        }
+    }
+    once.cards()
 }
 
 #[cfg(test)]
@@ -946,6 +962,53 @@ mod tests {
             Phase::Lead,
             "no declaring once the stock is gone"
         );
+    }
+
+    /// Two table twins in the same announcements are one move; with
+    /// different histories, two.
+    #[test]
+    fn table_twins_alike_are_offered_once() {
+        use crate::melds::{Announced, Declared};
+        let kings = |extra: Option<Announced>| {
+            let four = Announced {
+                declared: Declared {
+                    meld: Meld::Four(Rank::KING),
+                    cards: CardSet::of(&[c("KS", 0), c("KS", 1), c("KH", 0), c("KD", 0)]),
+                },
+                scored: true,
+            };
+            Holdings {
+                concealed: set("7C 8C 9C 7D"),
+                shown: CardSet::of(&[c("KS", 0), c("KS", 1), c("KH", 0), c("KD", 0)]),
+                announced: [Some(four), extra].into_iter().flatten().collect(),
+            }
+        };
+        let spades_offered = |holdings: Holdings| {
+            let other = Holdings::new(set("7S 8S 9S JS 7H 8H 9H JH"));
+            let rest: Vec<Card> = CardSet::PACK
+                .minus(holdings.cards())
+                .minus(other.cards())
+                .cards()
+                .collect();
+            let turn_up = *rest.iter().find(|c| c.suit() == Suit::HEARTS).unwrap();
+            let face_down: Vec<Card> = rest.iter().copied().filter(|&c| c != turn_up).take(31).collect();
+            let hand = Hand::arranged(Suit::HEARTS, Stock::new(&face_down, Some(turn_up)), [holdings, other], Seat::Dealer, 8)
+                .unwrap();
+            hand.legal()
+                .iter()
+                .filter(|a| matches!(a, Action::Play(c) if c.card_type() == CardType::parse("KS").unwrap()))
+                .count()
+        };
+        assert_eq!(spades_offered(kings(None)), 1);
+        // One of them also married: different histories, two moves.
+        let married = Announced {
+            declared: Declared {
+                meld: Meld::Marriage(Suit::SPADES),
+                cards: CardSet::of(&[c("KS", 1), c("QS", 0)]),
+            },
+            scored: true,
+        };
+        assert_eq!(spades_offered(kings(Some(married))), 2);
     }
 
     #[test]

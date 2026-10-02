@@ -134,7 +134,7 @@ pub enum EventKind {
 /// record from before is refused rather than replayed into a different
 /// game. The test `the_golden_game_replays_unchanged` fails when play
 /// changes, as the reminder to bump it.
-pub const RECORD_VERSION: u32 = 2;
+pub const RECORD_VERSION: u32 = 3;
 
 /// A sitting: one person against the opponent, from the cut to the end of
 /// the game, advanced one human decision at a time.
@@ -1163,7 +1163,7 @@ mod tests {
         assert!(dealer_choices > 0 && wide_declarations > 0, "{dealer_choices} {wide_declarations}");
         assert_eq!(
             (RECORD_VERSION, fingerprint),
-            (2, 1_997_377_466_795_593_592),
+            (3, 6_109_118_772_721_476_042),
             "play, the options or the narration changed: see this test's comment"
         );
     }
