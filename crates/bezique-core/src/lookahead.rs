@@ -19,10 +19,10 @@ use crate::agents::{Maxims, Skills, Style};
 use crate::cards::{Card, CardSet, Rank};
 use crate::deal::{Seat, Stock};
 use crate::game::{Game, Side, GAME};
-use crate::race;
 use crate::hand::{Action, Hand, Phase, Source};
 use crate::melds::Holdings;
 use crate::observation::{Agent, View};
+use crate::race;
 use crate::rng::Rng;
 use crate::solver::{Endgame, Solver};
 
@@ -181,7 +181,8 @@ impl Lookahead {
                 let view = View::of(&game, mover);
                 agents[mover.index()].choose(&view, &game.legal())
             };
-            game.apply(action).expect("rung 4 and the solver play legally");
+            game.apply(action)
+                .expect("rung 4 and the solver play legally");
         }
         let hand_ended = game.hand_number() != number;
         let hand = if hand_ended {
@@ -300,7 +301,11 @@ fn game_banked(view: &View) -> [u32; 2] {
     let (mut mine, mut theirs) = view.totals;
     if view.phase == Phase::Declare {
         if let Some(last) = view.tricks.last() {
-            let brisques = 10 * [last.led, last.second].iter().filter(|c| c.is_brisque()).count() as u32;
+            let brisques = 10
+                * [last.led, last.second]
+                    .iter()
+                    .filter(|c| c.is_brisque())
+                    .count() as u32;
             if last.winner == view.seat {
                 mine -= brisques;
             } else {
@@ -360,8 +365,8 @@ pub fn world_with(view: &View, rng: &mut Rng, banked: [u32; 2]) -> Option<Game> 
     }
     let stock = Stock::new(face_down, view.turn_up);
     let hand = Hand::arranged(view.trump, stock, holdings, leader, tricks as u8)
-    .ok()?
-    .with_sevens_scored(sevens_scored(view));
+        .ok()?
+        .with_sevens_scored(sevens_scored(view));
     let dealer = if view.seat == Seat::Dealer {
         view.side
     } else {
@@ -548,7 +553,11 @@ mod tests {
             ..Lookahead::default()
         };
         let mut differs = 0;
-        for (game, view) in positions.iter().filter(|(g, _)| g.legal().len() > 1).take(60) {
+        for (game, view) in positions
+            .iter()
+            .filter(|(g, _)| g.legal().len() > 1)
+            .take(60)
+        {
             let legal = game.legal();
             let first = six.choose(view, &legal);
             assert!(legal.contains(&first));
@@ -566,7 +575,12 @@ mod tests {
         let mut rng = Rng::seeded(5);
         for (_, view) in late_positions(12) {
             let world = world_with(&view, &mut rng, game_banked(&view)).unwrap();
-            assert_eq!(View::of(&world, view.side).totals, view.totals, "{:?}", view.phase);
+            assert_eq!(
+                View::of(&world, view.side).totals,
+                view.totals,
+                "{:?}",
+                view.phase
+            );
         }
     }
 

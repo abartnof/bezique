@@ -181,7 +181,10 @@ fn the_leak_checks_catch_planted_leaks() {
         }
         let mut said = Vec::new();
         said_in(&leaked, hand, &mut said);
-        assert!(said.iter().any(|t| names(t, &wholly)), "plant {plant} missed");
+        assert!(
+            said.iter().any(|t| names(t, &wholly)),
+            "plant {plant} missed"
+        );
     }
     // And the honest state says nothing of it.
     let mut said = Vec::new();

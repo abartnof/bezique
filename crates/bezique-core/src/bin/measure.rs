@@ -27,8 +27,8 @@ use bezique_core::cards::Suit;
 use bezique_core::deal::Seat;
 use bezique_core::game::{Game, Side};
 use bezique_core::hand::{Action, Hand, Phase, Source};
-use bezique_core::melds::{self, Announcement, Meld};
 use bezique_core::lookahead::Lookahead;
+use bezique_core::melds::{self, Announcement, Meld};
 use bezique_core::observation::{Agent, View};
 use bezique_core::opponent;
 use bezique_core::tournament;
@@ -226,12 +226,7 @@ fn last_stock_trick(pairs: u64) {
     let three = |_: u64| rung(3);
     report_hands(
         "rung 3 fighting for the last stock trick, against rung 3",
-        &tournament::hands(
-            seeds(8_000_000),
-            pairs,
-            &fighting,
-            &three,
-        ),
+        &tournament::hands(seeds(8_000_000), pairs, &fighting, &three),
     );
 }
 
@@ -239,7 +234,9 @@ fn last_stock_trick(pairs: u64) {
 /// `lookahead <pairs> [horizon] [worlds]`.
 fn lookahead(pairs: u64, rest: &[String]) {
     let horizon = rest.first().map_or(9, |s| s.parse().expect("a horizon"));
-    let worlds = rest.get(1).map_or(16, |s| s.parse().expect("a number of worlds"));
+    let worlds = rest
+        .get(1)
+        .map_or(16, |s| s.parse().expect("a number of worlds"));
     let ahead = move |_: u64| -> Box<dyn Agent> {
         Box::new(Lookahead {
             horizon,
@@ -263,7 +260,9 @@ fn lookahead(pairs: u64, rest: &[String]) {
 /// stands: `lookahead-vs-five <pairs> <horizon> <worlds>`.
 fn lookahead_vs_five(pairs: u64, rest: &[String]) {
     let horizon = rest.first().map_or(9, |s| s.parse().expect("a horizon"));
-    let worlds = rest.get(1).map_or(32, |s| s.parse().expect("a number of worlds"));
+    let worlds = rest
+        .get(1)
+        .map_or(32, |s| s.parse().expect("a number of worlds"));
     let variant = move |_: u64| -> Box<dyn Agent> {
         Box::new(Lookahead {
             horizon,

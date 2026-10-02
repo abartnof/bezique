@@ -507,7 +507,11 @@ fn declaration(view: &View, legal: &[Action], maxims: bool) -> Action {
         Action::Declare(x) => {
             let mut after = view.mine.clone();
             after.apply(trump, x).map_or(0, |_| {
-                after.carried().iter().map(|d| d.meld.points(trump)).sum::<u32>()
+                after
+                    .carried()
+                    .iter()
+                    .map(|d| d.meld.points(trump))
+                    .sum::<u32>()
             })
         }
         _ => 0,
@@ -739,7 +743,8 @@ mod tests {
     #[test]
     fn the_counted_hand_is_true_and_the_solver_scores_as_the_engine_does() {
         use crate::hand::Phase;
-        let types = |cards: CardSet| -> Vec<u8> { cards.cards().map(|c| c.card_type().0).collect() };
+        let types =
+            |cards: CardSet| -> Vec<u8> { cards.cards().map(|c| c.card_type().0).collect() };
         let mut checked = 0;
         for seed in 0..150u64 {
             let mut game = Game::new(seed, Side::A);
@@ -770,7 +775,8 @@ mod tests {
                 other: theirs,
                 led: None,
             });
-            let margin = |h: &crate::hand::Hand| h.score(seat) as i32 - h.score(seat.other()) as i32;
+            let margin =
+                |h: &crate::hand::Hand| h.score(seat) as i32 - h.score(seat.other()) as i32;
             let before = margin(game.hand());
             while game.to_move().is_some() && game.hand_number() == 1 {
                 step(&mut game);
@@ -804,22 +810,51 @@ mod tests {
         for married in [0u8, 1] {
             let other = 1 - married;
             let declared = |meld, cards: &[Card], scored| Announced {
-                declared: Declared { meld, cards: set(cards) },
+                declared: Declared {
+                    meld,
+                    cards: set(cards),
+                },
                 scored,
             };
             let dealer = Holdings {
                 concealed: set(&[c("AH", 0), c("TH", 0), c("JH", 0), c("AS", 0)]),
                 shown: set(&[c("KH", 0), c("KH", 1), c("QH", 0), c("QH", 1)]),
                 announced: vec![
-                    declared(Meld::Four(Rank::KING), &[c("KH", other), c("KS", 0), c("KD", 0), c("KC", 0)], true),
-                    declared(Meld::Four(Rank::QUEEN), &[c("QH", other), c("QS", 0), c("QD", 0), c("QC", 0)], true),
-                    declared(Meld::Marriage(Suit::HEARTS), &[c("KH", married), c("QH", married)], false),
+                    declared(
+                        Meld::Four(Rank::KING),
+                        &[c("KH", other), c("KS", 0), c("KD", 0), c("KC", 0)],
+                        true,
+                    ),
+                    declared(
+                        Meld::Four(Rank::QUEEN),
+                        &[c("QH", other), c("QS", 0), c("QD", 0), c("QC", 0)],
+                        true,
+                    ),
+                    declared(
+                        Meld::Marriage(Suit::HEARTS),
+                        &[c("KH", married), c("QH", married)],
+                        false,
+                    ),
                 ],
             };
             let pone = Holdings::new(set(&[
-                c("7D", 0), c("8D", 0), c("9D", 0), c("7C", 0), c("8C", 0), c("9C", 0), c("7S", 0), c("8S", 0),
+                c("7D", 0),
+                c("8D", 0),
+                c("9D", 0),
+                c("7C", 0),
+                c("8C", 0),
+                c("9C", 0),
+                c("7S", 0),
+                c("8S", 0),
             ]));
-            let gone = set(&[c("KS", 0), c("KD", 0), c("KC", 0), c("QS", 0), c("QD", 0), c("QC", 0)]);
+            let gone = set(&[
+                c("KS", 0),
+                c("KD", 0),
+                c("KC", 0),
+                c("QS", 0),
+                c("QD", 0),
+                c("QC", 0),
+            ]);
             let turn_up = c("7H", 0);
             let pool: Vec<Card> = CardSet::PACK
                 .minus(dealer.cards())
@@ -829,14 +864,23 @@ mod tests {
                 .cards()
                 .take(5)
                 .collect();
-            let hand = Hand::arranged(Suit::HEARTS, Stock::new(&pool, Some(turn_up)), [dealer, pone], Seat::Dealer, 21)
-                .unwrap();
+            let hand = Hand::arranged(
+                Suit::HEARTS,
+                Stock::new(&pool, Some(turn_up)),
+                [dealer, pone],
+                Seat::Dealer,
+                21,
+            )
+            .unwrap();
             let mut game = Game::arranged(1, [0, 0], Side::A, hand).unwrap();
             game.apply(Action::Play(c("AS", 0))).unwrap();
             game.apply(Action::Play(c("7D", 0))).unwrap();
             let view = View::of(&game, Side::A);
             let action = rung(2).choose(&view, &game.legal());
-            assert!(matches!(&action, Action::Declare(a) if a.score.meld == Meld::Sequence), "{action:?}");
+            assert!(
+                matches!(&action, Action::Declare(a) if a.score.meld == Meld::Sequence),
+                "{action:?}"
+            );
             game.apply(action).unwrap();
             let carried = game.hand().holdings(Seat::Dealer).carried();
             assert_eq!(carried.len(), 1, "married copy {married}: {carried:?}");

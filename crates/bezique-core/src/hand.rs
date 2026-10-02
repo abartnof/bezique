@@ -991,9 +991,20 @@ mod tests {
                 .cards()
                 .collect();
             let turn_up = *rest.iter().find(|c| c.suit() == Suit::HEARTS).unwrap();
-            let face_down: Vec<Card> = rest.iter().copied().filter(|&c| c != turn_up).take(31).collect();
-            let hand = Hand::arranged(Suit::HEARTS, Stock::new(&face_down, Some(turn_up)), [holdings, other], Seat::Dealer, 8)
-                .unwrap();
+            let face_down: Vec<Card> = rest
+                .iter()
+                .copied()
+                .filter(|&c| c != turn_up)
+                .take(31)
+                .collect();
+            let hand = Hand::arranged(
+                Suit::HEARTS,
+                Stock::new(&face_down, Some(turn_up)),
+                [holdings, other],
+                Seat::Dealer,
+                8,
+            )
+            .unwrap();
             hand.legal()
                 .iter()
                 .filter(|a| matches!(a, Action::Play(c) if c.card_type() == CardType::parse("KS").unwrap()))

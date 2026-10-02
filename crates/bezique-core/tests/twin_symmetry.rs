@@ -24,7 +24,8 @@ fn swap_card(t: CardType, c: Card) -> Card {
 }
 
 fn swap_set(t: CardType, s: CardSet) -> CardSet {
-    s.cards().fold(CardSet::EMPTY, |acc, c| acc.with(swap_card(t, c)))
+    s.cards()
+        .fold(CardSet::EMPTY, |acc, c| acc.with(swap_card(t, c)))
 }
 
 fn swap_action(t: CardType, a: &Action) -> Action {

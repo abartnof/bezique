@@ -467,7 +467,6 @@ impl<R: BufRead, W: Write> Table<R, W> {
     }
 
     // ---- telling what happened -----------------------------------------------
-
 }
 
 /// A card's code, red for hearts and diamonds when colour is on.
@@ -607,7 +606,10 @@ mod tests {
         assert!(matches!(end, End::Finished(_)));
         assert!(said.contains("A leads") || said.contains("B leads"));
         assert!(said.contains("The stock is exhausted"));
-        assert!(said.contains("reaches") && said.contains("wins the game"), "{said}");
+        assert!(
+            said.contains("reaches") && said.contains("wins the game"),
+            "{said}"
+        );
     }
 
     #[test]

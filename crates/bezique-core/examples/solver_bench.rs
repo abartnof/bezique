@@ -13,10 +13,19 @@ fn main() {
     for _ in 0..400 {
         let mut pack: Vec<Card> = CardSet::PACK.cards().collect();
         rng.shuffle(&mut pack);
-        positions.push(Endgame { mover: CardSet::of(&pack[..8]), other: CardSet::of(&pack[8..16]), led: None });
+        positions.push(Endgame {
+            mover: CardSet::of(&pack[..8]),
+            other: CardSet::of(&pack[8..16]),
+            led: None,
+        });
     }
     let start = std::time::Instant::now();
     let mut sum = 0i64;
-    for p in &positions { sum += i64::from(Solver::new(Suit::HEARTS).value(*p)); }
-    println!("fresh solver: {:.3} ms a position (checksum {sum})", start.elapsed().as_secs_f64() * 1000.0 / positions.len() as f64);
+    for p in &positions {
+        sum += i64::from(Solver::new(Suit::HEARTS).value(*p));
+    }
+    println!(
+        "fresh solver: {:.3} ms a position (checksum {sum})",
+        start.elapsed().as_secs_f64() * 1000.0 / positions.len() as f64
+    );
 }

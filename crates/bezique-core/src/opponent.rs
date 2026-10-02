@@ -91,9 +91,7 @@ impl Erratic {
         // land on rungs no weaker.
         let level = level.clamp(1, TOP);
         Erratic {
-            rungs: (1..=level)
-                .map(|r| rung_with(r, &persona.style))
-                .collect(),
+            rungs: (1..=level).map(|r| rung_with(r, &persona.style)).collect(),
             erraticism: erraticism.clamp(0.0, 1.0),
             rng,
         }

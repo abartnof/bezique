@@ -125,11 +125,7 @@ pub fn games(first_seed: u64, pairs: u64, a: Make, b: Make) -> Games {
         };
         for (i, swap) in [false, true].into_iter().enumerate() {
             let (sa, sb) = (agent_seed(seed, 0), agent_seed(seed, 1));
-            let mut agents = if swap {
-                [b(sb), a(sa)]
-            } else {
-                [a(sa), b(sb)]
-            };
+            let mut agents = if swap { [b(sb), a(sa)] } else { [a(sa), b(sb)] };
             let mut game = Game::new(seed, Side::A);
             play(&mut game, &mut agents, |_| false);
             let outcome = game.outcome().expect("played to the end");
@@ -195,11 +191,7 @@ pub fn hands(first_seed: u64, pairs: u64, a: Make, b: Make) -> Hands {
         let mut margin = 0i64;
         for swap in [false, true] {
             let (sa, sb) = (agent_seed(seed, 0), agent_seed(seed, 1));
-            let mut agents = if swap {
-                [b(sb), a(sa)]
-            } else {
-                [a(sa), b(sb)]
-            };
+            let mut agents = if swap { [b(sb), a(sa)] } else { [a(sa), b(sb)] };
             let mut game = Game::new(seed, Side::A);
             play(&mut game, &mut agents, |g| g.hand_number() > 1);
             let hand = if game.hand_number() > 1 {
@@ -405,7 +397,10 @@ mod tests {
                 };
                 let mut game = Game::new(seed, Side::A);
                 play(&mut game, &mut agents, |g| g.hand_number() > 1);
-                let (a, b) = (i64::from(game.total(Side::A)), i64::from(game.total(Side::B)));
+                let (a, b) = (
+                    i64::from(game.total(Side::A)),
+                    i64::from(game.total(Side::B)),
+                );
                 // The maxims played side A unless swapped.
                 expected += if swap { b - a } else { a - b };
             }
@@ -449,7 +444,10 @@ mod tests {
         let (g, stop) = games_until(30, rule, &maxims, &legal);
         let plain = games(30, 9, &maxims, &legal);
         assert_eq!(stop, Stop::Cap);
-        assert_eq!((g.wins, g.doubles, g.points.clone()), (plain.wins, plain.doubles, plain.points));
+        assert_eq!(
+            (g.wins, g.doubles, g.points.clone()),
+            (plain.wins, plain.doubles, plain.points)
+        );
         let (h, _) = hands_until(30, rule, &maxims, &legal);
         assert_eq!(h.margins, hands(30, 9, &maxims, &legal).margins);
     }

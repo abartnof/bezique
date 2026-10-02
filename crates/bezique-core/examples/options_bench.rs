@@ -30,5 +30,8 @@ fn main() {
         }
     }
     let each = start.elapsed().as_secs_f64() * 1e6 / (5 * positions.len()) as f64;
-    println!("{} declaring positions: {each:.1} µs for the options of each ({n} offered)", positions.len());
+    println!(
+        "{} declaring positions: {each:.1} µs for the options of each ({n} offered)",
+        positions.len()
+    );
 }

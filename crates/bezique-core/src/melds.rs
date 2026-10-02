@@ -1498,19 +1498,39 @@ mod tests {
     fn the_cross_marriages_are_offered_when_worth_more() {
         let card = |code: &str, copy: u8| Card::new(CardType::parse(code).unwrap(), copy);
         let mut h = Holdings::new(CardSet::of(&[
-            card("KS", 1), card("KH", 0), card("KD", 0), card("KC", 0),
-            card("QS", 1), card("JD", 0), card("7C", 0), card("8C", 0),
+            card("KS", 1),
+            card("KH", 0),
+            card("KD", 0),
+            card("KC", 0),
+            card("QS", 1),
+            card("JD", 0),
+            card("7C", 0),
+            card("8C", 0),
         ]));
         let kings = Declared {
             meld: Meld::Four(Rank::KING),
             cards: CardSet::of(&[card("KS", 1), card("KH", 0), card("KD", 0), card("KC", 0)]),
         };
-        h.apply(HEARTS, &Announcement { melds: vec![kings], score: kings }).unwrap();
+        h.apply(
+            HEARTS,
+            &Announcement {
+                melds: vec![kings],
+                score: kings,
+            },
+        )
+        .unwrap();
         let bezique = Declared {
             meld: Meld::Bezique,
             cards: CardSet::of(&[card("QS", 1), card("JD", 0)]),
         };
-        h.apply(HEARTS, &Announcement { melds: vec![bezique], score: bezique }).unwrap();
+        h.apply(
+            HEARTS,
+            &Announcement {
+                melds: vec![bezique],
+                score: bezique,
+            },
+        )
+        .unwrap();
         h.play(card("7C", 0));
         h.play(card("8C", 0));
         h.receive(card("KS", 0));
@@ -1520,7 +1540,10 @@ mod tests {
             assert_eq!(h.check(HEARTS, o), Ok(()), "{o:?}");
         }
         let marriages = |o: &Announcement| {
-            o.melds.iter().filter(|d| d.meld == Meld::Marriage(Suit::SPADES)).count()
+            o.melds
+                .iter()
+                .filter(|d| d.meld == Meld::Marriage(Suit::SPADES))
+                .count()
         };
         assert!(options.iter().any(|o| marriages(o) == 2), "{options:?}");
     }

@@ -88,7 +88,10 @@ pub fn outcomes(mine: u32, theirs: u32, i_deal: bool) -> [f64; 4] {
         counts[i] += 1;
     };
     if mine >= GAME || theirs >= GAME {
-        count(outcome(mine >= GAME, if mine >= GAME { theirs } else { mine }));
+        count(outcome(
+            mine >= GAME,
+            if mine >= GAME { theirs } else { mine },
+        ));
         return counts.map(f64::from);
     }
     let logs = logs();
@@ -172,8 +175,16 @@ mod tests {
 
     #[test]
     fn more_points_are_worth_more() {
-        for &(lo, hi, theirs) in &[(0u32, 200u32, 0u32), (400, 500, 300), (850, 950, 900), (480, 520, 950)] {
-            assert!(value(hi, theirs, true) > value(lo, theirs, true), "{lo} {hi} {theirs}");
+        for &(lo, hi, theirs) in &[
+            (0u32, 200u32, 0u32),
+            (400, 500, 300),
+            (850, 950, 900),
+            (480, 520, 950),
+        ] {
+            assert!(
+                value(hi, theirs, true) > value(lo, theirs, true),
+                "{lo} {hi} {theirs}"
+            );
         }
         // Near the end, a lead of a hundred is close to a won game.
         assert!(value(950, 400, true) > 1.0);

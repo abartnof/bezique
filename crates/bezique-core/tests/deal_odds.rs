@@ -77,7 +77,10 @@ fn each_player_receives_exactly_half_the_pack() {
 
 #[test]
 fn the_pone_receives_each_combination_as_often_as_the_exact_odds_say() {
-    let (mut rng, mut coin) = (Rng::stream(20261001, purpose::DEALS), Rng::stream(20261001, CHOICES));
+    let (mut rng, mut coin) = (
+        Rng::stream(20261001, purpose::DEALS),
+        Rng::stream(20261001, CHOICES),
+    );
     let (queen, jack) = (of("QS"), of("JD"));
     let sequence = [Rank::ACE, Rank::TEN, Rank::KING, Rank::QUEEN, Rank::JACK]
         .map(|rank| CardType::new(rank, Suit::SPADES));

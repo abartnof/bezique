@@ -99,4 +99,3 @@ fn moving_a_hidden_card_leaves_the_view_unchanged() {
     }
     assert!(total > 20_000, "{total}");
 }
-

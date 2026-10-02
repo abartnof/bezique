@@ -465,7 +465,11 @@ mod tests {
             // The lowest of the best cards, as before the search was pruned.
             let first_best = moves(position, trump)
                 .into_iter()
-                .find(|&c| step(position, c, trump, |p| memo_value(p, trump, &mut HashMap::new())) == expected)
+                .find(|&c| {
+                    step(position, c, trump, |p| {
+                        memo_value(p, trump, &mut HashMap::new())
+                    }) == expected
+                })
                 .unwrap();
             assert_eq!(card, first_best);
         }
