@@ -10,6 +10,8 @@
 //! cargo run --release -p bezique-core --bin measure -- lookahead-vs-five [pairs] [horizon] [worlds]
 //! cargo run --release -p bezique-core --bin measure -- rollout-memory
 //! cargo run --release -p bezique-core --bin measure -- hand-logs [hands]
+//! cargo run --release -p bezique-core --bin measure -- worlds [worlds]
+//! cargo run --release -p bezique-core --bin measure -- rung6
 //! ```
 //!
 //! Each prints a short report, with the seeds it used; the reports kept are
@@ -52,6 +54,8 @@ fn main() {
         Some("lookahead-vs-five") => lookahead_vs_five(n(500), &args[2..]),
         Some("rollout-memory") => rollout_memory(),
         Some("hand-logs") => hand_logs(n(2000)),
+        Some("worlds") => worlds(n(32)),
+        Some("rung6") => rung6(),
         _ => {
             eprintln!("measure: no such report; see the list at the top of measure.rs");
             std::process::exit(2);
@@ -354,6 +358,59 @@ fn hand_logs(hands: u64) {
         logs.len(),
         points,
         seeds(20_000_000)
+    );
+}
+
+/// Rung 5 with more worlds against rung 5 (16), in mirrored hands,
+/// sequentially: stop when the difference is clear, or clearly under a
+/// point a hand (not worth doubling the cost of a decision for).
+fn worlds(worlds: u64) {
+    let more = move |_: u64| -> Box<dyn Agent> {
+        Box::new(Lookahead {
+            worlds: worlds as usize,
+            ..Lookahead::default()
+        })
+    };
+    let five = |_: u64| rung(5);
+    sequential_hands(
+        &format!("rung 5 with {worlds} worlds, against rung 5 (16)"),
+        seeds(15_000_000),
+        tournament::Sequential {
+            batch: 250,
+            min: 500,
+            max: 10_000,
+            z: 3.0,
+            worth: 1.0,
+        },
+        &more,
+        &five,
+    );
+}
+
+/// Rung 6 (rung 5 playing for the game near its end) against rung 5, in
+/// mirrored games judged by game points (a double counting two),
+/// sequentially: stop when the difference is clear, or clearly under 0.02
+/// game points a game.
+fn rung6() {
+    let six = |_: u64| -> Box<dyn Agent> {
+        Box::new(Lookahead {
+            objective: bezique_core::lookahead::Objective::Game,
+            ..Lookahead::default()
+        })
+    };
+    let five = |_: u64| rung(5);
+    let rule = tournament::Sequential {
+        batch: 100,
+        min: 300,
+        max: 6000,
+        z: 3.0,
+        worth: 0.02,
+    };
+    let (g, stop) = tournament::games_until(seeds(16_000_000), rule, &six, &five);
+    report_games("rung 6 against rung 5, games", &g);
+    println!(
+        "    sequential on game points: batches of {}, looks from {} pairs, stop at |z| >= {} or when the effect is within ±{} at two standard errors, cap {}; stopped: {stop:?}",
+        rule.batch, rule.min, rule.z, rule.worth, rule.max
     );
 }
 
