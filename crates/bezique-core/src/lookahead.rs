@@ -22,6 +22,7 @@ use crate::game::{Game, Side, GAME};
 use crate::hand::{Action, Hand, Phase, Source};
 use crate::melds::Holdings;
 use crate::observation::{Agent, View};
+#[cfg(feature = "race")]
 use crate::race;
 use crate::rng::Rng;
 use crate::solver::{Endgame, Solver};
@@ -140,7 +141,9 @@ impl Lookahead {
 impl Lookahead {
     /// Whether this decision is played for the game rather than the hand.
     fn for_the_game(&self, view: &View) -> bool {
-        self.objective == Objective::Game && view.totals.0.max(view.totals.1) + NEAR >= GAME
+        cfg!(feature = "race")
+            && self.objective == Objective::Game
+            && view.totals.0.max(view.totals.1) + NEAR >= GAME
     }
 
     /// What `action` is worth to `side` for the game, in millionths of a
@@ -197,7 +200,7 @@ impl Lookahead {
             // next deal did is not this world's: every world deals the same
             // next hand, so its turned seven must not count.
             let banked = |s: Side| game.total(s) - game.hand().score(game.seat_of(s));
-            race::value(banked(side), banked(side.other()), game.dealer() == side)
+            race_value(banked(side), banked(side.other()), game.dealer() == side)
         } else {
             let outcome = game.outcome().expect("the game ended within the hand");
             let games = if outcome.double { 2.0 } else { 1.0 };
@@ -292,6 +295,19 @@ fn before_the_world(view: &View) -> [u8; 32] {
 /// admits no such position, which should not happen.
 pub fn world(view: &View, rng: &mut Rng) -> Option<Game> {
     world_with(view, rng, [0, 0])
+}
+
+/// [`race::value`], where it is built in.
+#[cfg(feature = "race")]
+fn race_value(mine: u32, theirs: u32, i_deal: bool) -> f64 {
+    race::value(mine, theirs, i_deal)
+}
+
+/// Without the race model rung 6 never plays for the game
+/// (`Lookahead::for_the_game`), so this is never asked.
+#[cfg(not(feature = "race"))]
+fn race_value(_: u32, _: u32, _: bool) -> f64 {
+    unreachable!("playing for the game needs the race feature")
 }
 
 /// The totals a world's game starts from, by side, when playing for the
@@ -506,6 +522,7 @@ mod tests {
 
     /// Positions near the end of the stock in the later hands of games
     /// between two rung-4 players, where either is within reach of 1,000.
+    #[cfg(feature = "race")]
     fn late_positions(games: u64) -> Vec<(Game, View)> {
         let mut out = Vec::new();
         for seed in 0..games {
@@ -527,6 +544,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "race")]
     fn far_from_the_end_rung_6_plays_as_rung_5() {
         let mut six = Lookahead {
             objective: Objective::Game,
@@ -545,6 +563,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "race")]
     fn near_the_end_rung_6_plays_legally_and_the_same_every_time() {
         let positions = late_positions(12);
         assert!(positions.len() > 30, "{}", positions.len());
@@ -571,6 +590,7 @@ mod tests {
     /// A world built to play for the game starts from the real totals, in
     /// every phase, the replayed trick's brisques allowed for.
     #[test]
+    #[cfg(feature = "race")]
     fn a_world_for_the_game_starts_from_the_real_totals() {
         let mut rng = Rng::seeded(5);
         for (_, view) in late_positions(12) {

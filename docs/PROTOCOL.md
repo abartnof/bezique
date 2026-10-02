@@ -201,4 +201,5 @@ memory. `crates/bezique-wasm/ffi-check.mjs` plays a whole game this way
 (at level 4 by default, or the level given after the module's path): in
 Node, a game takes about 0.35 s at level 4 and 1.0 s at level 5. Built with
 `cargo build --release -p bezique-wasm --lib --target
-wasm32-unknown-unknown`, the module is about 237 KB.
+wasm32-unknown-unknown`, the module is about 248 KB (built without the
+`race` feature of `bezique-core`, which only the measurements need).

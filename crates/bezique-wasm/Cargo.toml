@@ -12,7 +12,7 @@ description = "The table as a JSON protocol that a browser, or any other client,
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
-bezique-core = { path = "../bezique-core" }
+bezique-core = { path = "../bezique-core", default-features = false }
 
 [dev-dependencies]
 serde_json = "1"
