@@ -4,14 +4,10 @@
 
 use std::io::{self, BufRead, Write};
 
-use bezique_core::agents;
-use bezique_core::cards::{Card, CardSet, Rank, Suit};
-use bezique_core::deal::Seat;
-use bezique_core::game::{cut_for_deal, Game, Outcome, Side};
-use bezique_core::hand::{Action, Hand, Phase, Source};
-use bezique_core::observation::{Agent, View};
-use bezique_core::opponent::{self, Erratic, Persona};
-use bezique_core::rng::{purpose, Rng};
+use bezique_core::cards::{Card, CardSet, Suit};
+use bezique_core::game::{Game, Outcome, Side};
+use bezique_core::hand::Phase;
+use bezique_core::observation::View;
 use bezique_core::session::{DeclareOption, EventKind, Prompt, Session, Settings};
 use bezique_core::words;
 
@@ -309,84 +305,49 @@ impl<R: BufRead, W: Write> Table<R, W> {
         }
     }
 
-    /// Two computer players, watched.
+    /// Two computer players, watched: the session plays and tells the game,
+    /// one move at a time; this shows the table before each lead.
     fn watch(&mut self) -> io::Result<End> {
         writeln!(
             self.out,
             "Bezique: two packs, 1,000 up. Seed {}. Two computer players; q stops.",
             self.options.seed
         )?;
-        self.introduce()?;
-        let Some(first_dealer) = self.cut()? else {
-            return Ok(End::Quit);
+        let settings = Settings {
+            level: self.options.level,
+            persona: self.options.persona.clone(),
+            erraticism: self.options.erraticism,
         };
-        let mut game = Game::new(self.options.seed, first_dealer);
-        let mut agents: [Box<dyn Agent>; 2] = [self.agent(Side::A), self.agent(Side::B)];
-        self.hand_begins(&game)?;
-        while let Some(side) = game.to_move() {
-            if game.hand().phase() == Phase::Lead {
-                self.show(&game, side)?;
-                if self.options.pause && !self.wait()? {
-                    return Ok(End::Quit);
+        let mut session = Session::watch(self.options.seed, settings);
+        for side in Side::BOTH {
+            writeln!(self.out, "{}", session.player(side))?;
+        }
+        let mut told = 0;
+        loop {
+            for event in &session.events()[told..] {
+                if matches!(
+                    event.kind,
+                    EventKind::Dealt { .. } | EventKind::GameEnds { .. }
+                ) {
+                    writeln!(self.out)?;
+                }
+                writeln!(self.out, "{}", event.text)?;
+            }
+            told = session.events().len();
+            let game = session.game().expect("a watched game is dealt at once");
+            if let Some(side) = game.to_move() {
+                if game.hand().phase() == Phase::Lead {
+                    self.show(game, side)?;
+                    if self.options.pause && !self.wait()? {
+                        return Ok(End::Quit);
+                    }
                 }
             }
-            let view = View::of(&game, side);
-            let action = agents[side.index()].choose(&view, &game.legal());
-            let before = game.hand().clone();
-            let number = game.hand_number();
-            game.apply(action.clone())
-                .expect("only legal moves are made");
-            self.narrate(&before, number, &game, side, &action)?;
-        }
-        let outcome = game.outcome().expect("the game is over");
-        self.game_ends(&game, outcome)?;
-        Ok(End::Finished(outcome))
-    }
-
-    /// The persona `side` plays: the one chosen, or one drawn from the seed
-    /// (each side its own, when watching).
-    fn persona(&self, side: Side) -> Persona {
-        if let Some(key) = &self.options.persona {
-            if let Some(p) = opponent::persona(key) {
-                return p;
+            if !session.step() {
+                let outcome = session.outcome().expect("the game is over");
+                return Ok(End::Finished(outcome));
             }
         }
-        let all = opponent::personas();
-        let mut rng = Rng::stream(self.options.seed, purpose::persona(side.index()));
-        all[rng.below(all.len() as u64) as usize].clone()
-    }
-
-    fn agent(&self, side: Side) -> Box<dyn Agent> {
-        let rng = Rng::stream(self.options.seed, purpose::agent(side.index()));
-        Box::new(Erratic::new(
-            self.options.level,
-            &self.persona(side),
-            self.options.erraticism,
-            rng,
-        ))
-    }
-
-    /// Who the person is playing, in a sentence.
-    fn introduce(&mut self) -> io::Result<()> {
-        for side in Side::BOTH {
-            if Some(side) == self.human {
-                continue;
-            }
-            let p = self.persona(side);
-            let level = self.options.level.min(agents::TOP);
-            writeln!(self.out, "{} {}.", self.who(side), agents::describe(level))?;
-            if p.key != "balanced" {
-                writeln!(self.out, "Its style: it {}.", p.described)?;
-            }
-            if self.options.erraticism > 0.0 {
-                writeln!(
-                    self.out,
-                    "{} does not always play its best.",
-                    self.who(side)
-                )?;
-            }
-        }
-        Ok(())
     }
 
     // ---- names and cards ---------------------------------------------------
@@ -409,18 +370,6 @@ impl<R: BufRead, W: Write> Table<R, W> {
         }
     }
 
-    /// A verb agreeing with `who`: "You take", "Your opponent takes".
-    fn does(&self, side: Side, verb: &str) -> String {
-        let who = self.who(side);
-        if who == "You" {
-            format!("{who} {verb}")
-        } else if verb.ends_with("sh") || verb.ends_with("ch") {
-            format!("{who} {verb}es")
-        } else {
-            format!("{who} {verb}s")
-        }
-    }
-
     fn card(&self, card: Card) -> String {
         paint(card, self.options.colour)
     }
@@ -430,41 +379,6 @@ impl<R: BufRead, W: Write> Table<R, W> {
     }
 
     // ---- the cut -----------------------------------------------------------
-
-    /// Cuts for the deal; returns who deals first, or `None` on quitting.
-    fn cut(&mut self) -> io::Result<Option<Side>> {
-        let cut = cut_for_deal(&mut Rng::stream(self.options.seed, purpose::CUT));
-        for (i, [a, b]) in cut.rounds.iter().enumerate() {
-            let (cuts, other) = (self.does(Side::A, "cut"), self.whom(Side::B));
-            writeln!(
-                self.out,
-                "{cuts} the {}; {other} the {}.",
-                self.card(*a),
-                self.card(*b)
-            )?;
-            if i + 1 < cut.rounds.len() {
-                writeln!(self.out, "Equal ranks: cut again.")?;
-            }
-        }
-        if Some(cut.chooser) == self.human {
-            loop {
-                write!(self.out, "You cut higher. Will you deal? [y/n] ")?;
-                self.out.flush()?;
-                match self.line()?.as_deref() {
-                    None | Some("q") | Some("quit") => return Ok(None),
-                    Some("y") | Some("yes") => return Ok(Some(cut.chooser)),
-                    Some("n") | Some("no") => return Ok(Some(cut.chooser.other())),
-                    _ => {}
-                }
-            }
-        }
-        writeln!(
-            self.out,
-            "{} higher and chooses to deal.",
-            self.does(cut.chooser, "cut")
-        )?;
-        Ok(Some(cut.chooser))
-    }
 
     // ---- asking the person ---------------------------------------------------
 
@@ -554,247 +468,6 @@ impl<R: BufRead, W: Write> Table<R, W> {
 
     // ---- telling what happened -----------------------------------------------
 
-    fn narrate(
-        &mut self,
-        before: &Hand,
-        number: u32,
-        game: &Game,
-        side: Side,
-        action: &Action,
-    ) -> io::Result<()> {
-        let new_hand = game.hand_number() > number;
-        let after = if new_hand {
-            game.previous_hand().expect("the hand just finished")
-        } else {
-            game.hand()
-        };
-        let side_of = |seat: Seat| -> Side {
-            // Seats belong to the hand the move was made in.
-            let dealer = if new_hand {
-                game.dealer().other()
-            } else {
-                game.dealer()
-            };
-            if seat == Seat::Dealer {
-                dealer
-            } else {
-                dealer.other()
-            }
-        };
-        let trump = before.trump();
-        match (before.phase(), action) {
-            (Phase::Lead, Action::Play(c)) => {
-                let from_table = before.holdings(before.leader()).shown.contains(*c);
-                let place = if from_table { " from the table" } else { "" };
-                writeln!(
-                    self.out,
-                    "{} the {}{place}.",
-                    self.does(side, "lead"),
-                    self.card(*c)
-                )?;
-            }
-            (Phase::Follow, Action::Play(c)) => {
-                writeln!(
-                    self.out,
-                    "{} the {}.",
-                    self.does(side, "play"),
-                    self.card(*c)
-                )?;
-                let trick = after.tricks().last().expect("a trick was taken");
-                let winner = side_of(trick.winner);
-                let mut taken = self.does(winner, "take");
-                taken.push_str(" the trick");
-                let new_scores = &after.log()[before.log().len()..];
-                let mut extras = Vec::new();
-                for s in new_scores {
-                    match s.source {
-                        Source::Brisques => {
-                            extras.push(format!("{} for brisques", words::points(s.points)))
-                        }
-                        Source::LastTrick => extras.push("ten for the last trick".to_string()),
-                        _ => {}
-                    }
-                }
-                if !extras.is_empty() {
-                    taken.push_str(&format!(": {}", extras.join(", and ")));
-                }
-                writeln!(self.out, "{taken}.")?;
-            }
-            (Phase::Declare, Action::Declare(a)) => {
-                let seat = before.leader();
-                let said = words::announcement(a, trump, &after.holdings(seat).carried());
-                writeln!(self.out, "{}: \"{said}\"", self.does(side, "declare"))?;
-            }
-            (Phase::Declare, Action::Dix(_)) => {
-                let turned = before
-                    .stock()
-                    .turn_up()
-                    .expect("there while declaring lasts");
-                if turned.rank() == Rank::SEVEN && turned.suit() == trump {
-                    writeln!(
-                        self.out,
-                        "{} the other seven of trumps: ten.",
-                        self.does(side, "show")
-                    )?;
-                } else {
-                    writeln!(
-                        self.out,
-                        "{} the seven of trumps for the {}: ten.",
-                        self.does(side, "exchange"),
-                        self.card(turned)
-                    )?;
-                }
-            }
-            _ => {}
-        }
-        if before.phase() == Phase::Declare {
-            self.draws(before, after, side)?;
-        }
-        if new_hand || (after.phase() == Phase::Over) {
-            self.hand_ends(after, game, new_hand)?;
-        }
-        // A new deal is told even when it ends the game: a turned seven can.
-        if new_hand {
-            self.hand_begins(game)?;
-        }
-        Ok(())
-    }
-
-    /// The draws after a turn of declaring, and the end of the stock.
-    fn draws(&mut self, before: &Hand, after: &Hand, winner: Side) -> io::Result<()> {
-        let winner_seat = before.leader();
-        let last = before.stock().face_down() == 1;
-        // At the end the loser takes the turn-up as it is then: the seven, if
-        // one was just exchanged for it (the review of 2026-10-02 found the
-        // old turn-up told here, as the session once told it).
-        let taken_last = last.then(|| {
-            let loser = winner_seat.other();
-            after
-                .holdings(loser)
-                .cards()
-                .minus(before.holdings(loser).cards())
-                .lowest()
-                .expect("the loser takes the turn-up")
-        });
-        // Not draws: the card taken by an exchange, and the turn-up taken at
-        // the end; both are told separately.
-        let turn_up = [before.stock().turn_up(), taken_last]
-            .into_iter()
-            .flatten()
-            .fold(CardSet::EMPTY, |s, c| s.with(c));
-        if let Some(taken) = taken_last {
-            let card = self.card(taken);
-            let loser = winner.other();
-            let (does, whom) = (self.does(winner, "take"), self.whom(loser));
-            writeln!(
-                self.out,
-                "{does} the last card; {whom} the turn-up, the {card}."
-            )?;
-        }
-        if let Some(human) = self.human {
-            let seat = if human == winner {
-                winner_seat
-            } else {
-                winner_seat.other()
-            };
-            let drawn = after
-                .holdings(seat)
-                .cards()
-                .minus(before.holdings(seat).cards())
-                .minus(turn_up);
-            if !drawn.is_empty() {
-                writeln!(self.out, "You draw the {}.", self.cards(drawn))?;
-            }
-        }
-        if last {
-            writeln!(
-                self.out,
-                "The stock is exhausted. The cards on the table go back into the hands; from now on the second player must follow suit and win the trick if able."
-            )?;
-        }
-        Ok(())
-    }
-
-    fn hand_begins(&mut self, game: &Game) -> io::Result<()> {
-        let hand = game.hand();
-        let turn_up = hand.stock().turn_up().expect("a fresh stock");
-        writeln!(self.out)?;
-        writeln!(
-            self.out,
-            "Hand {}. {}. The {} is turned up: {} are trumps.",
-            game.hand_number(),
-            self.does(game.dealer(), "deal"),
-            self.card(turn_up),
-            hand.trump().name()
-        )?;
-        if hand.log().iter().any(|s| s.source == Source::TurnedSeven) {
-            writeln!(
-                self.out,
-                "{} ten for turning up the seven.",
-                self.does(game.dealer(), "score")
-            )?;
-        }
-        Ok(())
-    }
-
-    fn hand_ends(&mut self, finished: &Hand, game: &Game, new_hand: bool) -> io::Result<()> {
-        let dealer = if new_hand {
-            game.dealer().other()
-        } else {
-            game.dealer()
-        };
-        let seat_of = |s: Side| {
-            if s == dealer {
-                Seat::Dealer
-            } else {
-                Seat::Pone
-            }
-        };
-        if finished.phase() != Phase::Over {
-            return Ok(());
-        }
-        let banked = |s: Side| {
-            game.total(s)
-                - if new_hand {
-                    game.hand().score(game.seat_of(s))
-                } else {
-                    0
-                }
-        };
-        writeln!(
-            self.out,
-            "End of the hand: {} {}, {} {}. The game: {} {}, {} {}.",
-            self.whom(Side::A),
-            finished.score(seat_of(Side::A)),
-            self.whom(Side::B),
-            finished.score(seat_of(Side::B)),
-            self.whom(Side::A),
-            banked(Side::A),
-            self.whom(Side::B),
-            banked(Side::B),
-        )?;
-        Ok(())
-    }
-
-    fn game_ends(&mut self, game: &Game, outcome: Outcome) -> io::Result<()> {
-        let Outcome { winner, double } = outcome;
-        writeln!(self.out)?;
-        let (reach, total) = (self.does(winner, "reach"), game.total(winner));
-        let wins = if self.who(winner) == "You" {
-            "win"
-        } else {
-            "wins"
-        };
-        writeln!(
-            self.out,
-            "{reach} {total} and {wins} the game, {total} to {}.",
-            game.total(winner.other())
-        )?;
-        if double {
-            writeln!(self.out, "A double game: the loser had not reached 500.")?;
-        }
-        Ok(())
-    }
 }
 
 /// A card's code, red for hearts and diamonds when colour is on.
@@ -933,7 +606,8 @@ mod tests {
         let (end, said) = sit("", options(true));
         assert!(matches!(end, End::Finished(_)));
         assert!(said.contains("A leads") || said.contains("B leads"));
-        assert!(said.contains("The stock is exhausted."));
+        assert!(said.contains("The stock is exhausted"));
+        assert!(said.contains("reaches") && said.contains("wins the game"), "{said}");
     }
 
     #[test]

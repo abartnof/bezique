@@ -151,6 +151,10 @@ pub struct Session {
     /// first time, so the opponent would choose the same. Cleared once the
     /// replay is done.
     script: Vec<Action>,
+    /// Watching two computer players: side A played too, by this agent, the
+    /// game advanced by [`Session::step`], and the players named "A" and
+    /// "B" in the narration rather than "you" and "your opponent".
+    watched: Option<(Erratic, Persona)>,
     persona: Persona,
     record: Vec<String>,
     events: Vec<Event>,
@@ -162,11 +166,71 @@ impl Session {
     /// Sits down: the cut is made, and if the opponent cut higher it deals
     /// first and the game begins.
     pub fn new(seed: u64, settings: Settings) -> Session {
-        Session::with_script(seed, settings, Vec::new())
+        Session::with_script(seed, settings, Vec::new(), false)
+    }
+
+    /// Two computer players, both set up by `settings` (each with a persona
+    /// of its own, drawn from the seed unless one is named), to be watched:
+    /// advance it with [`Session::step`]; the narration names them "A" and
+    /// "B". Whoever cuts higher chooses to deal.
+    pub fn watch(seed: u64, settings: Settings) -> Session {
+        Session::with_script(seed, settings, Vec::new(), true)
+    }
+
+    /// Plays one move in a watched game, and tells it. False once the game
+    /// is over (or if this is not a watched game).
+    pub fn step(&mut self) -> bool {
+        let Some(game) = &self.game else { return false };
+        let Some(side) = game.to_move() else { return false };
+        let view = View::of(game, side);
+        let legal = game.legal();
+        let action = match (side, self.watched.as_mut()) {
+            (Side::A, Some((a, _))) => a.choose(&view, &legal),
+            (Side::B, Some(_)) => self.opponent.choose(&view, &legal),
+            (_, None) => return false,
+        };
+        self.apply(side, action).expect("the players move legally");
+        true
+    }
+
+    /// Whether this is a watched game between two computer players.
+    pub fn watching(&self) -> bool {
+        self.watched.is_some()
+    }
+
+    /// How a player is named as the subject of a sentence.
+    fn subject(&self, a: bool) -> &'static str {
+        match (self.watching(), a) {
+            (true, true) => "A",
+            (true, false) => "B",
+            (false, true) => "You",
+            (false, false) => "Your opponent",
+        }
+    }
+
+    /// How a player is named as the object of a sentence.
+    fn object(&self, a: bool) -> &'static str {
+        match (self.watching(), a) {
+            (true, true) => "A",
+            (true, false) => "B",
+            (false, true) => "you",
+            (false, false) => "your opponent",
+        }
+    }
+
+    /// `verb` agreeing with the player as subject: "you take", "B takes".
+    fn verb(&self, a: bool, verb: &str) -> String {
+        if a && !self.watching() {
+            verb.to_string()
+        } else if verb.ends_with("ch") {
+            format!("{verb}es")
+        } else {
+            format!("{verb}s")
+        }
     }
 
     /// [`Session::new`], the opponent's first moves taken from `script`.
-    fn with_script(seed: u64, settings: Settings, script: Vec<Action>) -> Session {
+    fn with_script(seed: u64, settings: Settings, script: Vec<Action>, watch: bool) -> Session {
         let cut = cut_for_deal(&mut Rng::stream(seed, purpose::CUT));
         let persona = settings
             .persona
@@ -183,6 +247,24 @@ impl Session {
             settings.erraticism,
             Rng::stream(seed, purpose::agent(Side::B.index())),
         );
+        let watched = watch.then(|| {
+                let all = opponent::personas();
+                let persona = settings
+                    .persona
+                    .as_deref()
+                    .and_then(opponent::persona)
+                    .unwrap_or_else(|| {
+                        let mut rng = Rng::stream(seed, purpose::persona(1));
+                        all[rng.below(all.len() as u64) as usize].clone()
+                    });
+                let agent = Erratic::new(
+                    settings.level,
+                    &persona,
+                    settings.erraticism,
+                    Rng::stream(seed, purpose::agent(Side::A.index())),
+                );
+                (agent, persona)
+            });
         let mut session = Session {
             seed,
             settings,
@@ -191,6 +273,7 @@ impl Session {
             opponent,
             moves: Vec::new(),
             script,
+            watched,
             persona,
             record: Vec::new(),
             events: Vec::new(),
@@ -206,14 +289,17 @@ impl Session {
             session.tell(
                 EventKind::Cut { yours, theirs },
                 format!(
-                    "You cut the {}; your opponent the {}.{again}",
+                    "{} {} the {}; {} the {}.{again}",
+                    session.subject(true),
+                    session.verb(true, "cut"),
                     yours.code(),
+                    session.object(false),
                     theirs.code()
                 ),
             );
         }
-        if cut.chooser == Side::B {
-            session.start(Side::B);
+        if cut.chooser == Side::B || session.watching() {
+            session.start(cut.chooser);
         }
         session
     }
@@ -240,7 +326,7 @@ impl Session {
         record: &[String],
         script: Vec<Action>,
     ) -> Result<Session, String> {
-        let mut session = Session::with_script(seed, settings, script);
+        let mut session = Session::with_script(seed, settings, script, false);
         for entry in record.iter().filter(|e| !e.starts_with('*')) {
             if !session.send(entry) {
                 return Err(format!(
@@ -336,10 +422,20 @@ impl Session {
 
     /// The opponent, in a player's words.
     pub fn opponent(&self) -> String {
+        self.player(Side::B)
+    }
+
+    /// A computer player, in words: how strong, its style, how steady. In a
+    /// person's sitting, side B is "your opponent"; watching, A or B.
+    pub fn player(&self, side: Side) -> String {
+        let persona = match (side, &self.watched) {
+            (Side::A, Some((_, persona))) => persona,
+            _ => &self.persona,
+        };
         let level = self.settings.level.clamp(1, agents::TOP);
-        let mut said = format!("Your opponent {}.", agents::describe(level));
-        if self.persona.key != "balanced" {
-            said.push_str(&format!(" Its style: it {}.", self.persona.described));
+        let mut said = format!("{} {}.", self.subject(side == Side::A), agents::describe(level));
+        if persona.key != "balanced" {
+            said.push_str(&format!(" Its style: it {}.", persona.described));
         }
         if self.settings.erraticism > 0.0 {
             said.push_str(" It does not always play its best.");
@@ -465,12 +561,16 @@ impl Session {
     fn start(&mut self, dealer: Side) {
         self.game = Some(Game::new(self.seed, dealer));
         let you = dealer == Side::A;
-        let text = match (you, self.cut.chooser) {
-            (true, _) => "You deal first.",
-            (false, Side::A) => "You give the deal to your opponent.",
-            (false, Side::B) => "Your opponent cut higher and chooses to deal.",
+        let text = match (you, self.cut.chooser, self.watching()) {
+            (true, _, false) => "You deal first.".to_string(),
+            (_, chooser, true) | (false, chooser @ Side::B, false) => format!(
+                "{} cut higher and {} to deal.",
+                self.subject(chooser == Side::A),
+                self.verb(chooser == Side::A, "choose")
+            ),
+            (false, Side::A, false) => "You give the deal to your opponent.".to_string(),
         };
-        self.tell(EventKind::FirstDealer { you }, text.to_string());
+        self.tell(EventKind::FirstDealer { you }, text);
         self.hand_begins();
         self.run();
     }
@@ -478,6 +578,9 @@ impl Session {
     /// Runs the opponent, and whatever the table does for the person, until
     /// the person has a decision to make or the game is over.
     fn run(&mut self) {
+        if self.watching() {
+            return;
+        }
         loop {
             let Some(game) = &self.game else { return };
             let Some(side) = game.to_move() else { return };
@@ -627,22 +730,19 @@ impl Session {
         let turn_up = hand.stock().turn_up().expect("a fresh stock");
         let shown = self.named(turn_up, hand, game.seat_of(Side::A));
         let mut text = format!(
-            "Hand {}. {}. The {} is turned up: {} are trumps.",
+            "Hand {}. {} {}. The {} is turned up: {} are trumps.",
             game.hand_number(),
-            if you_deal {
-                "You deal"
-            } else {
-                "Your opponent deals"
-            },
+            self.subject(you_deal),
+            self.verb(you_deal, "deal"),
             turn_up.code(),
             hand.trump().name()
         );
         if hand.log().iter().any(|s| s.source == Source::TurnedSeven) {
-            text.push_str(if you_deal {
-                " You score ten for it."
-            } else {
-                " Your opponent scores ten for it."
-            });
+            text.push_str(&format!(
+                " {} {} ten for it.",
+                self.subject(you_deal),
+                self.verb(you_deal, "score")
+            ));
         }
         self.tell(
             EventKind::Dealt {
@@ -676,8 +776,8 @@ impl Session {
             Seat::Pone
         };
         let you = side == Side::A;
-        let who = if you { "You" } else { "Your opponent" };
-        let s = if you { "" } else { "s" };
+        let who = self.subject(you);
+        let does = |verb: &str| self.verb(you, verb);
         let trump = before.trump();
         match (before.phase(), action) {
             (Phase::Lead | Phase::Follow, Action::Play(card)) => {
@@ -689,7 +789,7 @@ impl Session {
                 let named = self.named(*card, &after, mine);
                 told.push((
                     EventKind::Played { you, card: named },
-                    format!("{who} {verb}{s} the {}.", card.code()),
+                    format!("{who} {} the {}.", does(verb), card.code()),
                 ));
                 if before.phase() == Phase::Follow {
                     let trick = *after.tricks().last().expect("a trick was taken");
@@ -698,11 +798,7 @@ impl Session {
                         .iter()
                         .map(|x| x.points)
                         .sum();
-                    let taker = if won {
-                        "You take"
-                    } else {
-                        "Your opponent takes"
-                    };
+                    let taker = format!("{} {}", self.subject(won), self.verb(won, "take"));
                     let worth = if points > 0 {
                         format!(": {}", words::points(points))
                     } else {
@@ -744,7 +840,7 @@ impl Session {
                         cards: laid,
                         points,
                     },
-                    format!("{who} declare{s}: \"{said}\""),
+                    format!("{who} {}: \"{said}\"", does("declare")),
                 ));
             }
             (Phase::Declare, Action::Dix(_)) => {
@@ -757,13 +853,14 @@ impl Session {
                 let (taken, text) = if shown_seven {
                     (
                         None,
-                        format!("{who} show{s} the other seven of trumps: ten."),
+                        format!("{who} {} the other seven of trumps: ten.", does("show")),
                     )
                 } else {
                     (
                         Some(self.named(turned, &after, mine)),
                         format!(
-                            "{who} exchange{s} the seven of trumps for the {}: ten.",
+                            "{who} {} the seven of trumps for the {}: ten.",
+                            does("exchange"),
                             turned.code()
                         ),
                     )
@@ -793,7 +890,9 @@ impl Session {
                 .cards()
                 .minus(before.holdings(mine).cards())
                 .minus(not_drawn);
-            for card in drawn.cards() {
+            // A watched game's draws are not told: the watchers see the
+            // hands, or not, as they chose.
+            for card in drawn.cards().filter(|_| !self.watching()) {
                 told.push((
                     EventKind::Drew { card },
                     format!("You draw the {}.", card.code()),
@@ -803,9 +902,10 @@ impl Session {
                 let turned = turn_up.expect("the turn-up is the last card");
                 let you_took_last = before.leader() == mine;
                 let text = format!(
-                    "{} the last card; {} the turn-up, the {}. The stock is exhausted: the cards on the table go back into the hands, and the second player must now follow suit and win the trick if able.",
-                    if you_took_last { "You take" } else { "Your opponent takes" },
-                    if you_took_last { "your opponent" } else { "you" },
+                    "{} {} the last card; {} the turn-up, the {}. The stock is exhausted: the cards on the table go back into the hands, and the second player must now follow suit and win the trick if able.",
+                    self.subject(you_took_last),
+                    self.verb(you_took_last, "take"),
+                    self.object(!you_took_last),
                     turned.code()
                 );
                 let named = self.named(turned, &after, mine);
@@ -822,18 +922,24 @@ impl Session {
             let (yours, theirs) = (after.score(mine), after.score(mine.other()));
             told.push((
                 EventKind::HandEnds { yours, theirs },
-                format!("End of the hand: you {yours}, your opponent {theirs}."),
+                format!(
+                    "End of the hand: {} {yours}, {} {theirs}.",
+                    self.object(true),
+                    self.object(false)
+                ),
             ));
         }
         let mut game_ends = None;
         if let Some(outcome) = game.outcome() {
             let you_won = outcome.winner == Side::A;
             let (a, b) = (game.total(Side::A), game.total(Side::B));
-            let mut text = if you_won {
-                format!("You reach {a} and win the game, {a} to {b}.")
-            } else {
-                format!("Your opponent reaches {b} and wins the game, {b} to {a}.")
-            };
+            let (high, low) = if you_won { (a, b) } else { (b, a) };
+            let mut text = format!(
+                "{} {} {high} and {} the game, {high} to {low}.",
+                self.subject(you_won),
+                self.verb(you_won, "reach"),
+                self.verb(you_won, "win")
+            );
             if outcome.double {
                 text.push_str(" A double game: the loser had not reached 500.");
             }
@@ -1108,6 +1214,36 @@ mod tests {
         assert!(slowest < std::time::Duration::from_millis(200), "{slowest:?}");
     }
 
+    /// Two computer players, watched: the game is played to its end a move
+    /// at a time, told with the players named A and B, and no draws told.
+    #[test]
+    fn a_watched_game_is_told_with_the_players_named() {
+        let settings = Settings {
+            level: 3,
+            persona: None,
+            erraticism: 0.0,
+        };
+        for seed in 0..4 {
+            let mut s = Session::watch(seed, settings.clone());
+            let mut moves = 0;
+            while s.step() {
+                moves += 1;
+                assert!(moves < 2000);
+            }
+            assert!(s.outcome().is_some());
+            assert_eq!(s.prompt(), Prompt::Over);
+            assert!(s.record().is_empty());
+            let texts: Vec<&str> = s.events().iter().map(|e| e.text.as_str()).collect();
+            for text in &texts {
+                assert!(!text.contains("You") && !text.contains("you") && !text.contains("opponent"), "{text}");
+            }
+            assert!(!s.events().iter().any(|e| matches!(e.kind, EventKind::Drew { .. })));
+            assert!(texts.iter().any(|t| t.starts_with("A leads") || t.starts_with("B leads")));
+            assert!(texts.iter().any(|t| t.contains("cut higher and chooses to deal.")));
+            assert!(matches!(s.events().last().unwrap().kind, EventKind::GameEnds { .. }));
+        }
+    }
+
     #[test]
     fn a_refused_command_changes_nothing_and_says_why() {
         let mut s = Session::new(14, Settings::default());
@@ -1214,6 +1350,7 @@ mod tests {
             opponent: Erratic::new(2, &persona, 0.0, Rng::stream(seed, purpose::agent(1))),
             moves: vec![],
             script: vec![],
+            watched: None,
             persona,
             record: vec![],
             events: vec![],
