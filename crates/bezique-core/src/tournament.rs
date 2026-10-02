@@ -435,6 +435,25 @@ mod tests {
         assert_eq!(rule.stop(30, 9.0, 1.0), None, "no look before the minimum");
     }
 
+    /// Batches follow one another with no seed missed or repeated: a
+    /// sequential run that goes to its cap is the plain run of as many pairs.
+    #[test]
+    fn sequential_games_cover_the_same_seeds_as_a_plain_run() {
+        let rule = Sequential {
+            batch: 3,
+            min: 6,
+            max: 9,
+            z: f64::INFINITY,
+            worth: 0.0,
+        };
+        let (g, stop) = games_until(30, rule, &maxims, &legal);
+        let plain = games(30, 9, &maxims, &legal);
+        assert_eq!(stop, Stop::Cap);
+        assert_eq!((g.wins, g.doubles, g.points.clone()), (plain.wins, plain.doubles, plain.points));
+        let (h, _) = hands_until(30, rule, &maxims, &legal);
+        assert_eq!(h.margins, hands(30, 9, &maxims, &legal).margins);
+    }
+
     /// The same results on one thread as on several.
     #[test]
     fn threads_do_not_change_results() {

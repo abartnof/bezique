@@ -4,15 +4,19 @@
 //! and is doubled if the loser has not reached 500. So the value of a
 //! position for the game is not its points but the chance of winning from
 //! the totals, and of winning double. That is estimated here from the play
-//! itself: a library of whole hands' score logs from rung 4 against rung 4
-//! (`data/hand-logs.bin`, made by `measure hand-logs`), replayed score by
-//! score from the given totals, hand after hand, the deal alternating, until
-//! one player crosses. The same paths through the library serve every
+//! itself: a library of hands' score logs, the first hand of each of 20,000
+//! games between two rung-4 players (`data/hand-logs.bin`, made by `measure
+//! hand-logs`), replayed score by score from the given totals, hand after
+//! hand, the deal alternating, until one player crosses. First hands only:
+//! a library of every finished hand would leave out those that end games,
+//! which run bigger than most, and undervalue doubles. The same paths through the library serve every
 //! estimate (common random numbers), so two nearby positions are compared
 //! on the same futures and their difference is not swamped by noise.
 //!
-//! The players' scores in a hand do not depend on the totals (no rung reads
-//! them), which is what lets whole hands be replayed on any totals.
+//! The players' scores in a hand do not depend on the totals (rung 4 never
+//! reads them; rung 5 uses them only to seed its sampling), which is what
+//! lets whole hands be replayed on any totals. The model is of rung 4's
+//! play; stronger play scores a little differently.
 
 use crate::game::{DOUBLE_BELOW, GAME};
 use crate::rng::Rng;
@@ -66,11 +70,28 @@ pub const PATHS: u64 = 2000;
 /// futures, of +1 for a game won, +2 for one won double, −1 and −2 for the
 /// same lost.
 pub fn value(mine: u32, theirs: u32, i_deal: bool) -> f64 {
+    let [won_double, won, lost, lost_double] = outcomes(mine, theirs, i_deal);
+    2.0 * won_double + won - lost - 2.0 * lost_double
+}
+
+/// The shares of the fixed futures in which the player wins double, wins,
+/// loses, and loses double, from these totals.
+pub fn outcomes(mine: u32, theirs: u32, i_deal: bool) -> [f64; 4] {
+    let mut counts = [0u32; 4];
+    let mut count = |worth: f64| {
+        let i = match worth as i32 {
+            2 => 0,
+            1 => 1,
+            -1 => 2,
+            _ => 3,
+        };
+        counts[i] += 1;
+    };
     if mine >= GAME || theirs >= GAME {
-        return outcome(mine >= GAME, if mine >= GAME { theirs } else { mine });
+        count(outcome(mine >= GAME, if mine >= GAME { theirs } else { mine }));
+        return counts.map(f64::from);
     }
     let logs = logs();
-    let mut total = 0.0;
     for path in 0..PATHS {
         let mut rng = Rng::stream(0x7ace, path);
         let (mut me, mut them, mut dealing) = (mine, theirs, i_deal);
@@ -85,18 +106,18 @@ pub fn value(mine: u32, theirs: u32, i_deal: bool) -> f64 {
                     them += points;
                 }
                 if me >= GAME {
-                    total += outcome(true, them);
+                    count(outcome(true, them));
                     break 'game;
                 }
                 if them >= GAME {
-                    total += outcome(false, me);
+                    count(outcome(false, me));
                     break 'game;
                 }
             }
             dealing = !dealing;
         }
     }
-    total / PATHS as f64
+    counts.map(|c| f64::from(c) / PATHS as f64)
 }
 
 /// A game won (`won`) or lost, the loser on `loser`: one game, or two if
@@ -137,6 +158,16 @@ mod tests {
         // Antisymmetric, the deal changing hands with the seat.
         let (a, b) = (value(700, 300, true), value(300, 700, false));
         assert!((a + b).abs() < 1e-9, "{a} {b}");
+    }
+
+    /// The model doubles about as many games as play does: rung 4 against
+    /// rung 4 doubles about 12% of games, rung 5 about 13% (the anatomy
+    /// reports). A library short of big hands predicted under 10%.
+    #[test]
+    fn games_are_doubled_about_as_often_as_in_play() {
+        let [won_double, _, _, lost_double] = outcomes(0, 0, true);
+        let doubled = won_double + lost_double;
+        assert!((0.105..0.145).contains(&doubled), "{doubled}");
     }
 
     #[test]

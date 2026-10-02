@@ -57,12 +57,17 @@ pub enum Objective {
     /// world is worth what the game is worth at its end, in game points (a
     /// game won 1, a double 2, the same lost negative): exactly, if the
     /// game ends in it; else, from the totals when the hand ends, by
-    /// [`race::value`]. Further from 1,000 it plays as rung 5.
+    /// [`race::value`]; of cards equal in that, the one scoring most in the
+    /// hand. Further from 1,000 it plays as rung 5. Only the cards played in
+    /// the last stock tricks are chosen this way: declaring stays rung 4's,
+    /// the last eight tricks the solver's (which maximises the hand's
+    /// points), and the race model is built from rung 4's play.
     Game,
 }
 
-/// How near 1,000 either player must be for rung 6 to play for the game: a
-/// hand rarely brings a player more than this.
+/// How near 1,000 either player must be for rung 6 to play for the game. A
+/// player scores 450 or more in about one hand in twenty (in the race
+/// library), so a game can rarely end within a hand from further off.
 pub const NEAR: u32 = 450;
 
 impl Default for Lookahead {
@@ -138,12 +143,13 @@ impl Lookahead {
         self.objective == Objective::Game && view.totals.0.max(view.totals.1) + NEAR >= GAME
     }
 
-    /// What `action` is worth to `side` for the game, in thousandths of a
-    /// game point, in `world` (whose game starts from the real totals): the
-    /// stock played out by rung 4, the last eight tricks by the solver on
-    /// both sides, as the real players play them, so that who reaches 1,000
-    /// first is the engine's to say; then, if the game is not over, the
-    /// race from the hand's final totals.
+    /// What `action` is worth to `side` for the game, in millionths of a
+    /// game point, in `world` (whose game starts from the real totals), with
+    /// the hand's points from here as a second measure for ties: the stock
+    /// played out by rung 4, the last eight tricks by the solver on both
+    /// sides, as the real players play them, so that who reaches 1,000 first
+    /// is the engine's to say; then, if the hand ends with the game still
+    /// on, the race from the hand's final totals.
     fn game_value_of(
         &self,
         world: &Game,
@@ -151,10 +157,10 @@ impl Lookahead {
         action: &Action,
         remembered: [u8; 32],
         solver: &mut Solver,
-    ) -> i32 {
+    ) -> (i64, i64) {
         let mut game = world.clone();
         if game.apply(action.clone()).is_err() {
-            return i32::MIN / 2;
+            return (i64::MIN / 4, 0);
         }
         let number = game.hand_number();
         let mut agents = [self.rung4(remembered), self.rung4(remembered)];
@@ -177,23 +183,30 @@ impl Lookahead {
             };
             game.apply(action).expect("rung 4 and the solver play legally");
         }
-        let worth = match game.outcome() {
-            Some(outcome) => {
-                let games = if outcome.double { 2.0 } else { 1.0 };
-                if outcome.winner == side {
-                    games
-                } else {
-                    -games
-                }
-            }
-            None => {
-                // The hand is over and the next dealt: the totals it ended
-                // on, and who deals next.
-                let banked = |s: Side| game.total(s) - game.hand().score(game.seat_of(s));
-                race::value(banked(side), banked(side.other()), game.dealer() == side)
+        let hand_ended = game.hand_number() != number;
+        let hand = if hand_ended {
+            game.previous_hand().expect("the hand just ended")
+        } else {
+            game.hand()
+        };
+        let seat = world.seat_of(side);
+        let margin = i64::from(hand.score(seat)) - i64::from(hand.score(seat.other()));
+        let worth = if hand_ended {
+            // The totals the hand ended on, and who deals next. Whatever the
+            // next deal did is not this world's: every world deals the same
+            // next hand, so its turned seven must not count.
+            let banked = |s: Side| game.total(s) - game.hand().score(game.seat_of(s));
+            race::value(banked(side), banked(side.other()), game.dealer() == side)
+        } else {
+            let outcome = game.outcome().expect("the game ended within the hand");
+            let games = if outcome.double { 2.0 } else { 1.0 };
+            if outcome.winner == side {
+                games
+            } else {
+                -games
             }
         };
-        (1000.0 * worth).round() as i32
+        ((1_000_000.0 * worth).round() as i64, margin)
     }
 }
 
@@ -222,7 +235,9 @@ impl Agent for Lookahead {
         };
         let mut rng = Rng::seeded(fingerprint(view));
         let mut solver = Solver::new(view.trump);
-        let mut totals = vec![0i64; candidates.len()];
+        // Per candidate: the value summed over the worlds, and (playing for
+        // the game) the hand's points, which break ties in game value.
+        let mut totals = vec![(0i64, 0i64); candidates.len()];
         let mut sampled = 0;
         for _ in 0..self.worlds {
             let Some(world) = world_with(view, &mut rng, banked) else {
@@ -230,12 +245,14 @@ impl Agent for Lookahead {
             };
             sampled += 1;
             for (total, action) in totals.iter_mut().zip(&candidates) {
-                let value = if for_the_game {
+                let (value, margin) = if for_the_game {
                     self.game_value_of(&world, view.side, action, remembered, &mut solver)
                 } else {
-                    self.value_of(&world, view.seat, action, remembered, &mut solver)
+                    let points = self.value_of(&world, view.seat, action, remembered, &mut solver);
+                    (i64::from(points), 0)
                 };
-                *total += i64::from(value);
+                total.0 += value;
+                total.1 += margin;
             }
         }
         if sampled == 0 {
