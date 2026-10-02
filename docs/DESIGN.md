@@ -411,9 +411,16 @@ Two proposed rungs failed measurement and were dropped, as piquet dropped
 two: memory used only to notice combinations that can no longer be made
 (+1.9 over rung 2: real, but small and now part of rung 3), and watching the
 opponent's table (counting its cards as gone, taking tricks to stop it
-declaring: nothing measurable). Search earlier in the stock phase, and
-play for the game rather than the hand, remain proposals for rungs 6 and
-up.
+declaring: nothing measurable). Two more were built and measured after
+the full review of 2026-10-02, and not kept: rung 5 with 32 worlds rather
+than 16 (+1.3 points a hand, se 0.5: inconclusive by the rule fixed in
+advance, probably real but small, at twice the cost of a decision), and a
+rung 6 playing for the game rather than the hand in the last stock tricks,
+valued on a race model replaying real hands (`race.rs`): no difference in
+game points (+0.000 a game, se 0.009, 1,100 pairs of games; nothing worth
+having). Playing for the game may yet pay in declaring or in the last
+eight tricks, which rung 6 left alone; search earlier in the stock phase
+remains a proposal.
 
 **Erraticism** (`opponent.rs`): on each decision the opponent may slip a
 rung, and each further rung with the set probability again (at 0.5, a

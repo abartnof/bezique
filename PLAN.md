@@ -129,9 +129,13 @@ the full ladder run. Levels run 1 to 5.
   both cores, counts doubles, refuses a mistyped seed and prints its seeds,
   and runs sequentially (DESIGN §10.5: stop as soon as the answer is clear,
   the maintainer's policy).
-- **Rung 6** (playing for the game near its end) is built on a race model
-  replaying real hands' score logs; it is under review, then to be
-  measured in games.
+- **The two long measurements**, after the review: rung 6 (playing for the
+  game in the last stock tricks, on a race model replaying 20,000 real
+  hands) against rung 5 in games: no difference worth having (+0.000 game
+  points a game, se 0.009, stopped at 1,100 pairs); not kept as a level.
+  32 worlds against 16 at rung 5: +1.3 points a hand (se 0.5), at the cap
+  of 10,000 pairs, inconclusive by the rule; not adopted for now (it would
+  double a level-5 decision's time), to revisit with the page's timing.
 
 ## Decisions
 

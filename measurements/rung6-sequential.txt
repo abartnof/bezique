@@ -1,0 +1,2 @@
+rung 6 against rung 5, games: the first won 1101 of 2200 games, 50.0% (standard error 0.4); game points +0.000 a game (se 0.009, a double counting two); pairs swept 45-44, split 1011; doubles 118-120; 4.28 hands a game; seeds 16000000-16001099
+    sequential on game points: batches of 100, looks from 300 pairs, stop at |z| >= 3 or when the effect is within ±0.02 at two standard errors, cap 6000; stopped: NothingWorthHaving
