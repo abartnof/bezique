@@ -231,10 +231,7 @@ mod tests {
         for _ in 0..60_000 {
             counts[g.below(6) as usize] += 1;
         }
-        let chi2: f64 = counts
-            .iter()
-            .map(|&c| (f64::from(c) - 10_000.0).powi(2) / 10_000.0)
-            .sum();
+        let chi2 = chi_square(&counts);
         assert!(chi2 < CRITICAL, "{counts:?}, chi-square {chi2:.1}");
     }
 
@@ -242,24 +239,8 @@ mod tests {
     #[test]
     fn shuffle_makes_every_order_equally_likely() {
         let mut g = Rng::seeded(11);
-        let orders = [
-            [0, 1, 2],
-            [0, 2, 1],
-            [1, 0, 2],
-            [1, 2, 0],
-            [2, 0, 1],
-            [2, 1, 0],
-        ];
-        let mut counts = [0u32; 6];
-        for _ in 0..60_000 {
-            let mut items = [0, 1, 2];
-            g.shuffle(&mut items);
-            counts[orders.iter().position(|o| *o == items).unwrap()] += 1;
-        }
-        let chi2: f64 = counts
-            .iter()
-            .map(|&c| (f64::from(c) - 10_000.0).powi(2) / 10_000.0)
-            .sum();
+        let counts = orders_of_three(|items| g.shuffle(items));
+        let chi2 = chi_square(&counts);
         assert!(chi2 < CRITICAL, "{counts:?}, chi-square {chi2:.1}");
     }
 

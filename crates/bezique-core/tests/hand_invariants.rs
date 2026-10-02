@@ -3,12 +3,16 @@
 use bezique_core::cards::{CardSet, Rank};
 use bezique_core::deal::{Deal, Seat};
 use bezique_core::hand::{Action, Hand, Phase, Source};
-use bezique_core::rng::Rng;
+use bezique_core::rng::{purpose, Rng};
+
+/// The stream of this test's own random choices (moves, coin flips), apart
+/// from the deals'.
+const CHOICES: u64 = 1;
 
 /// Plays a hand out, choosing uniformly among the legal moves.
 fn random_hand(seed: u64) -> Hand {
-    let mut deal_rng = Rng::stream(seed, 0);
-    let mut choose = Rng::stream(seed, 1);
+    let mut deal_rng = Rng::stream(seed, purpose::DEALS);
+    let mut choose = Rng::stream(seed, CHOICES);
     let mut hand = Hand::new(Deal::shuffled(&mut deal_rng));
     let mut moves = 0;
     while let Some(_seat) = hand.to_move() {
@@ -115,8 +119,8 @@ fn the_log_reconciles_brisques_make_160_and_the_last_trick_10() {
 #[test]
 fn declaring_happens_only_while_the_stock_lasts_and_play_follows_the_rules() {
     for seed in 4000..4500 {
-        let mut deal_rng = Rng::stream(seed, 0);
-        let mut choose = Rng::stream(seed, 1);
+        let mut deal_rng = Rng::stream(seed, purpose::DEALS);
+        let mut choose = Rng::stream(seed, CHOICES);
         let mut hand = Hand::new(Deal::shuffled(&mut deal_rng));
         while hand.to_move().is_some() {
             if hand.phase() == Phase::Declare {

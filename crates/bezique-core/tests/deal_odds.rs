@@ -21,7 +21,11 @@
 
 use bezique_core::cards::{Card, CardSet, CardType, Rank, Suit};
 use bezique_core::deal::{Deal, Seat};
-use bezique_core::rng::Rng;
+use bezique_core::rng::{purpose, Rng};
+
+/// The stream of this test's own random choices (moves, coin flips), apart
+/// from the deals'.
+const CHOICES: u64 = 1;
 
 const HANDS: u32 = 40_000;
 
@@ -62,7 +66,7 @@ fn check(name: &str, hits: u32, exact: f64) {
 
 #[test]
 fn each_player_receives_exactly_half_the_pack() {
-    let (mut rng, mut coin) = (Rng::stream(1, 0), Rng::stream(1, 1));
+    let (mut rng, mut coin) = (Rng::stream(1, purpose::DEALS), Rng::stream(1, CHOICES));
     for _ in 0..1000 {
         let [dealer, pone] = received(&mut rng, &mut coin);
         assert_eq!(dealer.len(), 32);
@@ -73,7 +77,7 @@ fn each_player_receives_exactly_half_the_pack() {
 
 #[test]
 fn the_pone_receives_each_combination_as_often_as_the_exact_odds_say() {
-    let (mut rng, mut coin) = (Rng::stream(20261001, 0), Rng::stream(20261001, 1));
+    let (mut rng, mut coin) = (Rng::stream(20261001, purpose::DEALS), Rng::stream(20261001, CHOICES));
     let (queen, jack) = (of("QS"), of("JD"));
     let sequence = [Rank::ACE, Rank::TEN, Rank::KING, Rank::QUEEN, Rank::JACK]
         .map(|rank| CardType::new(rank, Suit::SPADES));
