@@ -1102,7 +1102,12 @@ mod tests {
     }
 
     /// With more than sixteen possible riders the best set is still found,
-    /// not a truncated one.
+    /// not a truncated one. The position holds eleven cards, which play
+    /// cannot produce (with eight, more than sixteen riders needs freak
+    /// tables, six unmarried queens and the like): it tests the greedy
+    /// branch, which is optimal on value in every reachable case found by
+    /// the full review of 2026-10-02 but ignores the tie-break of tying the
+    /// fewest cards to scores still to come.
     #[test]
     fn many_free_riders_are_not_cut_short() {
         let h = Holdings {
