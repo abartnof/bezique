@@ -405,7 +405,7 @@ mirrored hands; games are the share won in mirrored games.
 | 2 | The period maxims (Pole, Pardon, Foster, Hoffmann), weighed by a tuned style: values each card for keeping (rank, trumps, bezique cards above aces while the double lives, marriage partners, sequence cards, three of a rank, the dix); throws the cheapest; takes brisques cheaply; wins the lead when there is something to declare, paying more the more it would score; single bezique before the double, royal marriage before the sequence | +98.6 (92% of games) |
 | 3 | Remembers every card played, and so plays the last eight tricks exactly (`solver.rs`): in bezique, memory pays in the endgame, where the cards played tell the opponent's hand | +18.7 (58%) |
 | 4 | Fights for the last trick before the stock runs out: its winner makes the last declaration and leads into the endgame | +2.3 (51%) |
-| 5 | Looks ahead once nine or fewer face-down cards remain: tries each card in 16 worlds drawn from its view, rung 4 playing out the stock and the solver valuing the endgame (`lookahead.rs`, §10.4) | +30.5 (62%) |
+| 5 | Looks ahead once nine or fewer face-down cards remain: tries each card in 16 worlds drawn from its view, rung 4 playing out the stock and the solver valuing the endgame (`lookahead.rs`, §10.4) | +30.7 (63%) |
 
 Two proposed rungs failed measurement and were dropped, as piquet dropped
 two: memory used only to notice combinations that can no longer be made

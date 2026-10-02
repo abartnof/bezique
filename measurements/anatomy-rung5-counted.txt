@@ -1,0 +1,36 @@
+Rung 5 against itself: 1000 games, 3234 finished hands.
+
+Hands a game: mean 4.23; distribution {1: 1, 2: 33, 3: 152, 4: 407, 5: 359, 6: 48}
+Double games (loser under 500): 13.4%
+Games ended in the middle of a hand: 95.5%
+The first dealer won 53.0% of games (standard error 1.6)
+
+Points a hand: dealer 224.1, pone 223.0 (the pone leads first)
+Where the points come from, per hand (both players):
+  brisques                      160.0  (35.8%)
+  meld: bezique                  33.9  (7.6%)
+  meld: common marriage          26.5  (5.9%)
+  meld: double bezique            9.7  (2.2%)
+  meld: four aces                80.7  (18.1%)
+  meld: four jacks                7.4  (1.7%)
+  meld: four kings               17.0  (3.8%)
+  meld: four queens              15.2  (3.4%)
+  meld: royal marriage           37.1  (8.3%)
+  meld: the sequence             34.3  (7.7%)
+  the dix                        14.0  (3.1%)
+  the last trick                 10.0  (2.2%)
+  the turned seven                1.2  (0.3%)
+
+Combinations scored, per player-hand:
+  bezique                      0.424
+  common marriage              0.662
+  double bezique               0.010
+  four aces                    0.404
+  four jacks                   0.092
+  four kings                   0.106
+  four queens                  0.127
+  royal marriage               0.464
+  the sequence                 0.069
+Announcements carrying free riders: 0.6% of 19004; carried scores later scored: 91
+
+The winner of the last stock trick (trick 24) out-scored the loser over the hand in 52.2% of hands, by 11.4 points on average
