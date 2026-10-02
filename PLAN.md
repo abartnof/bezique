@@ -14,9 +14,8 @@ observation and the opponent's rungs 1–5 with personas and erraticism
 (milestone 7) are done; the terminal client runs on the session. The
 overnight work has been reviewed, and then the whole codebase (the full
 review of 2026-10-02), every finding resolved or deliberately deferred.
-198 tests, all passing. What remains: the maintainer's play-test, the
-question of undo, two long measurements (rung 6, and 32 worlds at rung 5),
-and the 3D table. Planning was completed on
+203 tests, all passing. What remains: the maintainer's play-test, the
+question of undo, and the 3D table. No further simulation is needed. Planning was completed on
 2026-10-01:
 
 - `docs/LITERATURE.md`: the literature review (68 sources, the conflict
@@ -129,6 +128,13 @@ the ladder rerun after the full review. Levels run 1 to 5.
   both cores, counts doubles, refuses a mistyped seed and prints its seeds,
   and runs sequentially (DESIGN §10.5: stop as soon as the answer is clear,
   the maintainer's policy).
+- **The engine's debts paid** (no simulations): undo at level 5 reuses the
+  opponent's known moves (well under 200 ms, from about 0.9 s); one
+  narrator (the terminal client's watch mode runs on the session); table
+  twins alike offered once (`RECORD_VERSION` 3); the solver stores proved
+  values as exact; the race model is a feature, kept out of the wasm module
+  (248 KB); the workspace formatted. Every finding of the three reviews is
+  resolved.
 - **The two long measurements**, after the review: rung 6 (playing for the
   game in the last stock tricks, on a race model replaying 20,000 real
   hands) against rung 5 in games: no difference worth having (+0.000 game
