@@ -12,9 +12,11 @@ ready for its first play-test.** The rules engine (milestones 1–5),
 observation and the opponent's rungs 1–5 with personas and erraticism
 (milestones 6 and 8), the session, the JSON protocol and the wasm module
 (milestone 7) are done; the terminal client runs on the session. The
-overnight work has been reviewed and every finding but one design question
-resolved. 181 tests, all passing. What remains: the maintainer's play-test,
-the question of undo, and the 3D table. Planning was completed on
+overnight work has been reviewed, and then the whole codebase (the full
+review of 2026-10-02), every finding resolved or deliberately deferred.
+198 tests, all passing. What remains: the maintainer's play-test, the
+question of undo, two long measurements (rung 6, and 32 worlds at rung 5),
+and the 3D table. Planning was completed on
 2026-10-01:
 
 - `docs/LITERATURE.md`: the literature review (68 sources, the conflict
@@ -118,6 +120,18 @@ the full ladder run. Levels run 1 to 5.
   balanced.
 - **The "To measure" questions** that the anatomy already answered are
   recorded below.
+- **The full code review** (`docs/reviews/2026-10-02-full.md`), asked for by
+  the maintainer before any long run: six reviewers, the whole repository.
+  Nothing invalidated the rules, scores, views or measurements; small play
+  changes (rung 5's rollouts now remember earlier tricks; declaring ties go
+  to what is left to score, not to copy numbers; one missing declaration
+  option) are in, as `RECORD_VERSION` 2. The measurement harness now uses
+  both cores, counts doubles, refuses a mistyped seed and prints its seeds,
+  and runs sequentially (DESIGN §10.5: stop as soon as the answer is clear,
+  the maintainer's policy).
+- **Rung 6** (playing for the game near its end) is built on a race model
+  replaying real hands' score logs; it is under review, then to be
+  measured in games.
 
 ## Decisions
 
