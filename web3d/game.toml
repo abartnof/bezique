@@ -1,0 +1,13 @@
+name = "bezique"
+entry = "src/main.js"
+template = "src/index.html"
+style = "src/style.css"
+output = "bezique.html"
+crate = "bezique-wasm"
+guideline_bytes = 5242880
+
+[[assets]]
+placeholder = "/*ART*/"
+path = "art/cards"
+kind = "images"
+count = 33

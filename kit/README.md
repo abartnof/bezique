@@ -1,10 +1,13 @@
 # kit/ - the card table's game-independent code
 
-A vendored copy of the parts of Cassino's 3D table and build tooling that do
-not know which game they serve, for Strohmandeln and later games. It is
-ordinary files in this repository: no submodule, no package, no sync step at
-build time. `STAMP` says which Cassino commit it was copied from and lists
-every file with its source path and how it differs.
+Bezique's vendored copy of the parts of Cassino's 3D table and build tooling
+that do not know which game they serve. It came from Strohmandeln's `kit/`
+(itself taken from Cassino's `web3d`), and is ordinary files in this
+repository: no submodule, no package, no sync step at build time. `STAMP` says
+which Cassino commit it derives from and lists every file with its source path
+and how it differs. Two files differ from Strohmandeln's copy: `js/deck.js`
+builds a material per mesh (every card is in the pack twice, so dimming one
+twin leaves the other), and `build.py` names `/bezique` in its path remap.
 
 Why a copy and not a submodule: `research/review/RC.md` §4. A submodule is
 empty in a fresh `git worktree add` (every Claude Code agent worktree),
@@ -30,17 +33,6 @@ inside it. A plain directory is in every worktree from the start.
 `test/`: the Node tests that cover them, plus tests for what the kit changed
 (`engine`, `tutorial`, `director`, `modules`) and `test_build.py` for
 `build.py`. `build.py`: the page builder, below. `STAMP`: provenance.
-
-`learner/` is a Rust crate (`kit-learner`, no dependencies, a workspace member of
-the game), the game-independent part of Cassino's learner: the discounted Beta
-fold, mastery with hysteresis, the focus over a prerequisite graph, the summary's
-text form and versions, and the brief's shape. A game supplies a `Ladder` (its
-skills as indexes, with `needs`, `top_rate`, `top_cost`, `min_chances`, `may_focus`) and
-`Params`; the evidence, the words and the rules stay the game's.
-`docs/TUTOR.md` section 13 has the API. Its tests include an equivalence test
-against Cassino's own learner (`learner/tests/equivalence.rs`); `STAMP` lists
-its files. It is not JavaScript, so the origin-header and `kit/test` rules do not
-apply to it; `bin/gate` checks that every file under `learner/` is in `STAMP`.
 
 ## What was left out, and why
 

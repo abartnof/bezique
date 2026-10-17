@@ -18,3 +18,4 @@ __pycache__/
 
 # Claude Code worktrees and local state
 .claude/
+kit/node_modules

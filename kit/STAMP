@@ -1,11 +1,9 @@
+vendored into bezique from ~/strohmandeln/kit (itself from cassino @ 73f0cd7), 2026-10-17
+
 source: cassino (~/cassino, branch main)
 commit: 73f0cd75b5e943b4abe6dd76d84fed062628fc93
 date: 2026-10-13T23:24:53Z
 copied: 2026-10-14, from the working tree (no uncommitted change in the files below was looked for beyond their modification times, all older than the commit)
-
-learner/: copied 2026-10-15 from crates/cassino-core/src/{learner,brief}.rs of the same
-commit (both last changed at 69f409d, before it). Rust files carry no origin header; this
-table is their provenance.
 
 Every kit/js and kit/test file copied carries a first line
 "// From cassino web3d/src/<file> @ 73f0cd7". bin/gate fails if a file listed
@@ -18,7 +16,7 @@ files:
 js/art.js                web3d/src/art.js               verbatim
 js/bag.js                web3d/src/bag.js               verbatim
 js/cards.js              web3d/src/cards.js             verbatim
-js/deck.js               web3d/src/deck.js              verbatim
+js/deck.js               web3d/src/deck.js              CHANGED: a material per mesh (every card is in the pack twice), so dimming one twin leaves the other
 js/materials.js          web3d/src/materials.js         verbatim
 js/surfaces.js           web3d/src/surfaces.js          verbatim
 js/timeline.js           web3d/src/timeline.js          verbatim
@@ -56,21 +54,5 @@ test/hud.test.js         web3d/test/hud.test.js         widget tests ported onto
 test/count.test.js       -                              new (the pace and the quiet window were untested in cassino's node tests)
 test/counting.test.js    -                              new: a Strohmandeln-like game (threes, thirds, 36 of 70) through the whole path
 test/fixtures/games.js   -                              new: the stand-in game definitions
-build.py                 web3d/build.py                 generalised: config file, no wasm/art/courts specifics; new: optional kit_styles (the kit's stylesheets, inlined before the game's)
+build.py                 web3d/build.py                 CHANGED: path remap names /bezique; generalised: config file, no wasm/art/courts specifics; new: optional kit_styles (the kit's stylesheets, inlined before the game's)
 package.json             -                              new: marks kit/js as ES modules
-learner/Cargo.toml                       -                                      new: a workspace crate of the game, no dependencies
-learner/src/lib.rs                       -                                      new: the crate's doc and exports
-learner/src/beta.rs                      crates/cassino-core/src/learner.rs     ln_gamma (now public), beta_cdf, beta_quantile: verbatim bodies, the known-value tests, and tests for ln_gamma and the cdf's edges
-learner/src/model.rs                     crates/cassino-core/src/learner.rs     Tally and Summary (counts, text form, parse, version) on a Ladder of SkillSpec indexes instead of Skill::ALL; top_rate, top_cost, MIN_CHANCES, needs and the slugs are SkillSpec fields; the constants are Params (no defaults; Cassino's are written out in tests/common; MIN_CHANCES is per skill; `may_focus` is new: a skill the game found worth nothing is counted and praised but never the focus); master and lose; stale; Ladder::check is new; the header is "<ladder name> evidence v<n>"; a summary is current when its version and size fit the ladder
-learner/src/learn.rs                     crates/cassino-core/src/learner.rs     learn over a Ladder and Params, indexes for skills, Vec for arrays. CHANGED: an exact tie in gain goes to the earlier skill (Cassino's max_by took the later; docs/TUTOR.md 1); a skill with may_focus false is never the focus and does not hold back the skills that need it
-learner/src/brief.rs                     crates/cassino-core/src/brief.rs       the shape of brief() only: Bullet as keys and parameters (Cassino's carries prose), at most three, well / next / none, the FEW, min-history and enough-skills guards, the praise-versus-focus rule. Cassino's words (name, figure, fact, example, strength_line, method), costliest/Miss and the strengths stay in the game
-learner/tests/common/mod.rs              crates/cassino-core/src/{tutor,learner}.rs   new: Cassino's ladder (slugs, needs, top_rate, top_cost) and constants written out as a Ladder and Params
-learner/tests/summary.rs                 crates/cassino-core/src/learner.rs     ported: the summary tests (counts, text round trip, stale); new: Ladder::check, master and lose
-learner/tests/ladder.rs                  -                                      new: a ladder's cycles and repeats are refused
-learner/tests/params.rs                  -                                      new: Params::check, and learn asserts it in debug
-learner/tests/thresholds.rs              -                                      new: every >= / < at its exact line (mutation-checked); Cassino's own answers for the ladder-reachable ones are the edge-* cases of the fixture
-learner/tests/learn.rs                crates/cassino-core/src/learner.rs     ported: the learner tests that do not play games; new: the tie rule, a ladder of its own, per-skill min_chances, may_focus
-learner/tests/brief.rs                   crates/cassino-core/src/brief.rs       new: the shape's tests (Cassino's brief tests check its words)
-learner/tests/equivalence.rs             -                                      new: the crate against Cassino's learner on the fixture
-learner/tests/fixtures/cassino_learner.txt      -                               generated by Cassino's code at the commit above (127 cases)
-learner/tests/fixtures/cassino_learner_gen.rs   -                               new: the generator, with the steps to run it (not compiled here)

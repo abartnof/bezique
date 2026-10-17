@@ -181,7 +181,7 @@ class Safety(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             cfg = build.load_config(tiny_game(Path(tmp)), Path(tmp))
             flags = build.rust_env(cfg)["RUSTFLAGS"]
-            self.assertIn(f"--remap-path-prefix={cfg.root}=/strohmandeln", flags)
+            self.assertIn(f"--remap-path-prefix={cfg.root}=/bezique", flags)
             self.assertIn("=/cargo", flags)
             self.assertIn("=/rustup", flags)
 
