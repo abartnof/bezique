@@ -23,10 +23,12 @@ import { createTutorStore } from "./tutorstore.js";
 import { createTutorView } from "./tutorview.js";
 import TUTORIAL from "../tutorial.md";
 import { parseTutorial } from "../../kit/js/tutorial.js";
+import { createBubble, createSpeaker } from "./speaker.js";
+import { createTalk } from "./talk.js";
 import { createUi } from "./ui.js";
 import { EYE, EYE_PORTRAIT, ZONES, ZONES_PORTRAIT } from "./zones.js";
 
-/* global WASM_BASE64, ART */
+/* global WASM_BASE64, ART, WORDS */
 
 const params = new URL(window.location.href).searchParams;
 const SITTING = "bezique.sitting.v1";
@@ -62,6 +64,9 @@ async function main() {
   const url = urlOverrides(params);
   // The tutorial is on for a new player and off in a test run (`?seed=`), unless `?tutor=1`.
   const tutorOn = () => (params.has("seed") ? params.get("tutor") === "1" : prefs.tutor !== false && prefs.tutor !== "off");
+  // Table talk: quiet | normal | chatty (docs/PHRASES.md).
+  const talkMode = params.get("talk") ?? prefs.talk ?? WORDS.default_mode;
+  prefs.talk = Object.keys(WORDS.modes).includes(talkMode) ? talkMode : WORDS.default_mode;
 
   // ---- the scene, the cards -------------------------------------------------
   const canvas = document.getElementById("stage");
@@ -208,7 +213,28 @@ async function main() {
     director.redecorate();
   }
 
+  // ---- table talk: the opponent's lines, one at a time, in a bubble by its hand
+  const bubble = createBubble({ root: document.getElementById("overlay"), edge: () => director.handEdge("them") });
+  const speaker = createSpeaker({
+    clock: () => director.clock(),
+    later: (ms, fn, kind) => director.at(ms, fn, kind),
+    show: (line) => bubble.show(line),
+    hide: () => bubble.hide(),
+    pace: () => Math.min(1.5, Math.max(0.35, 1 / speedFactor(prefs, systemReduced()))),
+  });
+  const talk = createTalk({ words: WORDS, rng: Math.random, say: (line) => speaker.offer(line), mode: prefs.talk });
+  const setTalk = (mode) => {
+    talk.setMode(mode);
+    prefs.talk = mode;
+    savePrefs(prefs);
+  };
+  const hushTalk = () => {
+    speaker.stop();
+    director.drop("talk");
+  };
+
   function applyEvent(e, index) {
+    talk.onEvent(e, { totals: board.running().totals });
     ui.say(e.text);
     board.event(S.events, index);
   }
@@ -269,6 +295,7 @@ async function main() {
     newGameDialog.remember(prefs);
     seed = Number.isInteger(chosenSeed) ? chosenSeed : url.seed !== null && !S ? url.seed : Math.floor(Math.random() * 2 ** 32);
     director.cancelTimed();
+    hushTalk();
     engine.new(gameConfig(prefs, { seed }));
     if (prefs.hints) engine.send("set hints on");
     if (prefs.tracker) engine.send("set tracker on");
@@ -325,7 +352,9 @@ async function main() {
       const r = engine.send("undo");
       if (r.ok) {
         director.cancelTimed();
+        hushTalk();
         present(r.state, "direct");
+        talk.onEvent({ kind: "undo" });
         persist();
       }
     } else if (name === "tracker") {
@@ -379,7 +408,7 @@ async function main() {
   });
 
   // The test hook: what the browser checks read and drive.
-  window.bezique3d = { board, setFaces: (c) => { const r = setFaces(c); savePrefs(prefs); return r; }, facesShown: () => facesShown, state: () => raw, act, onAct, director, stage, ui, engine, waiting: () => waiting, screenPoint: (id) => director.screenPoint(S.model && placementCode(id)) };
+  window.bezique3d = { talk, setTalk, speaker, board, setFaces: (c) => { const r = setFaces(c); savePrefs(prefs); return r; }, facesShown: () => facesShown, state: () => raw, act, onAct, director, stage, ui, engine, waiting: () => waiting, screenPoint: (id) => director.screenPoint(S.model && placementCode(id)) };
   function placementCode(id) {
     return director.placement().find((m) => m.cardId === id)?.code;
   }
