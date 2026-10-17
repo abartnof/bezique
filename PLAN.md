@@ -312,6 +312,10 @@ game is finished, and nothing here should block it. Candidates to look at:
   for a real browser.
 - **Working method**: the conventions each repository's `CLAUDE.md` repeats.
 
+Open question for the maintainer: should these live in their own
+repositories as first-class generic tools (with how the games consume them:
+vendored copy, subtree or submodule, see strohmandeln `kit/README.md`)?
+
 Start by listing what is byte-identical or near-identical across the four
 repositories; extract only what two or more games already use.
 
