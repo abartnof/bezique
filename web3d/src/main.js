@@ -185,7 +185,7 @@ async function main() {
     waiting = false;
     if (!raw) return;
     sync();
-    ui.setPrompt(raw, { busy: false, hint: raw.aids.hints ? (raw.hint ?? {}) : null });
+    ui.setPrompt(raw, { busy: false, hint: raw.aids.hints ? (raw.hint ?? {}) : null, layers: { facts: prefs.hintFacts !== false, rules: prefs.hintRules !== false } });
     director.redecorate();
   }
 

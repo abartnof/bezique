@@ -201,6 +201,26 @@ fn a_refused_command_is_reported_in_the_state() {
 }
 
 #[test]
+fn a_hint_carries_a_reason_key() {
+    let mut session = sit_down(2, 3, 0, 0);
+    assert!(session.send("set hints on"));
+    let mut seen = 0;
+    for _ in 0..200 {
+        let s: Value = serde_json::from_str(&state(&session)).unwrap();
+        if s["hint"].is_object() {
+            assert!(s["hint"]["command"].is_string() && s["hint"]["text"].is_string());
+            assert!(s["hint"]["reason"]["key"].is_string(), "{}", s["hint"]);
+            seen += 1;
+        }
+        match first(&s) {
+            Some(c) => assert!(session.send(&c)),
+            None => break,
+        }
+    }
+    assert!(seen > 5);
+}
+
+#[test]
 fn a_record_reloads_the_sitting() {
     let mut session = sit_down(2, 21, 2, 0);
     for _ in 0..40 {

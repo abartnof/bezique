@@ -110,12 +110,24 @@ an engine running in the page cannot keep from a person determined to look.
   "aids": {"hints": false, "play_forced": false, "tracker": false},
   "can_undo": true,
   "record": ["dealer you", "play 12", "*declare 0", ...],
-  "hint": null,               // with hints: {"command": "play 12", "text": "Play the KS."}
+  "hint": null,               // with hints: {"command": "play 12", "text": "Play the KS.", "reason": {"key": "take_brisque", "card": "KS", "led": "TD"}}
   "events": [ ... ],          // below
   "outcome": null,            // at the end: {"winner": "you", "double": false}
   "error": null
 }
 ```
+
+### The hint's reason
+
+`hint.reason` says why the top rung chose as it did, for a client to word
+(`docs/HINTS.md`). `key` is one of the keys in `bezique_core::hints::KEYS`
+(`generic` when the choice fits no case); the other members are the few
+parameters that key needs: cards as codes (`card`, `led`, `kept`, `spared`,
+`partner`, `turn_up`), numbers (`points`, `trumps`) and words (`meld`, `suit`).
+Which members a key carries is listed in `docs/HINTS.md`. `command` and `text`
+are unchanged. The member is additive, so `PROTOCOL` stays 1; a client that
+ignores `reason` loses nothing, and one that meets a key it does not know
+should show `text`.
 
 ### Card ids and twins
 

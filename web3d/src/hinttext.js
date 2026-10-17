@@ -1,0 +1,208 @@
+// The hint in two layers (docs/HINTS.md): `do`, the concrete instruction for
+// this position with the cards named, and `rule`, one sentence the player can
+// carry to another hand, with its source. The engine sends only a reason
+// (`hint.reason`: a key and the cards and numbers it needs, docs/PROTOCOL.md);
+// the words are here. Pure functions, no DOM.
+
+import { cardName } from "./cards.js";
+
+const FOSTER = "Foster, Complete Hoyle (1897)";
+const CADY = "Cady, Bézique (1896)";
+
+// A source: `cite` is what the book says, `page` its place; `interp` marks a
+// rule that is the project's own reading of the maxims, not a book's.
+const book = (who, page, note) => ({ who, page, note, interp: false });
+const mine = (note, who, page) => ({ who, page, note, interp: true });
+
+const MELD = {
+  royal_marriage: (p) => `royal marriage in ${p.suit}`,
+  marriage: (p) => `marriage in ${p.suit}`,
+  sequence: () => "sequence",
+  bezique: () => "bezique",
+  double_bezique: () => "double bezique",
+  four_aces: () => "four aces",
+  four_kings: () => "four kings",
+  four_queens: () => "four queens",
+  four_jacks: () => "four jacks",
+};
+const meldName = (p) => (MELD[p.meld] ?? (() => "combination"))(p);
+
+// key -> { do(p, n), rule, src }. `n` names a card code; `p` is the params.
+export const REASONS = {
+  take_brisque: {
+    do: (p, n) => `Take the ${n(p.led)} with your ${n(p.card)}: an ace or ten is worth 10.`,
+    rule: "Win a trick that holds an ace or a ten: it is 10 points to you, and 10 less for your opponent.",
+    src: book(FOSTER, "p. 340", "Brisques score as soon as the trick is taken; “there is no object in winning any trick which does not contain a brisque” but for the lead.") ,
+    also: book(CADY, "p. 23", "If you do not win a brisque, your opponent does: a difference of twenty."),
+  },
+  take_to_declare: {
+    do: (p, n) => `Win the ${n(p.led)} with your ${n(p.card)}: you can then declare up to ${p.points}.`,
+    rule: "Win a trick when you have a combination to declare; only the winner of a trick may declare.",
+    src: book(CADY, "p. 22", "Tricks are of no value unless you have cards to declare, or for the brisques in them."),
+    also: book(FOSTER, "p. 340", "Only the winner of a trick may declare, before drawing."),
+  },
+  win_last_stock_trick: {
+    do: (p, n) => `Win the ${n(p.led)} with your ${n(p.card)}: it is the last trick of the stock.`,
+    rule: "Win the last trick of the stock: you declare once more and lead into the last eight.",
+    src: mine("Measured in this project: a rung that fights for it gains about 2.5 points a hand (measurements/skills-final-style.txt).", FOSTER, "p. 343"),
+  },
+  take_with_lowest_winner: {
+    do: (p, n) => `Take the ${n(p.led)} with your ${n(p.card)}, the cheapest card that wins it.`,
+    rule: "If you mean to win a trick, win it with the least card that does.",
+    src: mine("A reading of the maxims; the books give no rule for it.", CADY, "p. 22"),
+  },
+  let_brisque_go: {
+    do: (p, n) => `Let the ${n(p.led)} go and play your ${n(p.card)}.`,
+    rule: "Do not spend a strong card or a trump to win a brisque when it costs you more than the 10 points.",
+    src: mine("A reading of the maxims: Foster values a brisque at ten (p. 340) but does not say what it is worth paying.", FOSTER, "p. 340"),
+  },
+  throw_lowest: {
+    do: (p, n) => `Play the ${n(p.card)}${p.spared ? `, and keep your ${n(p.spared)}` : ""}: it is the card you can best spare.`,
+    rule: "When you will not win the trick, give up your least useful card, and spare the aces and tens.",
+    src: book(CADY, "p. 22", "Throw away worthless cards, unless there is a sound reason for winning the trick; p. 23: keep a ten to win tricks with."),
+  },
+  lead_low_nonbrisque: {
+    do: (p, n) => `Lead the ${n(p.card)}${p.spared ? `, not your ${n(p.spared)}` : ""}: a card you can spare.`,
+    rule: "Lead a low card you will not miss, never a ten or an ace if you can avoid it: keep those to win tricks with.",
+    src: book(CADY, "p. 22", "Lead the lowest card in the hand, a seven instead of an eight; p. 23: do not lead a ten if you can avoid it."),
+  },
+  play_declared_card: {
+    do: (p, n) => `Play the ${n(p.card)}: it is already declared, and has no more work to do.`,
+    rule: "Play cards you have already declared; this shows your opponent no more of your hand.",
+    src: book(CADY, "p. 22", "As a rule play your declared cards, which also lets you form the combination again."),
+  },
+  lead_cheapest: {
+    do: (p, n) => `Lead the ${n(p.card)}: of the cards you hold you will miss it least.`,
+    rule: "Lead what you can spare, so the cards that can still score stay in your hand.",
+    src: mine("A reading of the maxims for a hand with no clearly worthless card.", CADY, "p. 22"),
+  },
+  keep_for_bezique: {
+    do: (p, n) => `Play the ${n(p.card)} and keep the ${n(p.kept)}, for bezique.`,
+    rule: "Keep the queen of spades and the jack of diamonds: together they are bezique, 40, and two pairs are 500.",
+    src: mine("The scores are Foster's; that they are worth keeping over a spare card is this project's reading.", FOSTER, "p. 341"),
+  },
+  keep_marriage: {
+    do: (p, n) => `Play the ${n(p.card)} and keep the ${n(p.kept)}: with your ${n(p.partner)} it is a marriage worth ${p.points}.`,
+    rule: "Keep a king and queen of one suit together; once you win a trick, declare them.",
+    src: mine("The scores are Foster's; keeping the pair is this project's reading.", FOSTER, "p. 341"),
+  },
+  keep_sequence: {
+    do: (p, n) => `Play the ${n(p.card)} and keep the ${n(p.kept)}: you are building the sequence, 250.`,
+    rule: "With three or more of the ace, ten, king, queen and jack of trumps, keep them all for the sequence.",
+    src: book(CADY, "p. 29", "Retain as many sequence cards as possible (the 250 is Foster, p. 341)."),
+  },
+  keep_four: {
+    do: (p, n) => `Play the ${n(p.card)} and keep the ${n(p.kept)}: three of a kind, and one more makes four.`,
+    rule: "Keep three aces, kings, queens or jacks while the fourth can still come.",
+    src: mine("The scores are Foster's (p. 341); keeping three for a fourth is this project's reading.", FOSTER, "p. 341"),
+  },
+  save_seven_for_dix: {
+    do: (p, n) => `Play the ${n(p.card)} and keep your ${n(p.kept)}: exchanged for the turn-up it scores 10.`,
+    rule: "Do not play away the seven of trumps: exchange it for the turn-up after a trick you win, for 10.",
+    src: book(FOSTER, "p. 340", "The seven of trumps may be exchanged for the turn-up, scoring 10, right after winning a trick."),
+  },
+  declare_now: {
+    do: (p) => `Declare the ${meldName(p)}: ${p.points}.`,
+    rule: "After you win a trick, declare your best combination before you draw.",
+    src: book(FOSTER, "pp. 340-341", "The winner of a trick may declare before drawing; declaring later waives the right until the next trick."),
+  },
+  score_carried: {
+    do: (p) => `Score the ${meldName(p)} you announced earlier: ${p.points}.`,
+    rule: "A combination announced earlier scores when you win another trick, as long as its cards are still on the table.",
+    src: book(FOSTER, "pp. 341-343", "Several may be announced at once, one scored per trick won."),
+  },
+  single_before_double: {
+    do: (p) => `Declare the single bezique now (${p.points}); the other pair can follow for 500.`,
+    rule: "Declare a single bezique first, then the second pair: the double needs a new card on the table.",
+    src: book(FOSTER, "p. 342", "A second single bezique can be scored, but then the double is out of reach (docs/RULES.md)."),
+  },
+  royal_before_sequence: {
+    do: (p) => `Declare the ${meldName(p)} (${p.points}) now; the sequence can follow on a later trick.`,
+    rule: "Declare the royal marriage first and the sequence on the next trick: two scores, not one.",
+    src: book(FOSTER, "pp. 341-343", "A royal marriage may later be extended to the sequence by adding the ace, ten and jack."),
+  },
+  exchange_dix: {
+    do: (p, n) => `Exchange your ${n(p.card)} for the turn-up ${n(p.turn_up)}: 10 points.`,
+    rule: "Exchange the seven of trumps for the turn-up as soon as you win a trick, before you draw: 10 points.",
+    src: book(FOSTER, "p. 340", "Made right after winning a trick, before drawing; it cannot be scored together with a declaration."),
+  },
+  show_dix: {
+    do: () => "Show the seven of trumps: 10 points.",
+    rule: "A seven of trumps scores 10 when you show it after winning a trick, even if the turn-up is a seven.",
+    src: book(FOSTER, "p. 340", "If the turn-up is a seven, or an exchange has been made, the exchange can still be made and scored."),
+  },
+  pass: {
+    do: () => "Draw: nothing worth declaring.",
+    rule: "You need not declare; drawing without declaring only waives it until the next trick you win.",
+    src: book(FOSTER, "p. 340", "Drawing without declaring waives the right until the next trick won."),
+  },
+  last_eight_must_win: {
+    do: (p, n) => `Play the ${n(p.card)}: now you must follow suit and win if you can.`,
+    rule: "In the last eight tricks, follow suit and win the trick if you can, with a higher card of the suit or a trump.",
+    src: book(FOSTER, "p. 343", "The second player must follow suit, and must win the trick if he can."),
+  },
+  last_eight_choice: {
+    do: (p, n) => `Play the ${n(p.card)}: counting the cards left, it does best.`,
+    rule: "In the last eight tricks keep count of the trumps and bezique cards that are out, and choose the card that wins what is left.",
+    src: mine("The hint here comes from an exact count; the books say only that this play matters most and calls for memory.", CADY, "p. 23"),
+  },
+  last_eight_lead_ace: {
+    do: (p, n) => `Lead the ${n(p.card)}: only a trump can beat an ace of a plain suit.`,
+    rule: "In the last eight tricks lead a high plain-suit card: it wins, or draws a trump from your opponent.",
+    src: book(CADY, "p. 23", "Play a high card of a plain suit to force a trump; p. 29: keep the aces for the last eight tricks."),
+  },
+  draw_out_trump: {
+    do: (p, n) => `Lead the ${n(p.card)}: you hold ${p.trumps} trumps, so take theirs out.`,
+    rule: "With three or more trumps in the last eight tricks, lead your highest to draw your opponent's.",
+    src: mine("A reading of the maxims; Cady (p. 23) says to lead the lowest trump when reduced to trumps.", CADY, "p. 23"),
+  },
+};
+
+// The ordered list of keys the engine can send (crates/bezique-core/src/hints.rs `KEYS`).
+export const KEYS = [...Object.keys(REASONS), "generic"];
+
+const SUIT_WORD = { spades: "spades", hearts: "hearts", diamonds: "diamonds", clubs: "clubs" };
+
+// A card code as it is spoken: "7D" -> "seven of diamonds".
+const spoken = (code) => (typeof code === "string" && code.length === 2 ? cardName(code) : String(code));
+
+// How a source is told: "Foster, Complete Hoyle (1897), p. 340: ..." or, for the
+// project's own reading, "This is the project's reading of the maxims. ...".
+export function sourceLine(src, also) {
+  if (!src) return "";
+  const cite = `${src.who}, ${src.page}`;
+  const lines = [src.interp ? `The project's reading, not a book's rule. ${src.note} (See ${cite}.)` : `${cite}: ${src.note}`];
+  if (also) lines.push(`${also.who}, ${also.page}: ${also.note}`);
+  return lines.join(" ");
+}
+
+// What the table shows for a hint: { do, rule, why, interp } or null.
+//  - `do`: the instruction naming the cards (falls back to the engine's `text`);
+//  - `rule`: the one-sentence principle, or "" for an unknown reason;
+//  - `why`: the source line for the "Why?";
+//  - `interp`: true when the rule is the project's own reading.
+// `layers` = { facts, rules } switch the two layers (default both on); a
+// layer that is off comes back as "". `why` goes with the rule.
+export function hintView(hint, layers = {}) {
+  if (!hint || !hint.command) return null;
+  const { facts = true, rules = true } = layers;
+  const r = hint.reason ?? {};
+  const params = { ...r };
+  if (params.suit) params.suit = SUIT_WORD[params.suit] ?? params.suit;
+  const entry = REASONS[r.key];
+  let doText = hint.text ?? "";
+  try {
+    if (entry) doText = entry.do(params, spoken);
+  } catch {
+    doText = hint.text ?? "";
+  }
+  doText = capitalise(doText);
+  return {
+    do: facts ? doText : "",
+    rule: rules && entry ? entry.rule : "",
+    why: rules && entry ? sourceLine(entry.src, entry.also) : "",
+    interp: !!entry?.src?.interp,
+  };
+}
+
+const capitalise = (s) => (s ? s[0].toUpperCase() + s.slice(1) : s);
