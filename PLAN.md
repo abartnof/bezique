@@ -289,6 +289,32 @@ Still open:
 - Captions in the period formula: "Forty for bezique, and twenty to score."
 - Later games: Rubicon (four packs), the six-pack game, Polish bezique.
 
+## TODO, distant future: bottle what the card games share
+
+Four games now exist (piquet, bezique, cassino, strohmandeln), each with its
+own copy of a lot that is common. Some day, think about collecting it as
+reusable modules. Plain directories to copy or depend on by path, nothing
+published (no pip, no conda, no registry). Nothing is owed before the current
+game is finished, and nothing here should block it. Candidates to look at:
+
+- **The table kit**: `kit/` (renderer, card slab, kinematics, director,
+  framing, build script), already vendored from cassino into strohmandeln and
+  bezique; decide on one home and a sync story.
+- **Card faces and art**: the CC0 faces and the back, the Jumbo Index faces,
+  `CREDITS.md` practice.
+- **Rust**: the shape of a game crate (core, wasm, cli), the session and
+  undo-by-replay, the JSON protocol and its leak tests, the wasm ABI.
+- **Simulation style**: the mirrored-pair harness, the sequential stopping
+  rule with a floor and a ceiling (`CLAUDE.md`), TSV output, the analysis
+  scripts.
+- **The learner and tutor** (`kit/learner` in strohmandeln), hint and phrase
+  banks, the talk system, settings and new-game dialogs, the test harness
+  for a real browser.
+- **Working method**: the conventions each repository's `CLAUDE.md` repeats.
+
+Start by listing what is byte-identical or near-identical across the four
+repositories; extract only what two or more games already use.
+
 ## Notes for a future session
 
 - Read `DESIGN.md` §5–§8 before touching cards, declarations or observation.
