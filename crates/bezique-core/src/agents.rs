@@ -74,6 +74,10 @@ pub struct Style {
     /// lasts, to bring the brisque home (Foster: the lead is worth having
     /// when "you can bring home a plain-suit ten").
     pub lead_brisques: i32,
+    /// Declares at once whatever scores most, rather than holding back the
+    /// larger combination for a later turn (single bezique before the
+    /// double, marriage before the sequence): a bird in the hand.
+    pub prompt: bool,
     /// Which of several cards of nearly equal worth it plays: a temperament,
     /// nearly free in points, as measured (`measurements/README.md`).
     pub leaning: Leaning,
@@ -93,6 +97,10 @@ pub enum Leaning {
     /// A card already on the table, showing nothing new (Pardon: play a
     /// declared card so as not to expose the hand).
     Close,
+    /// Of cards alike in worth, plays one that is no king or queen, keeping
+    /// the makings of marriages (Foster: the marriages are the player's
+    /// chief source of score).
+    Collect,
 }
 
 impl Default for Style {
@@ -111,6 +119,7 @@ impl Default for Style {
             take_to_declare: 20,
             urgency: 16,
             lead_brisques: 0,
+            prompt: false,
             leaning: Leaning::Plain,
         }
     }
@@ -177,7 +186,7 @@ impl Agent for Maxims {
             last_stock_trick: self.skills.last_stock_trick,
         };
         let card = match (view.phase, view.led) {
-            (Phase::Declare, _) => return declaration(view, legal, true),
+            (Phase::Declare, _) => return declaration(view, legal, !think.style.prompt),
             (Phase::Follow, Some(led)) => follow(&think, legal, led),
             _ if in_endgame => endgame_lead(view, legal),
             _ => lead(&think, cards(legal)),
@@ -310,6 +319,9 @@ fn pick(think: &Think, valued: Vec<(Card, i32)>) -> Card {
         Leaning::Plain => valued.iter().min_by_key(|&&(c, v)| (v, c.0)),
         Leaning::Concentrate => near.min_by_key(|&&(c, v)| (held_in(c), v, c.0)),
         Leaning::Close => near.min_by_key(|&&(c, v)| (!mine.shown.contains(c), v, c.0)),
+        Leaning::Collect => near.min_by_key(|&&(c, v)| {
+            (matches!(c.rank(), Rank::KING | Rank::QUEEN), v, c.0)
+        }),
     }
     .expect("a card to play")
     .0

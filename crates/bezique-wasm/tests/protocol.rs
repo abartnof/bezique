@@ -234,3 +234,17 @@ fn a_record_reloads_the_sitting() {
         bezique_core::session::Session::replay(21, session.settings().clone(), &record).unwrap();
     assert_eq!(state(&again), state(&session));
 }
+
+/// The state names the sitting's persona, and a persona number (from 1)
+/// picks the one at that place in the list clients read.
+#[test]
+fn the_state_names_the_persona_from_the_list() {
+    let list: Value = serde_json::from_str(&bezique_core::opponent::personas_json()).unwrap();
+    let list = list.as_array().unwrap();
+    assert!(list.len() >= 4);
+    for (i, p) in list.iter().enumerate() {
+        let session = sit_down(2, 5, i as u32 + 1, 0);
+        let s: Value = serde_json::from_str(&state(&session)).unwrap();
+        assert_eq!(s["persona"], p["key"]);
+    }
+}

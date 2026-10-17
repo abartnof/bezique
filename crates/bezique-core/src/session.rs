@@ -134,7 +134,7 @@ pub enum EventKind {
 /// record from before is refused rather than replayed into a different
 /// game. The test `the_golden_game_replays_unchanged` fails when play
 /// changes, as the reminder to bump it.
-pub const RECORD_VERSION: u32 = 3;
+pub const RECORD_VERSION: u32 = 4;
 
 /// A sitting: one person against the opponent, from the cut to the end of
 /// the game, advanced one human decision at a time.
@@ -422,6 +422,11 @@ impl Session {
 
     pub fn settings(&self) -> &Settings {
         &self.settings
+    }
+
+    /// The key of the opponent's persona (`opponent::personas`).
+    pub fn persona_key(&self) -> &'static str {
+        self.persona.key
     }
 
     /// The opponent, in a player's words.
@@ -1190,7 +1195,7 @@ mod tests {
         );
         assert_eq!(
             (RECORD_VERSION, fingerprint),
-            (3, 6_109_118_772_721_476_042),
+            (4, 5_273_783_809_396_264_268),
             "play, the options or the narration changed: see this test's comment"
         );
     }
@@ -1367,13 +1372,13 @@ mod tests {
             17,
             Settings {
                 level: 4,
-                persona: Some("close".to_string()),
+                persona: Some("cautious".to_string()),
                 erraticism: 0.0,
             },
         );
         let said = s.opponent();
         assert!(said.contains("remembers every card"), "{said}");
-        assert!(said.contains("table first"), "{said}");
+        assert!(said.contains("declares at once"), "{said}");
     }
 
     // Narration, from the review of 2026-10-02.

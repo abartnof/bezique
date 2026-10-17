@@ -23,52 +23,114 @@ use crate::rng::Rng;
 pub struct Persona {
     /// A short key, for settings and measurement.
     pub key: &'static str,
-    /// How it plays, in a player's words.
+    /// The archetype's name, for the new-game dialog.
+    pub name: &'static str,
+    /// How it plays, in a player's words, to follow "it": used in the
+    /// opponent's description.
     pub described: &'static str,
-    /// Where the advice comes from.
+    /// One kind sentence for the new-game dialog.
+    pub description: &'static str,
+    /// Where the advice comes from (`docs/OPPONENT.md`).
     pub after: &'static str,
     pub style: Style,
 }
 
-/// The personas, the balanced one first.
+/// The personas, the balanced one first. Personality is orthogonal to skill:
+/// a persona only leans among choices of nearly equal worth (a [`Leaning`])
+/// or shifts a few preference weights by a few points, and every persona is
+/// measured to cost no more than [`TOLERANCE`] points a hand against
+/// balanced at the same level (`docs/OPPONENT.md`).
 pub fn personas() -> Vec<Persona> {
     let base = Style::default();
     vec![
         Persona {
             key: "balanced",
+            name: "The Steady Hand",
             described: "plays a balanced game",
+            description: "Plays the old books' maxims evenly, with no marked taste.",
             after: "the maxims of Pole, Pardon, Foster and Hoffmann",
             style: base.clone(),
         },
         Persona {
-            key: "concentrates",
-            described: "throws from its shortest suits, to be void of them",
-            after: "Foster: pick one or two suits and discard the rest",
+            key: "collector",
+            name: "The Collector",
+            described: "hoards kings and queens for marriages and fours",
+            description: "Keeps its kings and queens back and loves to declare a marriage.",
+            after: "Foster: the marriages and fours are the chief source of score",
             style: Style {
-                leaning: Leaning::Concentrate,
+                marriage: base.marriage + 2,
+                four: base.four + 2,
+                leaning: Leaning::Collect,
                 ..base.clone()
             },
         },
         Persona {
-            key: "close",
-            described: "plays from the table first, showing you as little as it can",
+            key: "hunter",
+            name: "The Brisque Hunter",
+            described: "will spend a good card to win a brisque",
+            description: "Chases the aces and tens, and will spend a good card to win one.",
+            after: "Foster: the brisques decide a close hand, and are worth a good card",
+            style: Style {
+                take_brisque: base.take_brisque + 20,
+                ..base.clone()
+            },
+        },
+        Persona {
+            key: "cautious",
+            name: "The Careful Hand",
+            described: "declares at once and plays from the table, showing you as little as it can",
+            description: "Declares what it can at once, and shows you as little of its hand as it can.",
             after: "Pardon: play a declared card so as not to expose the hand",
             style: Style {
+                prompt: true,
                 leaning: Leaning::Close,
                 ..base.clone()
             },
         },
         Persona {
-            key: "bezique",
-            described: "will give almost anything for double bezique",
-            after:
-                "Pardon: keep the bezique cards until near the end, even after declaring bezique",
+            key: "gambler",
+            name: "The Gambler",
+            described: "plays for double bezique and the sequence, keeping those cards to the end",
+            description: "Plays for the big prizes: double bezique and the sequence.",
+            after: "Pardon: keep the bezique cards until near the end, even after declaring bezique",
             style: Style {
-                bezique: base.bezique + 20,
+                bezique: base.bezique + 6,
+                sequence: base.sequence,
+                ..base.clone()
+            },
+        },
+        Persona {
+            key: "specialist",
+            name: "The Specialist",
+            described: "throws from its shortest suits, to be void of them",
+            description: "Picks a suit or two to build on and sheds the rest.",
+            after: "Foster: pick one or two suits and discard the rest",
+            style: Style {
+                leaning: Leaning::Concentrate,
                 ..base
             },
         },
     ]
+}
+
+/// The most points a hand a persona may cost against balanced at the same
+/// level: the tolerance within which personality is not skill.
+pub const TOLERANCE: f64 = 2.0;
+
+/// The personas as JSON for clients (`web3d/personas.json`): key, name and
+/// description, in the order of [`personas`] (the protocol's persona
+/// numbers are the places in this list from 1).
+pub fn personas_json() -> String {
+    let rows: Vec<String> = personas()
+        .iter()
+        .map(|p| {
+            format!(
+                "  {{\"key\": \"{}\", \"name\": \"{}\", \"description\": \"{}\"}}",
+                p.key, p.name, p.description
+            )
+        })
+        .collect();
+    format!("[\n{}\n]\n", rows.join(",\n"))
 }
 
 /// The persona with this key.
@@ -153,6 +215,62 @@ mod tests {
         }
         assert_eq!(persona("balanced").unwrap().key, "balanced");
         assert!(persona("no such").is_none());
+    }
+
+    #[test]
+    fn four_to_six_personas_each_named_and_kindly_described() {
+        let all = personas();
+        assert!((4..=6).contains(&all.len()), "{}", all.len());
+        for p in &all {
+            assert!(p.name.starts_with("The "), "{}", p.name);
+            assert!(
+                p.description.ends_with('.') && p.description.len() <= 90,
+                "{}",
+                p.key
+            );
+            // The opponent is never named, and personality never talks of
+            // strength.
+            for word in ["Foster", "Pardon", "Pole", "Cady", "strong", "weak", "clever"] {
+                assert!(!p.description.contains(word), "{}: {word}", p.key);
+            }
+        }
+    }
+
+    /// The list clients read is the engine's list (regenerate with
+    /// `measure personas-json > web3d/personas.json`).
+    #[test]
+    fn the_clients_list_of_personas_is_the_engines() {
+        assert_eq!(
+            include_str!("../../../web3d/personas.json"),
+            personas_json()
+        );
+    }
+
+    /// Personality never touches skill: a persona moves at most two
+    /// preference weights, by a few points, and never what a rung can do.
+    #[test]
+    fn a_persona_moves_a_few_weights_a_few_points() {
+        let base = Style::default();
+        for p in personas() {
+            let s = &p.style;
+            let moved = [
+                s.trump - base.trump,
+                s.bezique - base.bezique,
+                s.marriage - base.marriage,
+                s.royal - base.royal,
+                s.sequence - base.sequence,
+                s.four - base.four,
+                s.dix - base.dix,
+                s.carried - base.carried,
+                s.shown - base.shown,
+                s.take_brisque - base.take_brisque,
+                s.take_to_declare - base.take_to_declare,
+                s.urgency - base.urgency,
+                s.lead_brisques - base.lead_brisques,
+            ];
+            assert!(moved.iter().all(|d| d.abs() <= 20), "{}: {moved:?}", p.key);
+            assert!(moved.iter().filter(|&&d| d != 0).count() <= 2, "{}", p.key);
+        }
     }
 
     /// Plays a game with these agents and returns every move made.

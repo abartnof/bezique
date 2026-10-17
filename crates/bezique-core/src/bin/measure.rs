@@ -5,6 +5,8 @@
 //! cargo run --release -p bezique-core --bin measure -- riders [pairs]
 //! cargo run --release -p bezique-core --bin measure -- ladder [pairs]
 //! cargo run --release -p bezique-core --bin measure -- tune <field> <pairs> <value>...
+//! cargo run --release -p bezique-core --bin measure -- personality [persona]   (MEASURE_LEVEL)
+//! cargo run --release -p bezique-core --bin measure -- personas-json
 //! cargo run --release -p bezique-core --bin measure -- lookahead [pairs] [horizon] [worlds]
 //! cargo run --release -p bezique-core --bin measure -- lookahead-declarations [pairs]
 //! cargo run --release -p bezique-core --bin measure -- lookahead-vs-five [pairs] [horizon] [worlds]
@@ -49,6 +51,14 @@ fn main() {
         Some("skills") => skills(n(2000)),
         Some("last-stock-trick") => last_stock_trick(n(2000)),
         Some("personas") => personas(n(1000)),
+        Some("personality") => personality(
+            std::env::var("MEASURE_LEVEL")
+                .ok()
+                .and_then(|s| s.parse().ok())
+                .unwrap_or(2),
+            args.get(1).map(String::as_str),
+        ),
+        Some("personas-json") => print!("{}", opponent::personas_json()),
         Some("lookahead") => lookahead(n(200), &args[2..]),
         Some("lookahead-declarations") => lookahead_declarations(n(500)),
         Some("lookahead-vs-five") => lookahead_vs_five(n(500), &args[2..]),
@@ -653,4 +663,181 @@ fn tally(hand: &Hand, by_seat: &mut [u64; 2], by_source: &mut BTreeMap<String, u
         };
         *by_source.entry(name).or_default() += u64::from(s.points);
     }
+}
+
+/// The style statistics a persona is told apart by, per pair of mirrored
+/// hands: the persona's total minus balanced's over both seatings (halved,
+/// a difference a hand), except the last, the mean tricks taken when a
+/// combination was scored (earlier is lower), a difference of means.
+const STATS: [&str; 6] = [
+    "margin (points a hand)",
+    "combination points a hand",
+    "brisque points a hand",
+    "double beziques a hand",
+    "combinations scored a hand",
+    "tricks taken when scoring (mean)",
+];
+
+fn personality_pair(style: &Style, level: u8, seed: u64) -> [f64; 6] {
+    let balanced = Style::default();
+    // [points, melds, brisques, doubles, count, trick-sum] for persona, balanced.
+    let mut got = [[0f64; 6]; 2];
+    for swap in [false, true] {
+        let mut agents = if swap {
+            [rung_with(level, &balanced), rung_with(level, style)]
+        } else {
+            [rung_with(level, style), rung_with(level, &balanced)]
+        };
+        let mut game = Game::new(seed, Side::A);
+        tournament::play(&mut game, &mut agents, |g| g.hand_number() > 1);
+        let hand = if game.hand_number() > 1 {
+            game.previous_hand().unwrap()
+        } else {
+            game.hand()
+        };
+        let mine = if swap { Seat::Pone } else { Seat::Dealer };
+        let theirs = if swap { Seat::Dealer } else { Seat::Pone };
+        for (who, seat) in [(0, mine), (1, theirs)] {
+            got[who][0] += f64::from(hand.score(seat));
+            for s in hand.log().iter().filter(|s| s.seat == seat) {
+                match s.source {
+                    Source::Meld(d) => {
+                        got[who][1] += f64::from(s.points);
+                        got[who][4] += 1.0;
+                        got[who][5] += f64::from(s.tricks);
+                        if d.meld == melds::Meld::DoubleBezique {
+                            got[who][3] += 1.0;
+                        }
+                    }
+                    Source::Brisques => got[who][2] += f64::from(s.points),
+                    _ => {}
+                }
+            }
+        }
+    }
+    let mean_tricks = |g: &[f64; 6]| if g[4] > 0.0 { Some(g[5] / g[4]) } else { None };
+    let when = match (mean_tricks(&got[0]), mean_tricks(&got[1])) {
+        (Some(a), Some(b)) => a - b,
+        _ => 0.0,
+    };
+    [
+        (got[0][0] - got[1][0]) / 2.0,
+        (got[0][1] - got[1][1]) / 2.0,
+        (got[0][2] - got[1][2]) / 2.0,
+        (got[0][3] - got[1][3]) / 2.0,
+        (got[0][4] - got[1][4]) / 2.0,
+        when,
+    ]
+}
+
+/// Each persona against balanced at one level, sequentially: batches of
+/// `BATCH` mirrored pairs, a look after each, the stopping boundary
+/// O'Brien-Fleming for `LOOKS` equally spaced looks (z_k = 2.09 sqrt(LOOKS/k)),
+/// none before the floor, a ceiling of `LOOKS` batches. Stops when the
+/// persona's headline style statistic has crossed the boundary and the
+/// strength difference's 95% interval lies within the tolerance, or when the
+/// strength difference crosses the boundary (a persona that costs or gains
+/// skill), or at the ceiling.
+fn personality(level: u8, only: Option<&str>) {
+    const BATCH: u64 = 1000;
+    const LOOKS: u64 = 16;
+    const FLOOR: u64 = 2000;
+    let tol = opponent::TOLERANCE;
+    println!(
+        "personality at level {level}: persona against balanced, mirrored first hands; batch {BATCH}, floor {FLOOR}, ceiling {} pairs, O'Brien-Fleming z_k = 2.09 sqrt({LOOKS}/k), tolerance ±{tol} points a hand (95% interval)",
+        BATCH * LOOKS
+    );
+    println!("seeds from {}", seeds(20_000_000));
+    // The headline statistic of each persona (index into STATS).
+    let headline = |key: &str| match key {
+        "collector" => 1,
+        "hunter" => 2,
+        "cautious" => 5,
+        "gambler" => 3,
+        _ => 4,
+    };
+    for p in opponent::personas().into_iter().filter(|p| p.key != "balanced") {
+        if only.is_some_and(|k| k != p.key) {
+            continue;
+        }
+        let mut rows: Vec<[f64; 6]> = Vec::new();
+        let (stop, k) = loop {
+            let first = seeds(20_000_000) + rows.len() as u64;
+            let mut tuned = p.style.clone();
+            for kv in std::env::var("MEASURE_VARIANT").unwrap_or_default().split(',') {
+                match kv.split_once('=') {
+                    Some(("bezique", v)) => tuned.bezique = v.parse().unwrap(),
+                    Some(("leaning", "plain")) => tuned.leaning = bezique_core::agents::Leaning::Plain,
+                    Some(("sequence", v)) => tuned.sequence = v.parse().unwrap(),
+                    Some(("marriage", v)) => tuned.marriage = v.parse().unwrap(),
+                    Some(("four", v)) => tuned.four = v.parse().unwrap(),
+                    Some(("take_brisque", v)) => tuned.take_brisque = v.parse().unwrap(),
+                    Some(("lead_brisques", v)) => tuned.lead_brisques = v.parse().unwrap(),
+                    _ => {}
+                }
+            }
+            let style = &tuned;
+            let threads = 2u64;
+            let mut part: Vec<(u64, [f64; 6])> = std::thread::scope(|scope| {
+                let workers: Vec<_> = (0..threads)
+                    .map(|t| {
+                        scope.spawn(move || {
+                            (t..BATCH)
+                                .step_by(threads as usize)
+                                .map(|i| (i, personality_pair(style, level, first + i)))
+                                .collect::<Vec<_>>()
+                        })
+                    })
+                    .collect();
+                workers
+                    .into_iter()
+                    .flat_map(|w| w.join().unwrap())
+                    .collect()
+            });
+            part.sort_by_key(|&(i, _)| i);
+            rows.extend(part.into_iter().map(|(_, r)| r));
+            let n = rows.len() as u64;
+            let k = n / BATCH;
+            let z = 2.09 * (LOOKS as f64 / k as f64).sqrt();
+            let (m, se) = mean_se(&rows, 0);
+            let (hm, hse) = mean_se(&rows, headline(p.key));
+            let strength_off = m + z * se < -tol || m - z * se > tol;
+            let inside = (m - 1.96 * se) > -tol && (m + 1.96 * se) < tol;
+            let style_clear = hse > 0.0 && hm.abs() >= z * hse;
+            if n >= FLOOR && (strength_off || (inside && style_clear)) {
+                let why = if strength_off {
+                    "strength crossed the boundary"
+                } else {
+                    "style clear and strength inside the tolerance"
+                };
+                break (why, k);
+            }
+            if k >= LOOKS {
+                break ("ceiling", k);
+            }
+        };
+        let n = rows.len();
+        let z = 2.09 * (LOOKS as f64 / k as f64).sqrt();
+        println!(
+            "\n{} ({}), {n} pairs used; stopped: {stop}; boundary at last look z = {z:.2}",
+            p.key, p.name
+        );
+        for (i, name) in STATS.iter().enumerate() {
+            let (m, se) = mean_se(&rows, i);
+            let mark = if i == headline(p.key) { "  <- headline" } else { "" };
+            println!(
+                "    {name:<36} {m:+8.3}  95% interval [{:+.3}, {:+.3}]  z {:+.1}{mark}",
+                m - 1.96 * se,
+                m + 1.96 * se,
+                if se > 0.0 { m / se } else { 0.0 }
+            );
+        }
+    }
+}
+
+fn mean_se(rows: &[[f64; 6]], i: usize) -> (f64, f64) {
+    let n = rows.len() as f64;
+    let m = rows.iter().map(|r| r[i]).sum::<f64>() / n;
+    let v = rows.iter().map(|r| (r[i] - m).powi(2)).sum::<f64>() / (n - 1.0).max(1.0);
+    (m, (v / n).sqrt())
 }

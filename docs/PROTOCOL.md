@@ -22,7 +22,7 @@ end of the game).
 
 The person is always side A. `level` is 1 to 5 (`agents::TOP`); `persona` is
 0 to draw one from the seed, else its place in `opponent::personas()` from 1
-(balanced, concentrates, close, bezique); `erraticism` is in thousandths. The
+(balanced, collector, hunter, cautious, gambler, specialist; `web3d/personas.json`, `docs/OPPONENT.md`); `erraticism` is in thousandths. The
 same arguments always give the same sitting. Out-of-range arguments are not
 refused: the level is clamped to 1–5, erraticism to 0–1,000, and a persona
 number past the list is drawn from the seed as 0 is. Before `bezique_new`
@@ -87,9 +87,10 @@ an engine running in the page cannot keep from a person determined to look.
 
 ```jsonc
 {
-  "protocol": 1, "record_version": 3,
+  "protocol": 1, "record_version": 4,
   "level": 4,
   "opponent": "Your opponent remembers every card, ... Its style: ...",
+  "persona": "gambler",
   "phase": "lead",            // choose_dealer, lead, follow, declare, over
   "hand_number": 2, "you_deal": false,
   "trump": "hearts", "trump_symbol": "♥",
@@ -193,6 +194,7 @@ The module has no imports. It exports its memory and:
 | `bezique_alloc(len: usize) -> *mut u8` | a buffer to write a command into |
 | `bezique_send(len: usize) -> u32` | carry out the command just written; 1 if accepted |
 | `bezique_state() -> *const u8`, `bezique_state_len() -> usize` | the state, as UTF-8 JSON |
+| `bezique_personas() -> *const u8`, `bezique_personas_len() -> usize` | the personas, as UTF-8 JSON: `[{"key", "name", "description"}]` in the order `bezique_new` numbers them from 1 (the same list as `web3d/personas.json`) |
 
 ```js
 const { instance } = await WebAssembly.instantiate(bytes, {});

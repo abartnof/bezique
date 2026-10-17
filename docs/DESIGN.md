@@ -442,16 +442,11 @@ most instructive measurement of the night:
   nearly equal worth. A `Leaning` breaks near-ties only, so it costs
   little; how near, and what it costs, are measured.
 
-The personas, each within 1.24 points a hand of balanced at rung 2, where
-they were calibrated, and within 1.35 at rung 4 (`personas-rung4.txt`):
-**balanced**;
-**concentrates** (of cards exactly equal in worth, throws from its shortest
-suit: Foster's "pick one or two suits and discard the rest"); **close**
-(plays from the table first, after Pardon: show the opponent as little as
-possible); **bezique** (values bezique cards at twice the default, after
-Pardon; the one weight shift that is both free and visible, scoring 145 in
-combinations a hand against 139). An opponent is described by how it plays,
-never named.
+The personas (balanced, collector, hunter, cautious, gambler, specialist),
+their bounds, the audit of the earlier four and the orthogonality measurement
+(each within the stated tolerance of balanced at rungs 2 and 4, and each
+differing in its own style statistic) are in `docs/OPPONENT.md`. An opponent
+is described by how it plays, never named.
 
 ### 10.2 Decisions per trick
 
