@@ -18,7 +18,7 @@ Options (all listed by `--help`):
   fights for the last trick before the stock runs out; 5 also, near the end
   of the stock, tries each card against guesses at your hand and the stock,
   and plays the one that does best.
-- `--persona balanced|concentrates|close|bezique`: its style, drawn at random
+- `--persona balanced|collector|hunter|cautious|gambler|specialist`: its style, drawn at random
   unless you choose. Each plays about as well as the others; they differ in
   how they look.
 - `--erratic 0.2`: how often it slips below its level (0 to 1; 0 is the

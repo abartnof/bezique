@@ -1,0 +1,42 @@
+personality at level 4: persona against balanced, mirrored first hands; batch 1000, floor 2000, ceiling 16000 pairs, O'Brien-Fleming z_k = 2.09 sqrt(16/k), tolerance ±2 points a hand (95% interval)
+seeds from 20000000
+
+collector (The Collector), 12000 pairs used; stopped: style clear and strength inside the tolerance; boundary at last look z = 2.41
+    margin (points a hand)                 -0.366  95% interval [-1.230, +0.499]  z -0.8
+    combination points a hand              +1.078  95% interval [+0.270, +1.887]  z +2.6  <- headline
+    brisque points a hand                  -1.206  95% interval [-1.436, -0.976]  z -10.3
+    double beziques a hand                 +0.001  95% interval [+0.000, +0.002]  z +2.2
+    combinations scored a hand             +0.039  95% interval [+0.031, +0.047]  z +9.2
+    tricks taken when scoring (mean)       +0.008  95% interval [-0.018, +0.035]  z +0.6
+
+hunter (The Brisque Hunter), 3000 pairs used; stopped: style clear and strength inside the tolerance; boundary at last look z = 4.83
+    margin (points a hand)                 +0.300  95% interval [-0.748, +1.348]  z +0.6
+    combination points a hand              -0.183  95% interval [-1.182, +0.815]  z -0.4
+    brisque points a hand                  +0.570  95% interval [+0.340, +0.800]  z +4.9  <- headline
+    double beziques a hand                 -0.000  95% interval [-0.002, +0.001]  z -0.2
+    combinations scored a hand             +0.005  95% interval [-0.002, +0.013]  z +1.4
+    tricks taken when scoring (mean)       +0.010  95% interval [-0.015, +0.036]  z +0.8
+
+cautious (The Careful Hand), 9000 pairs used; stopped: style clear and strength inside the tolerance; boundary at last look z = 2.79
+    margin (points a hand)                 +0.602  95% interval [-0.633, +1.838]  z +1.0
+    combination points a hand              +0.204  95% interval [-0.938, +1.347]  z +0.4
+    brisque points a hand                  +0.499  95% interval [+0.168, +0.830]  z +3.0
+    double beziques a hand                 +0.000  95% interval [-0.001, +0.002]  z +0.6
+    combinations scored a hand             -0.034  95% interval [-0.045, -0.023]  z -6.1
+    tricks taken when scoring (mean)       -0.067  95% interval [-0.103, -0.030]  z -3.6  <- headline
+
+gambler (The Gambler), 7000 pairs used; stopped: style clear and strength inside the tolerance; boundary at last look z = 3.16
+    margin (points a hand)                 -0.092  95% interval [-0.480, +0.296]  z -0.5
+    combination points a hand              +0.640  95% interval [+0.280, +1.000]  z +3.5
+    brisque points a hand                  -0.676  95% interval [-0.806, -0.545]  z -10.1
+    double beziques a hand                 +0.001  95% interval [+0.000, +0.001]  z +3.5  <- headline
+    combinations scored a hand             +0.012  95% interval [+0.008, +0.015]  z +6.7
+    tricks taken when scoring (mean)       +0.039  95% interval [+0.025, +0.053]  z +5.5
+
+specialist (The Specialist), 16000 pairs used; stopped: ceiling; boundary at last look z = 2.09
+    margin (points a hand)                 -1.700  95% interval [-2.777, -0.624]  z -3.1
+    combination points a hand              -1.191  95% interval [-2.191, -0.191]  z -2.3
+    brisque points a hand                  -0.664  95% interval [-0.948, -0.381]  z -4.6
+    double beziques a hand                 -0.002  95% interval [-0.003, -0.000]  z -2.6
+    combinations scored a hand             -0.011  95% interval [-0.021, -0.002]  z -2.3  <- headline
+    tricks taken when scoring (mean)       -0.030  95% interval [-0.062, +0.003]  z -1.8

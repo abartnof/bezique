@@ -236,6 +236,7 @@ pub fn state(session: &Session) -> String {
         ),
         ("level", session.settings().level.to_string()),
         ("opponent", text(&session.opponent())),
+        ("persona", text(session.persona_key())),
         ("phase", text(phase(view.as_ref(), &p))),
     ];
     if let Some(v) = &view {
@@ -340,6 +341,7 @@ pub mod ffi {
         static SESSION: RefCell<Option<Session>> = const { RefCell::new(None) };
         static OUT: RefCell<Vec<u8>> = const { RefCell::new(Vec::new()) };
         static IN: RefCell<Vec<u8>> = const { RefCell::new(Vec::new()) };
+        static PERSONAS: RefCell<Vec<u8>> = const { RefCell::new(Vec::new()) };
     }
 
     /// A buffer of `len` bytes for the host to write a command into. Valid
@@ -377,6 +379,22 @@ pub mod ffi {
         });
         render();
         u32::from(accepted)
+    }
+
+    /// Where the list of personas, as UTF-8 JSON (`[{key, name, description}]`
+    /// in the order `bezique_new` numbers them from 1), begins. Valid until
+    /// the next call to this function.
+    #[no_mangle]
+    pub extern "C" fn bezique_personas() -> *const u8 {
+        PERSONAS.with(|p| {
+            *p.borrow_mut() = bezique_core::opponent::personas_json().into_bytes();
+            p.borrow().as_ptr()
+        })
+    }
+
+    #[no_mangle]
+    pub extern "C" fn bezique_personas_len() -> usize {
+        PERSONAS.with(|p| p.borrow().len())
     }
 
     /// Where the state, as UTF-8 JSON, begins.

@@ -616,7 +616,7 @@ mod tests {
     fn the_opponent_is_described_at_the_start() {
         let mut o = options(false);
         o.level = 4;
-        o.persona = Some("bezique".to_string());
+        o.persona = Some("gambler".to_string());
         o.erraticism = 0.2;
         let (_, said) = sit("q\n", o);
         assert!(

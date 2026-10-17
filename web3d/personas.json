@@ -1,0 +1,8 @@
+[
+  {"key": "balanced", "name": "The Steady Hand", "description": "Plays the old books' maxims evenly, with no marked taste."},
+  {"key": "collector", "name": "The Collector", "description": "Keeps its kings and queens back and loves to declare a marriage."},
+  {"key": "hunter", "name": "The Brisque Hunter", "description": "Chases the aces and tens, and will spend a good card to win one."},
+  {"key": "cautious", "name": "The Careful Hand", "description": "Declares what it can at once, and shows you as little of its hand as it can."},
+  {"key": "gambler", "name": "The Gambler", "description": "Plays for the big prizes: double bezique and the sequence."},
+  {"key": "specialist", "name": "The Specialist", "description": "Picks a suit or two to build on and sheds the rest."}
+]
