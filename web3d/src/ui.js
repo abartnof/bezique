@@ -46,13 +46,9 @@ export function createUi(root, { onAct }) {
   const undoBtn = el("button", "ui-btn ui-small", "Undo", tools);
   const hintBtn = el("button", "ui-btn ui-small", "Hint: off", tools);
   const newBtn = el("button", "ui-btn ui-small", "New game", tools);
-  const levelWrap = el("label", "ui-level", "Level ", tools);
-  const levelSel = el("select", "ui-select", null, levelWrap);
-  for (let i = 1; i <= 5; i++) {
-    const o = el("option", null, String(i), levelSel);
-    o.value = String(i);
-  }
-  for (const b of [undoBtn, hintBtn, newBtn]) b.type = "button";
+  const gearBtn = el("button", "ui-btn ui-small", "\u2699 Settings", tools);
+  gearBtn.dataset.act = "settings";
+  for (const b of [undoBtn, hintBtn, newBtn, gearBtn]) b.type = "button";
   hintBtn.setAttribute("aria-pressed", "false");
 
   let isOver = false;
@@ -61,10 +57,8 @@ export function createUi(root, { onAct }) {
 
   undoBtn.onclick = () => act("undo");
   hintBtn.onclick = () => act("hints");
-  newBtn.onclick = () => {
-    if (isOver || confirm("Start a new game?")) act("new");
-  };
-  levelSel.onchange = () => act("level", Number(levelSel.value));
+  newBtn.onclick = () => act("new"); // the New game dialog asks, and confirms an abandoned game
+  gearBtn.onclick = () => act("settings");
 
   function setScores({ totals, hand } = {}) {
     for (const k of ["you", "them"]) {
@@ -105,8 +99,6 @@ export function createUi(root, { onAct }) {
     hintLine.textContent = hint && hint.text ? hint.text : "";
 
     if (raw.error) say(raw.error);
-
-    if (raw.level != null) levelSel.value = String(raw.level);
 
     const btns = [];
     if (busy) {
@@ -151,8 +143,6 @@ export function createUi(root, { onAct }) {
 
     undoBtn.disabled = !!busy || !raw.can_undo;
     hintBtn.disabled = !!busy;
-    newBtn.disabled = !!busy;
-    levelSel.disabled = !!busy;
     for (const b of btns) b.disabled = !!busy;
     hintBtn.textContent = "Hint: " + (hintOn ? "on" : "off");
     hintBtn.setAttribute("aria-pressed", String(hintOn));

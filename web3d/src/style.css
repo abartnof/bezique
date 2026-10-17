@@ -57,7 +57,6 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: var(--bg); f
 .ui-option { text-align: left; }
 .ui-quiet { background: transparent; color: var(--muted); }
 .ui-hinted { outline: 3px solid var(--hint); outline-offset: -1px; }
-.ui-level { display: flex; align-items: center; gap: 4px; font-size: 13px; color: var(--muted); min-height: 44px; }
 .ui-select { min-height: 44px; min-width: 52px; border-radius: 10px; border: 1px solid var(--line); background: #fff; padding: 0 6px; }
 
 .ui-modal { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(20, 30, 50, 0.35); pointer-events: auto; padding: 16px; }
@@ -75,3 +74,23 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: var(--bg); f
   .ui-chips { justify-content: flex-start; }
   .ui-panel, .ui-bar { max-width: 344px; }
 }
+
+/* settings panel and New game dialog (settings.js, newgame.js) */
+.st-panel { position: absolute; right: 8px; bottom: 80px; width: min(380px, calc(100% - 16px)); max-height: 70vh; overflow-y: auto; box-sizing: border-box; pointer-events: auto; background: #fff; border-radius: 14px; box-shadow: var(--shadow); padding: 12px 14px; }
+.ng-modal { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(20, 30, 50, 0.35); pointer-events: auto; padding: 16px; }
+.st-panel[hidden], .ng-modal[hidden] { display: none; }
+.st-head { display: flex; justify-content: space-between; align-items: center; }
+.st-title { margin: 0; font-size: 20px; }
+.st-section h3 { margin: 12px 0 4px; font-size: 13px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); }
+.st-row { display: flex; flex-direction: column; gap: 4px; padding: 6px 0; }
+.st-label { font-size: 14px; }
+.st-options { display: flex; flex-wrap: wrap; gap: 6px; }
+.ng-card { text-align: left; max-width: 440px; max-height: 92vh; overflow-y: auto; }
+.ng-card .ui-modal-title { text-align: center; font-size: 24px; }
+.ng-line { margin: 0; color: var(--muted); font-size: 14px; min-height: 2.6em; }
+.ng-warn { margin: 0; color: var(--them); font-size: 14px; }
+.ng-warn:empty { display: none; }
+.ng-range { display: flex; align-items: center; gap: 10px; }
+.ng-range input { flex: 1; }
+.ng-word { min-width: 7em; font-size: 14px; color: var(--muted); }
+.ng-seed { width: 10em; }
