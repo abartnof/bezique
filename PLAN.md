@@ -199,7 +199,13 @@ the ladder rerun after the full review. Levels run 1 to 5.
 - [x] **8. Rungs 3–5**: memory with the exact endgame; the last stock trick;
       looking ahead at the end of the stock. Watching the table was tried
       and dropped.
-- [ ] **9. The 3D table**, adapted from piquet's (`DESIGN.md` §11).
+- [~] **9. The 3D table**: a first playable page, built 2026-10-17 on the
+      vendored kit (`kit/`, from strohmandeln's, itself cassino's):
+      `web3d/bezique.html`, one offline file. Whole games play through it in
+      Chromium without console errors. Desktop first; the phone layout is a
+      first cut. Open: the score display (marker homage), the piles, the
+      tutorial, the tracker, table talk, celebrations, GitHub Pages (needs
+      the repository public).
 - [ ] **10. Rungs 6–7, and the finish**: search, the game-level objective,
       hints, the tutorial, celebrations.
 
