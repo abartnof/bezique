@@ -13,6 +13,11 @@ import { chooseSurface } from "../../kit/js/surfaces.js";
 import { choreograph, initialPlacement, opening } from "./choreography.js";
 import { loadEngine } from "./engine.js";
 import { fromState } from "./model.js";
+import { PAGE_KEYS, dueIn } from "./tutor.js";
+import { createTutorStore } from "./tutorstore.js";
+import { createTutorView } from "./tutorview.js";
+import TUTORIAL from "../tutorial.md";
+import { parseTutorial } from "../../kit/js/tutorial.js";
 import { createUi } from "./ui.js";
 import { EYE, EYE_PORTRAIT, ZONES, ZONES_PORTRAIT } from "./zones.js";
 
@@ -53,6 +58,8 @@ async function main() {
   if (params.has("level")) prefs.level = Math.min(5, Math.max(1, Number(params.get("level")) || 3));
   if (params.has("hints")) prefs.hints = params.get("hints") !== "0";
   const savePrefs = () => store.set(PREFS, prefs);
+  // The tutorial is on for a new player and off in a test run (`?seed=`), unless `?tutor=1`.
+  const tutorOn = () => (params.has("seed") ? params.get("tutor") === "1" : prefs.tutor !== false);
 
   // ---- the scene, the cards -------------------------------------------------
   const canvas = document.getElementById("stage");
@@ -119,6 +126,47 @@ async function main() {
   frame();
   stage.onReframe = () => director.relayout();
 
+  // ---- the tutorial (web3d/src/tutor.js): a page at the first moment its element appears --
+  const pages = parseTutorial(TUTORIAL, PAGE_KEYS);
+  const pageOf = (key) => pages.find((p) => p.key === key);
+  const tutorStore = createTutorStore((() => { try { return params.has("seed") && !params.has("keep") ? null : window.localStorage; } catch { return null; } })());
+  let afterPage = null; // what "Got it" does for a page that fell due
+  const tutorView = createTutorView(document.getElementById("overlay"), {
+    close: ({ dontShow, help, back }) => {
+      if (dontShow) { prefs.tutor = false; savePrefs(); }
+      if (help) tutorView.close();
+      else if (back) openHelp();
+      else if (afterPage) afterPage();
+    },
+    pick: (key) => { const p = pageOf(key); if (p) tutorView.show(p, { back: true }); },
+    tips: (on) => { prefs.tutor = on; savePrefs(); openHelp(); },
+    reset: () => { tutorStore.reset(); prefs.tutor = true; savePrefs(); openHelp(); },
+  });
+  function openHelp() {
+    tutorView.help(pages, { seen: tutorStore.seen(), tips: tutorOn() });
+  }
+  // Pages due at this change of state, one after another, holding the table's clock until the last is dismissed.
+  function tutorial(prev, next, timing) {
+    if (!tutorOn() || tutorView.isOpen()) return;
+    const first = dueIn(prev, next, tutorStore.seen());
+    if (!first) return;
+    const run = (release) => {
+      const go = (step) => {
+        tutorStore.add(step.key);
+        afterPage = () => {
+          const more = tutorOn() ? dueIn(prev, next, tutorStore.seen()) : null;
+          if (more) go(more);
+          else { afterPage = null; tutorView.close(); release?.(); }
+        };
+        tutorView.show(pageOf(step.key));
+      };
+      go(first);
+    };
+    if (!timing) return run();
+    const ms = first.event !== null && timing.beats[first.event] !== undefined ? timing.beats[first.event] : Math.max(0, ...Object.values(timing.beats));
+    director.gate(ms, run);
+  }
+
   // ---- showing a state --------------------------------------------------------
   function sync() {
     shown = { totals: { ...raw.totals }, hand: { ...raw.hand_scores } };
@@ -150,6 +198,7 @@ async function main() {
   function present(next, how) {
     const first = S ? S.events.length : 0;
     const state = { model: fromState(next), events: next.events, raw: next };
+    const before = how === "advance" ? raw : null;
     raw = next;
     waiting = true;
     chosen = null;
@@ -159,6 +208,7 @@ async function main() {
     else if (how === "direct" || !S) director.restart(state);
     else timing = director.advance(state);
     S = state;
+    tutorial(before, next, how === "direct" ? null : timing);
     if (how === "direct" || !timing) {
       rested();
       return;
@@ -222,6 +272,9 @@ async function main() {
     if (name === "dealer") act(`dealer ${data}`);
     else if (name === "declare") act(`declare ${data}`);
     else if (name === "new") newGame();
+    else if (name === "help") {
+      if (!tutorView.isOpen()) openHelp();
+    }
     else if (name === "level") newGame(Number(data));
     else if (name === "undo") {
       if (waiting) return;

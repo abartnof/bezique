@@ -45,6 +45,9 @@ export function createUi(root, { onAct }) {
 
   const undoBtn = el("button", "ui-btn ui-small", "Undo", tools);
   const hintBtn = el("button", "ui-btn ui-small", "Hint: off", tools);
+  const helpBtn = el("button", "ui-btn ui-small", "Help", tools);
+  helpBtn.type = "button";
+  helpBtn.onclick = () => act("help");
   const newBtn = el("button", "ui-btn ui-small", "New game", tools);
   const levelWrap = el("label", "ui-level", "Level ", tools);
   const levelSel = el("select", "ui-select", null, levelWrap);
