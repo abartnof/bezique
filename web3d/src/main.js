@@ -6,7 +6,8 @@
 // and the narration at each event's moment.
 import { createDeck } from "../../kit/js/deck.js";
 import { createDirector } from "../../kit/js/director.js";
-import { loadTextures } from "../../kit/js/art.js";
+import { loadTextures, vectorWidth } from "../../kit/js/art.js";
+import { jumboTextures } from "../../kit/js/faces.js";
 import { decodeBase64 } from "../../kit/js/engine.js";
 import { createScene } from "../../kit/js/scene.js";
 import { chooseSurface } from "../../kit/js/surfaces.js";
@@ -70,6 +71,23 @@ async function main() {
   });
   const textures = await loadTextures(ART, { anisotropy: stage.renderer.capabilities.getMaxAnisotropy(), pixelRatio: stage.renderer.getPixelRatio() });
   const deck = createDeck(stage, textures);
+
+  // The card faces: high-visibility Jumbo Index by default (every rank and
+  // suit in the corner, the ten as 10), the classic art on request; drawn in
+  // the browser, changeable at run time (`bezique3d.setFaces`).
+  const faceSets = { classic: textures.faces };
+  let facesShown = "classic";
+  function setFaces(choice) {
+    const want = choice === "classic" ? "classic" : "jumbo";
+    prefs.faces = want;
+    if (want === facesShown) return facesShown;
+    faceSets[want] ??= jumboTextures(Object.keys(textures.faces), { width: textures.width ?? vectorWidth(stage.renderer.getPixelRatio()), anisotropy: stage.renderer.capabilities.getMaxAnisotropy() });
+    deck.setFaces(faceSets[want]);
+    facesShown = want;
+    stage.render();
+    return want;
+  }
+  setFaces(prefs.faces);
   const zonesNow = () => (stage.portrait ? ZONES_PORTRAIT : ZONES);
 
   // ---- state ------------------------------------------------------------------
@@ -127,6 +145,7 @@ async function main() {
   canvas.setAttribute("aria-label", "The bezique table");
 
   function frame() {
+    stage.setInset(window.innerWidth >= 900 ? 360 : 0); // the panels stand in the left margin (style.css)
     stage.setStrips({ top: ui.hudBottom() + 6, foot: window.innerHeight - ui.barTop() + 6, raised: 0 }, { instant: true });
   }
   ui.onLayout(frame);
@@ -140,14 +159,14 @@ async function main() {
   let afterPage = null; // what "Got it" does for a page that fell due
   const tutorView = createTutorView(document.getElementById("overlay"), {
     close: ({ dontShow, help, back }) => {
-      if (dontShow) { prefs.tutor = false; savePrefs(); }
+      if (dontShow) { prefs.tutor = false; savePrefs(prefs); }
       if (help) tutorView.close();
       else if (back) openHelp();
       else if (afterPage) afterPage();
     },
     pick: (key) => { const p = pageOf(key); if (p) tutorView.show(p, { back: true }); },
-    tips: (on) => { prefs.tutor = on; savePrefs(); openHelp(); },
-    reset: () => { tutorStore.reset(); prefs.tutor = true; savePrefs(); openHelp(); },
+    tips: (on) => { prefs.tutor = on; savePrefs(prefs); openHelp(); },
+    reset: () => { tutorStore.reset(); prefs.tutor = true; savePrefs(prefs); openHelp(); },
   });
   function openHelp() {
     tutorView.help(pages, { seen: tutorStore.seen(), tips: tutorOn() });
@@ -356,7 +375,7 @@ async function main() {
   });
 
   // The test hook: what the browser checks read and drive.
-  window.bezique3d = { state: () => raw, act, onAct, director, stage, ui, engine, waiting: () => waiting, screenPoint: (id) => director.screenPoint(S.model && placementCode(id)) };
+  window.bezique3d = { setFaces: (c) => { const r = setFaces(c); savePrefs(prefs); return r; }, facesShown: () => facesShown, state: () => raw, act, onAct, director, stage, ui, engine, waiting: () => waiting, screenPoint: (id) => director.screenPoint(S.model && placementCode(id)) };
   function placementCode(id) {
     return director.placement().find((m) => m.cardId === id)?.code;
   }

@@ -15,7 +15,13 @@ import { ZONES } from "./zones.js";
 
 const DEG = Math.PI / 180;
 export const CHOSEN_LIFT = 1.6;
-const STEP = CARD.thickness + 0.02;
+// A pile is drawn thicker than its cards are (the eye looks almost straight
+// down), so a stock of fifty reads as a pile and not as one card.
+export const PILE_STEP = 0.11;
+const STEP = PILE_STEP;
+// Between one suit and the next in a row of table cards, so a declared group
+// (a marriage, a sequence) reads as a group.
+export const SUIT_GAP = 1.4;
 
 // A small fixed turn for each card, so piles look placed by a hand.
 export function jitter(key, degrees = 3) {
@@ -35,17 +41,31 @@ function pile(zone, count, at, { faceUp = false, from = 0, key }) {
   }));
 }
 
-// A row of cards lying face up, centred on the zone, closing up when there are many.
+// A row of cards lying face up, centred on the zone, a little apart suit from
+// suit, closing up when there are many (each card's
+// index strip stays clear of its neighbour: layout.test.js).
+export function rowOffsets(codes, zone) {
+  const n = codes.length;
+  const breaks = codes.map((c, i) => (i > 0 && c[1] !== codes[i - 1][1] ? 1 : 0));
+  const nBreaks = breaks.reduce((a, b) => a + b, 0);
+  const room = zone.width - CARD.width;
+  const gap = nBreaks ? Math.min(SUIT_GAP, Math.max(0, room - (n - 1) * zone.pitch) / nBreaks) : 0;
+  const pitch = n < 2 ? zone.pitch : Math.min(zone.pitch, (room - gap * nBreaks) / (n - 1));
+  let x = 0;
+  const at = codes.map((_, i) => (x += (i ? pitch : 0) + breaks[i] * gap));
+  const mid = (at[n - 1] ?? 0) / 2;
+  return at.map((v) => v - mid);
+}
+
 function lyingRow(cards, zone, name) {
-  const n = cards.length;
-  const pitch = n < 2 ? zone.pitch : Math.min(zone.pitch, (zone.width - CARD.width) / (n - 1));
+  const offsets = rowOffsets(cards.map((c) => c.code), zone);
   return cards.map((c, i) => ({
     zone: name,
     index: i,
     code: c.code,
     cardId: c.id,
     faceUp: true,
-    pose: lying({ x: zone.x + (i - (n - 1) / 2) * pitch, z: zone.z, height: i * 0.004, faceUp: true }),
+    pose: lying({ x: zone.x + offsets[i], z: zone.z, height: i * 0.004, faceUp: true }),
   }));
 }
 
