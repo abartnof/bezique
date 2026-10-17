@@ -1,0 +1,6 @@
+{
+  "name": "kit",
+  "private": true,
+  "type": "module",
+  "description": "Vendored from cassino; see README.md and STAMP. Only marks the .js files as ES modules."
+}
