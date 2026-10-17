@@ -199,13 +199,32 @@ the ladder rerun after the full review. Levels run 1 to 5.
 - [x] **8. Rungs 3–5**: memory with the exact endgame; the last stock trick;
       looking ahead at the end of the stock. Watching the table was tried
       and dropped.
-- [~] **9. The 3D table**: a first playable page, built 2026-10-17 on the
-      vendored kit (`kit/`, from strohmandeln's, itself cassino's):
-      `web3d/bezique.html`, one offline file. Whole games play through it in
-      Chromium without console errors. Desktop first; the phone layout is a
-      first cut. Open: the score display (marker homage), the piles, the
-      tutorial, the tracker, table talk, celebrations, GitHub Pages (needs
-      the repository public).
+- [~] **9. The 3D table**: playable and live (GitHub Pages,
+      `abartnof.github.io/bezique/`), built 2026-10-17 on the vendored kit
+      (`kit/`, from strohmandeln's, itself cassino's). One offline page,
+      `web3d/bezique.html`. Landed the same day, each from its own branch:
+      jumbo-index faces by default and a table fitted to the window
+      (`layout.test.js`); the kit's score HUD with a per-hand ledger, table
+      badges, an end-of-hand count and a cards-out panel (`scoring.js`, reconciled
+      against the engine over 36 games); hints that give the move and a rule
+      with its source (`docs/HINTS.md`, engine `hints.rs`); a tutorial of 14
+      pages shown at the first occurrence of each element (`tutorial.md`); a
+      settings panel (in-game) apart from a New game dialog (skill, personality,
+      slips, seed); table talk in the period's formulae (`docs/PHRASES.md`,
+      `tools/phrases.py`); six personalities on the skill ladder
+      (`docs/OPPONENT.md`, `RECORD_VERSION` 4). Phone layout: a first cut,
+      deliberately not worked on.
+      Open: the maintainer's read of `tutorial.md` and the phrase bank;
+      the Help list and the tutorial gate's timing (the dix page fires before
+      the trick cards are drawn) are unchecked in a browser; the score display
+      in homage to the markers; `Specialist` persona is about 1.2 to 1.7 points
+      a hand weaker than the others (kept, flagged in `docs/OPPONENT.md`); the
+      measured gain of a higher bezique valuation (+3.3 a hand at rung 2) is a
+      skill review for later; the tracker panel is hidden on narrow windows;
+      most hint rules are the project's interpretation, not quotable from
+      Foster or Cady; Cady page locators are missing from the phrase bank; no
+      test drives the settings, tutorial or talk in a real browser (only whole
+      games played through the page without a console error).
 - [ ] **10. Rungs 6–7, and the finish**: search, the game-level objective,
       hints, the tutorial, celebrations.
 
