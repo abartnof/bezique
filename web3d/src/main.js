@@ -12,6 +12,9 @@ import { createScene } from "../../kit/js/scene.js";
 import { chooseSurface } from "../../kit/js/surfaces.js";
 import { choreograph, initialPlacement, opening } from "./choreography.js";
 import { loadEngine } from "./engine.js";
+import { createNewGame } from "./newgame.js";
+import { gameConfig, loadPrefs, savePrefs, speedFactor, urlOverrides, withUrl } from "./prefs.js";
+import { createSettings } from "./settings.js";
 import { fromState } from "./model.js";
 import { createUi } from "./ui.js";
 import { EYE, EYE_PORTRAIT, ZONES, ZONES_PORTRAIT } from "./zones.js";
@@ -20,7 +23,6 @@ import { EYE, EYE_PORTRAIT, ZONES, ZONES_PORTRAIT } from "./zones.js";
 
 const params = new URL(window.location.href).searchParams;
 const SITTING = "bezique.sitting.v1";
-const PREFS = "bezique.prefs.v1";
 
 const store = {
   get(key) {
@@ -39,7 +41,7 @@ const store = {
   },
 };
 
-const SPEEDS = { instant: 1000, fast: 2.2, normal: 1 };
+const systemReduced = () => !!window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
 
 async function main() {
   let stopped = false;
@@ -49,15 +51,13 @@ async function main() {
     ui.say("The table has stopped. Reload the page to carry on.");
   });
 
-  const prefs = { level: 3, hints: false, ...store.get(PREFS) };
-  if (params.has("level")) prefs.level = Math.min(5, Math.max(1, Number(params.get("level")) || 3));
-  if (params.has("hints")) prefs.hints = params.get("hints") !== "0";
-  const savePrefs = () => store.set(PREFS, prefs);
+  const prefs = withUrl(loadPrefs(), params);
+  const url = urlOverrides(params);
 
   // ---- the scene, the cards -------------------------------------------------
   const canvas = document.getElementById("stage");
   const stage = createScene(canvas, {
-    table: chooseSurface({ chosen: params.get("table"), saved: null }),
+    table: chooseSurface({ chosen: prefs.surface, saved: null }),
     ...(params.has("lowfx") ? { shadow: "pcf", shadowMap: 256 } : {}),
     eyes: { across: EYE, portrait: EYE_PORTRAIT },
   });
@@ -104,11 +104,18 @@ async function main() {
     zones: ZONES,
     cards: 64,
     manual: params.has("manual"),
-    speed: SPEEDS[params.get("speed")] ?? 1,
+    speed: speedFactor(prefs, systemReduced()),
   });
 
   // ---- the page ---------------------------------------------------------------
-  const ui = createUi(document.getElementById("overlay"), { onAct: (act, data) => onAct(act, data) });
+  const overlay = document.getElementById("overlay");
+  const ui = createUi(overlay, { onAct: (act, data) => onAct(act, data) });
+  const settings = createSettings(overlay, { prefs, onChange: (key, value) => changed(key, value) });
+  const newGameDialog = createNewGame(overlay, {
+    prefs,
+    inProgress: () => !!raw && raw.prompt?.kind !== "over",
+    onStart: (values, chosenSeed) => newGame(values, chosenSeed),
+  });
   document.getElementById("loading").remove();
   canvas.setAttribute("aria-label", "The bezique table");
 
@@ -171,15 +178,34 @@ async function main() {
   }
 
   function persist() {
-    if (raw && raw.record) store.set(SITTING, { v: raw.record_version, level: raw.level, seed, hints: raw.aids.hints, record: raw.record });
+    if (raw && raw.record) store.set(SITTING, { v: raw.record_version, level: raw.level, persona: prefs.persona, erratic: prefs.erratic, seed, hints: raw.aids.hints, record: raw.record });
   }
 
-  function newGame(level = prefs.level) {
-    prefs.level = level;
-    savePrefs();
-    seed = Math.floor(params.has("seed") && !S ? Number(params.get("seed")) : Math.random() * 2 ** 32);
+  // A setting within the game, taking effect at once. The other aids' keys
+  // (faces, hintRules, tutor, talk, tracker) are saved here and wired by their owners.
+  function changed(key, value) {
+    prefs[key] = value;
+    savePrefs(prefs);
+    if (key === "speed" || key === "reducedMotion") director.setSpeed(speedFactor(prefs, systemReduced()));
+    else if (key === "surface") stage.setSurface(chooseSurface({ chosen: value, saved: null }));
+    else if (key === "hints") setHints(value);
+  }
+
+  function setHints(on) {
+    if (!raw || raw.aids.hints === on) return;
+    raw = engine.send(`set hints ${on ? "on" : "off"}`).state;
+    persist();
+    rested();
+  }
+
+  // Starts a game from the New game dialog's values (level, persona, erratic).
+  function newGame(values = prefs, chosenSeed = null) {
+    Object.assign(prefs, { level: values.level, persona: values.persona, erratic: values.erratic });
+    savePrefs(prefs);
+    newGameDialog.remember(prefs);
+    seed = Number.isInteger(chosenSeed) ? chosenSeed : url.seed !== null && !S ? url.seed : Math.floor(Math.random() * 2 ** 32);
     director.cancelTimed();
-    engine.new({ level, seed });
+    engine.new(gameConfig(prefs, { seed }));
     if (prefs.hints) engine.send("set hints on");
     present(engine.state(), "deal");
     persist();
@@ -188,10 +214,12 @@ async function main() {
   // The sitting kept from last time, replayed command by command.
   function restore() {
     const saved = store.get(SITTING);
-    if (!saved || params.has("seed") || params.has("fresh")) return false;
+    if (!saved || url.seed !== null || url.fresh) return false;
     seed = saved.seed;
     prefs.level = saved.level;
-    let s = engine.new({ level: saved.level, seed: saved.seed });
+    prefs.persona = saved.persona ?? 0;
+    prefs.erratic = saved.erratic ?? 0;
+    let s = engine.new(gameConfig(prefs, { seed }));
     if (s.record_version !== saved.v) return false;
     if (saved.hints) engine.send("set hints on");
     for (const command of saved.record) {
@@ -221,8 +249,8 @@ async function main() {
   function onAct(name, data) {
     if (name === "dealer") act(`dealer ${data}`);
     else if (name === "declare") act(`declare ${data}`);
-    else if (name === "new") newGame();
-    else if (name === "level") newGame(Number(data));
+    else if (name === "new") newGameDialog.open();
+    else if (name === "settings") settings.toggle();
     else if (name === "undo") {
       if (waiting) return;
       const r = engine.send("undo");
@@ -232,12 +260,9 @@ async function main() {
         persist();
       }
     } else if (name === "hints") {
-      prefs.hints = !raw.aids.hints;
-      savePrefs();
-      const r = engine.send(`set hints ${prefs.hints ? "on" : "off"}`);
-      raw = r.state;
-      persist();
-      rested();
+      const on = !raw.aids.hints;
+      settings.set("hints", on);
+      changed("hints", on);
     }
   }
 
