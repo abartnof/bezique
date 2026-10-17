@@ -19,14 +19,17 @@ const onOff = opts([[true, "On"], [false, "Off"]]);
 
 export const LEVELS = opts([[1, "1"], [2, "2"], [3, "3"], [4, "4"], [5, "5"]]);
 
-// The engine's personas (crates/bezique-core/src/opponent.rs `personas()`),
-// 1 to 4 in that order; 0 draws one from the seed.
+// The engine's personas (web3d/personas.json, from crates/bezique-core
+// `personas()`; a test keeps this list equal to it): 1 to 6 in that order;
+// 0 draws one from the seed.
 export const PERSONAS = opts([
   [0, "Surprise me", "Its way of playing is drawn from the deal."],
-  [1, "Balanced", "Plays a balanced game."],
-  [2, "Concentrates", "Throws from its shortest suits, to be void of them."],
-  [3, "Close", "Plays from the table first, showing you as little as it can."],
-  [4, "Bezique", "Will give almost anything for double bezique."],
+  [1, "The Steady Hand", "Plays the old books' maxims evenly, with no marked taste."],
+  [2, "The Collector", "Keeps its kings and queens back and loves to declare a marriage."],
+  [3, "The Brisque Hunter", "Chases the aces and tens, and will spend a good card to win one."],
+  [4, "The Careful Hand", "Declares what it can at once, and shows you as little of its hand as it can."],
+  [5, "The Gambler", "Plays for the big prizes: double bezique and the sequence."],
+  [6, "The Specialist", "Picks a suit or two to build on and sheds the rest."],
 ]);
 
 export const LEVEL_LINES = Object.freeze({

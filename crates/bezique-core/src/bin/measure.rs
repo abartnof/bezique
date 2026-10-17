@@ -756,7 +756,10 @@ fn personality(level: u8, only: Option<&str>) {
         "gambler" => 3,
         _ => 4,
     };
-    for p in opponent::personas().into_iter().filter(|p| p.key != "balanced") {
+    for p in opponent::personas()
+        .into_iter()
+        .filter(|p| p.key != "balanced")
+    {
         if only.is_some_and(|k| k != p.key) {
             continue;
         }
@@ -764,10 +767,15 @@ fn personality(level: u8, only: Option<&str>) {
         let (stop, k) = loop {
             let first = seeds(20_000_000) + rows.len() as u64;
             let mut tuned = p.style.clone();
-            for kv in std::env::var("MEASURE_VARIANT").unwrap_or_default().split(',') {
+            for kv in std::env::var("MEASURE_VARIANT")
+                .unwrap_or_default()
+                .split(',')
+            {
                 match kv.split_once('=') {
                     Some(("bezique", v)) => tuned.bezique = v.parse().unwrap(),
-                    Some(("leaning", "plain")) => tuned.leaning = bezique_core::agents::Leaning::Plain,
+                    Some(("leaning", "plain")) => {
+                        tuned.leaning = bezique_core::agents::Leaning::Plain
+                    }
                     Some(("sequence", v)) => tuned.sequence = v.parse().unwrap(),
                     Some(("marriage", v)) => tuned.marriage = v.parse().unwrap(),
                     Some(("four", v)) => tuned.four = v.parse().unwrap(),
@@ -824,7 +832,11 @@ fn personality(level: u8, only: Option<&str>) {
         );
         for (i, name) in STATS.iter().enumerate() {
             let (m, se) = mean_se(&rows, i);
-            let mark = if i == headline(p.key) { "  <- headline" } else { "" };
+            let mark = if i == headline(p.key) {
+                "  <- headline"
+            } else {
+                ""
+            };
             println!(
                 "    {name:<36} {m:+8.3}  95% interval [{:+.3}, {:+.3}]  z {:+.1}{mark}",
                 m - 1.96 * se,

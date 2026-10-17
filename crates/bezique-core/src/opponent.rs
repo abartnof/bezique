@@ -79,7 +79,8 @@ pub fn personas() -> Vec<Persona> {
             key: "cautious",
             name: "The Careful Hand",
             described: "declares at once and plays from the table, showing you as little as it can",
-            description: "Declares what it can at once, and shows you as little of its hand as it can.",
+            description:
+                "Declares what it can at once, and shows you as little of its hand as it can.",
             after: "Pardon: play a declared card so as not to expose the hand",
             style: Style {
                 prompt: true,
@@ -92,7 +93,8 @@ pub fn personas() -> Vec<Persona> {
             name: "The Gambler",
             described: "plays for double bezique and the sequence, keeping those cards to the end",
             description: "Plays for the big prizes: double bezique and the sequence.",
-            after: "Pardon: keep the bezique cards until near the end, even after declaring bezique",
+            after:
+                "Pardon: keep the bezique cards until near the end, even after declaring bezique",
             style: Style {
                 bezique: base.bezique + 6,
                 sequence: base.sequence,
@@ -230,7 +232,9 @@ mod tests {
             );
             // The opponent is never named, and personality never talks of
             // strength.
-            for word in ["Foster", "Pardon", "Pole", "Cady", "strong", "weak", "clever"] {
+            for word in [
+                "Foster", "Pardon", "Pole", "Cady", "strong", "weak", "clever",
+            ] {
                 assert!(!p.description.contains(word), "{}: {word}", p.key);
             }
         }

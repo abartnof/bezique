@@ -244,6 +244,7 @@ async function main() {
   function present(next, how) {
     const first = S && how !== "deal" ? S.events.length : 0;
     const state = { model: fromState(next), events: next.events, raw: next };
+    if (next.persona && talk.persona !== next.persona) talk.setPersona(next.persona);
     const before = how === "advance" ? raw : null;
     raw = next;
     waiting = true;

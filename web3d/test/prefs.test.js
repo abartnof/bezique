@@ -64,3 +64,13 @@ test("speed factor: reduced motion plays at once", () => {
   assert.equal(speedFactor({ ...DEFAULTS }, true) > 100, true);
   assert.equal(speedFactor({ ...DEFAULTS, reducedMotion: "off" }, true), 1);
 });
+
+import fs from "node:fs";
+import { PERSONAS as PERSONA_OPTIONS } from "../src/prefs.js";
+test("the persona choices are the engine's list, in order", () => {
+  const list = JSON.parse(fs.readFileSync(new URL("../personas.json", import.meta.url), "utf8"));
+  assert.deepEqual(
+    PERSONA_OPTIONS.slice(1).map((p) => [p.label, p.line]),
+    list.map((p) => [p.name, p.description]),
+  );
+});

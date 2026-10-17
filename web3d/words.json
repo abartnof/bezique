@@ -20,27 +20,39 @@
  },
  "personas": {
   "balanced": {},
-  "concentrates": {
-   "play_them_low": 1.8,
-   "play_you_low": 1.6,
-   "play_them_trump": 1.4,
-   "stock_low": 1.5,
-   "last_eight": 1.5
+  "collector": {
+   "decl_you_marriage": 1.5,
+   "decl_them_lucky": 1.4,
+   "decl_you_four": 1.3,
+   "play_them_low": 1.3
   },
-  "close": {
+  "hunter": {
+   "play_them_brisque": 1.8,
+   "play_you_brisque": 1.6,
+   "play_them_high": 1.4,
+   "play_them_trump": 1.3
+  },
+  "cautious": {
    "play_them_brisque": 0.6,
    "play_them_high": 0.6,
-   "decl_you_marriage": 0.7,
    "pace": 1.5,
    "hand_ahead_them": 0.7,
-   "hand_ahead_you": 1.3
+   "hand_ahead_you": 1.3,
+   "last_eight": 1.4
   },
-  "bezique": {
+  "gambler": {
    "decl_you_bezique": 1.8,
    "decl_you_double": 1.8,
    "decl_you_four": 1.5,
    "dix_you": 1.4,
    "decl_them_lucky": 1.5
+  },
+  "specialist": {
+   "play_them_low": 1.6,
+   "play_you_low": 1.5,
+   "play_them_trump": 1.4,
+   "stock_low": 1.5,
+   "last_eight": 1.5
   }
  },
  "sources": {

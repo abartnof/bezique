@@ -319,9 +319,9 @@ fn pick(think: &Think, valued: Vec<(Card, i32)>) -> Card {
         Leaning::Plain => valued.iter().min_by_key(|&&(c, v)| (v, c.0)),
         Leaning::Concentrate => near.min_by_key(|&&(c, v)| (held_in(c), v, c.0)),
         Leaning::Close => near.min_by_key(|&&(c, v)| (!mine.shown.contains(c), v, c.0)),
-        Leaning::Collect => near.min_by_key(|&&(c, v)| {
-            (matches!(c.rank(), Rank::KING | Rank::QUEEN), v, c.0)
-        }),
+        Leaning::Collect => {
+            near.min_by_key(|&&(c, v)| (matches!(c.rank(), Rank::KING | Rank::QUEEN), v, c.0))
+        }
     }
     .expect("a card to play")
     .0

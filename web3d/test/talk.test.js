@@ -175,10 +175,10 @@ test("no line comes round again before the rest, nor twice running", () => {
   for (let k = 0; k < 4; k++) assert.equal(new Set(texts.slice(k * n, (k + 1) * n)).size, n);
 });
 
-test("a persona weights the same bank: concentrates is readier to speak of the stock", () => {
+test("a persona weights the same bank: the specialist is readier to speak of the stock", () => {
   const roll = () => 0.7; // above 0.6, below 0.6 * 1.5
   const a = table({ mode: "normal", rng: roll });
-  const b = table({ mode: "normal", rng: roll, persona: "concentrates" });
+  const b = table({ mode: "normal", rng: roll, persona: "specialist" });
   for (const t of [a, b]) {
     t.ev(dealt());
     for (let i = 0; i < 21; i++) t.ev({ kind: "drew", card: { id: i, card: "7S" } });

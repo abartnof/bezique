@@ -18,8 +18,8 @@ test("the model marks the selected option", () => {
 test("the New game dialog offers Surprise me and each persona", () => {
   const persona = NEW_SPECS.find((s) => s.key === "persona");
   assert.equal(persona.options[0].label, "Surprise me");
-  assert.deepEqual(persona.options.map((o) => o.value), [0, 1, 2, 3, 4]);
-  assert.match(opponentLine(3, 2), /shortest suits/);
+  assert.deepEqual(persona.options.map((o) => o.value), [0, 1, 2, 3, 4, 5, 6]);
+  assert.match(opponentLine(3, 3), /aces and tens/);
 });
 
 test("seed parsing", () => {
