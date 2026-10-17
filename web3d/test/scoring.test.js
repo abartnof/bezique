@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { combinationName, fold, itemsOf, apply, initial, itemsFor, doubleWatch } from "../src/scoring.js";
+import { combinationName, fold, itemsOf, apply, initial, itemsFor, doubleWatch, carriedNote, doubleNote, hudGame, hudEvent } from "../src/scoring.js";
 import { decide, sitting } from "./support/table.js";
 
 function rngOf(seed) {
@@ -91,6 +91,21 @@ test("combinations are named from the announcement", () => {
   assert.equal(t("Two-fifty in trumps."), "sequence");
   assert.equal(t("Sixty queens, and forty, and twenty to score."), "four queens");
   assert.equal(t("A hundred aces."), "four aces");
+});
+
+test("the notes under the score", () => {
+  assert.equal(carriedNote({ carried: [{ points: 20 }, { points: 40 }], their_carried: [] }), "To score: you 20 + 40");
+  assert.equal(carriedNote({ carried: [], their_carried: [{ points: 20 }] }), "To score: your opponent 20");
+  assert.equal(carriedNote({ carried: [], their_carried: [] }), "");
+  assert.match(doubleNote({ you: 100, them: 200 }), /1000 wins/);
+  assert.match(doubleNote({ you: 800, them: 200 }), /double game/);
+  assert.match(doubleNote({ you: 800, them: 600 }), /no double/);
+});
+
+test("the HUD's game takes the ledger", () => {
+  assert.equal(hudGame.segments, 20);
+  assert.equal(hudGame.lit(500), 10);
+  assert.equal(hudEvent({ who: "them", cat: "declared", label: "bezique", pts: 40, hand: 2 }).side, "opp");
 });
 
 test("the double line", () => {

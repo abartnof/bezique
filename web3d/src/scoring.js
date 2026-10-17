@@ -10,6 +10,8 @@
 // play, only this accounting; web3d/test/scoring.test.js checks it against
 // the engine's own `totals` and `hand_scores` over whole games.
 
+import { defineGame } from "../../kit/js/scoring.js";
+
 export const TARGET = 1000;
 export const DOUBLE_LINE = 500;
 export const SEVEN_POINTS = 10; // the dealer's seven and the dix
@@ -145,4 +147,44 @@ export function doubleWatch(totals) {
   const lo = Math.min(totals.you, totals.them);
   const hi = Math.max(totals.you, totals.them);
   return { leader: totals.you === totals.them ? null : totals.you > totals.them ? "you" : "them", behind: lo < DOUBLE_LINE, atRisk: hi >= TARGET - 250 && lo < DOUBLE_LINE, hi, lo };
+}
+
+// ---- the kit's score HUD (kit/js/hud.js) --------------------------------------
+
+// Twenty segments of fifty points: the quarter marks are 250, 500 (the double
+// line), 750 and 1000.
+export const hudGame = defineGame({
+  categories: CATEGORIES,
+  target: TARGET,
+  segments: 20,
+  lit: (units) => Math.floor(units / 50),
+  goal: "1000 up",
+  names: { you: "You", opp: "Opponent" },
+  words: { hand: "Hand" },
+  line: (l) => l,
+});
+
+// A scoring item as the HUD takes it.
+export const hudEvent = (item) => ({ side: hudSide(item.who), cat: item.cat, label: item.label, pts: item.pts, hand: item.hand });
+
+// ---- the quiet notes under the score ------------------------------------------
+
+const said = (list) => list.map((c) => c.points).join(" + ");
+
+// Melds announced and still to score (state.carried, their_carried): "To score: you 20 + 40".
+export function carriedNote(s) {
+  const mine = s?.carried ?? [];
+  const theirs = s?.their_carried ?? [];
+  const parts = [];
+  if (mine.length) parts.push(`you ${said(mine)}`);
+  if (theirs.length) parts.push(`your opponent ${said(theirs)}`);
+  return parts.length ? `To score: ${parts.join("; ")}` : "";
+}
+
+// The double game (Foster p. 339): 1000 up, doubled if the loser has under 500.
+export function doubleNote(totals) {
+  const { lo, hi } = doubleWatch(totals);
+  if (lo >= DOUBLE_LINE) return "Both past 500: no double game now";
+  if (hi >= TARGET - 250) return "Under 500 when 1000 is reached: a double game";
+  return "1000 wins; under 500 at the end is a double game";
 }

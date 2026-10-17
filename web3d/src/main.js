@@ -12,6 +12,7 @@ import { createScene } from "../../kit/js/scene.js";
 import { chooseSurface } from "../../kit/js/surfaces.js";
 import { choreograph, initialPlacement, opening } from "./choreography.js";
 import { loadEngine } from "./engine.js";
+import { createScoreboard } from "./scoreboard.js";
 import { fromState } from "./model.js";
 import { createUi } from "./ui.js";
 import { EYE, EYE_PORTRAIT, ZONES, ZONES_PORTRAIT } from "./zones.js";
@@ -49,7 +50,7 @@ async function main() {
     ui.say("The table has stopped. Reload the page to carry on.");
   });
 
-  const prefs = { level: 3, hints: false, ...store.get(PREFS) };
+  const prefs = { level: 3, hints: false, tracker: false, ...store.get(PREFS) };
   if (params.has("level")) prefs.level = Math.min(5, Math.max(1, Number(params.get("level")) || 3));
   if (params.has("hints")) prefs.hints = params.get("hints") !== "0";
   const savePrefs = () => store.set(PREFS, prefs);
@@ -72,7 +73,6 @@ async function main() {
   let waiting = false; // cards moving: the person may not act
   let chosen = null; // a card picked on a touch screen, to be played by a second tap
   let hover = null;
-  let shown = { totals: { you: 0, them: 0 }, hand: { you: 0, them: 0 } };
 
   const view = () => ({ chosen, zones: zonesNow() });
   const legal = () => (raw?.prompt?.kind === "play" ? raw.prompt.legal : []);
@@ -115,14 +115,14 @@ async function main() {
   function frame() {
     stage.setStrips({ top: ui.hudBottom() + 6, foot: window.innerHeight - ui.barTop() + 6, raised: 0 }, { instant: true });
   }
+  const board = createScoreboard({ ui, director, zones: zonesNow, overlay: document.getElementById("overlay"), reduced: () => window.matchMedia?.("(prefers-reduced-motion: reduce)").matches });
   ui.onLayout(frame);
   frame();
   stage.onReframe = () => director.relayout();
 
   // ---- showing a state --------------------------------------------------------
   function sync() {
-    shown = { totals: { ...raw.totals }, hand: { ...raw.hand_scores } };
-    ui.setScores(shown);
+    board.rest(raw);
     ui.setInfo({ trump: raw.trump_symbol ?? null, stock: raw.stock ?? 64, hand: raw.hand_number ?? null, level: raw.level });
   }
 
@@ -134,21 +134,15 @@ async function main() {
     director.redecorate();
   }
 
-  function applyEvent(e) {
+  function applyEvent(e, index) {
     ui.say(e.text);
-    if (e.kind === "took_trick" || e.kind === "declared") {
-      shown.hand[e.who] += e.points;
-      shown.totals[e.who] += e.points;
-    } else if (e.kind === "hand_ends") {
-      shown.hand = { you: 0, them: 0 };
-    }
-    ui.setScores(shown);
+    board.event(S.events, index);
   }
 
   // `how`: "deal" (a new sitting, dealt out from the pack), "direct" (an undo
   // or a sitting restored: the cards at once) or "advance" (the next move played out).
   function present(next, how) {
-    const first = S ? S.events.length : 0;
+    const first = S && how !== "deal" ? S.events.length : 0;
     const state = { model: fromState(next), events: next.events, raw: next };
     raw = next;
     waiting = true;
@@ -160,18 +154,19 @@ async function main() {
     else timing = director.advance(state);
     S = state;
     if (how === "direct" || !timing) {
+      board.reset(next.events);
       rested();
       return;
     }
-    shown = how === "deal" ? { totals: { you: 0, them: 0 }, hand: { you: 0, them: 0 } } : shown;
+    if (how === "deal") board.reset(next.events, { empty: true });
     for (const [index, ms] of Object.entries(timing.beats)) {
       const e = next.events[Number(index)];
-      if (e && Number(index) >= first) director.at(ms, () => applyEvent(e));
+      if (e && Number(index) >= first) director.at(ms, () => applyEvent(e, Number(index)));
     }
   }
 
   function persist() {
-    if (raw && raw.record) store.set(SITTING, { v: raw.record_version, level: raw.level, seed, hints: raw.aids.hints, record: raw.record });
+    if (raw && raw.record) store.set(SITTING, { v: raw.record_version, level: raw.level, seed, hints: raw.aids.hints, tracker: raw.aids.tracker, record: raw.record });
   }
 
   function newGame(level = prefs.level) {
@@ -181,6 +176,7 @@ async function main() {
     director.cancelTimed();
     engine.new({ level, seed });
     if (prefs.hints) engine.send("set hints on");
+    if (prefs.tracker) engine.send("set tracker on");
     present(engine.state(), "deal");
     persist();
   }
@@ -194,6 +190,7 @@ async function main() {
     let s = engine.new({ level: saved.level, seed: saved.seed });
     if (s.record_version !== saved.v) return false;
     if (saved.hints) engine.send("set hints on");
+    if (saved.tracker) engine.send("set tracker on");
     for (const command of saved.record) {
       if (command.startsWith("*")) continue;
       const r = engine.send(command);
@@ -231,6 +228,13 @@ async function main() {
         present(r.state, "direct");
         persist();
       }
+    } else if (name === "tracker") {
+      prefs.tracker = !raw.aids.tracker;
+      savePrefs();
+      const r = engine.send(`set tracker ${prefs.tracker ? "on" : "off"}`);
+      raw = r.state;
+      persist();
+      rested();
     } else if (name === "hints") {
       prefs.hints = !raw.aids.hints;
       savePrefs();
@@ -278,7 +282,7 @@ async function main() {
   });
 
   // The test hook: what the browser checks read and drive.
-  window.bezique3d = { state: () => raw, act, onAct, director, stage, ui, engine, waiting: () => waiting, screenPoint: (id) => director.screenPoint(S.model && placementCode(id)) };
+  window.bezique3d = { board, state: () => raw, act, onAct, director, stage, ui, engine, waiting: () => waiting, screenPoint: (id) => director.screenPoint(S.model && placementCode(id)) };
   function placementCode(id) {
     return director.placement().find((m) => m.cardId === id)?.code;
   }

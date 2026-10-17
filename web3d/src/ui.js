@@ -1,5 +1,5 @@
 // DOM overlay for the bezique table: scores, info chips, ticker, control bar.
-// Plain DOM, no libraries. createUi(root, { onAct }) -> { setScores, setInfo,
+// Plain DOM, no libraries. createUi(root, { onAct }) -> { hudSlot, trackerRoot, setNotes, setTracker, setInfo,
 // say, setPrompt, hudBottom, barTop, onLayout }.
 
 function el(tag, cls, text, parent) {
@@ -16,18 +16,11 @@ export function createUi(root, { onAct }) {
 
   // ---- top HUD
   const hud = el("div", "ui-hud", null, root);
-  const panel = el("div", "ui-panel", null, hud);
-  const rows = {};
-  for (const [key, label] of [["you", "You"], ["them", "Opponent"]]) {
-    const r = el("div", "ui-score-row", null, panel);
-    el("div", "ui-name", label, r);
-    const total = el("div", "ui-total", "0", r);
-    const hand = el("div", "ui-hand", "this hand 0", r);
-    const bar = el("div", "ui-progress", null, r);
-    const fill = el("div", "ui-progress-fill ui-" + key, null, bar);
-    el("div", "ui-notch", null, bar);
-    rows[key] = { total, hand, fill };
-  }
+  // The score itself is the kit's HUD (main.js mounts it here); under it, two quiet notes.
+  const hudSlot = el("div", "ui-hudslot", null, hud);
+  const noteDouble = el("div", "ui-note", "", hud);
+  const noteCarried = el("div", "ui-note ui-carried", "", hud);
+  const trackerRoot = el("div", null, null, root);
   const chips = el("div", "ui-chips", null, hud);
   const chipTrump = el("span", "ui-chip", null, chips);
   const chipStock = el("span", "ui-chip", null, chips);
@@ -45,6 +38,7 @@ export function createUi(root, { onAct }) {
 
   const undoBtn = el("button", "ui-btn ui-small", "Undo", tools);
   const hintBtn = el("button", "ui-btn ui-small", "Hint: off", tools);
+  const trackerBtn = el("button", "ui-btn ui-small", "Cards out: off", tools);
   const newBtn = el("button", "ui-btn ui-small", "New game", tools);
   const levelWrap = el("label", "ui-level", "Level ", tools);
   const levelSel = el("select", "ui-select", null, levelWrap);
@@ -52,7 +46,8 @@ export function createUi(root, { onAct }) {
     const o = el("option", null, String(i), levelSel);
     o.value = String(i);
   }
-  for (const b of [undoBtn, hintBtn, newBtn]) b.type = "button";
+  for (const b of [undoBtn, hintBtn, trackerBtn, newBtn]) b.type = "button";
+  trackerBtn.setAttribute("aria-pressed", "false");
   hintBtn.setAttribute("aria-pressed", "false");
 
   let isOver = false;
@@ -61,18 +56,17 @@ export function createUi(root, { onAct }) {
 
   undoBtn.onclick = () => act("undo");
   hintBtn.onclick = () => act("hints");
+  trackerBtn.onclick = () => act("tracker");
   newBtn.onclick = () => {
     if (isOver || confirm("Start a new game?")) act("new");
   };
   levelSel.onchange = () => act("level", Number(levelSel.value));
 
-  function setScores({ totals, hand } = {}) {
-    for (const k of ["you", "them"]) {
-      const t = totals ? totals[k] | 0 : 0;
-      rows[k].total.textContent = String(t);
-      rows[k].hand.textContent = "this hand " + (hand ? hand[k] | 0 : 0);
-      rows[k].fill.style.width = Math.max(0, Math.min(100, t / 10)) + "%";
-    }
+  // The notes under the score: the double line, and what is carried "to score".
+  function setNotes({ double = "", carried = "" } = {}) {
+    noteDouble.textContent = double;
+    noteCarried.textContent = carried;
+    noteCarried.hidden = !carried;
   }
 
   function setInfo({ trump, stock, hand, level } = {}) {
@@ -151,6 +145,7 @@ export function createUi(root, { onAct }) {
 
     undoBtn.disabled = !!busy || !raw.can_undo;
     hintBtn.disabled = !!busy;
+    trackerBtn.disabled = !!busy;
     newBtn.disabled = !!busy;
     levelSel.disabled = !!busy;
     for (const b of btns) b.disabled = !!busy;
@@ -176,7 +171,13 @@ export function createUi(root, { onAct }) {
     window.addEventListener("resize", fn);
   }
 
-  setScores({ totals: { you: 0, them: 0 }, hand: { you: 0, them: 0 } });
+  // The tracker button shows whether the counting aid is on.
+  function setTracker(on) {
+    trackerBtn.textContent = "Cards out: " + (on ? "on" : "off");
+    trackerBtn.setAttribute("aria-pressed", String(!!on));
+  }
+
+  setNotes({});
   setInfo({});
-  return { setScores, setInfo, say, setPrompt, hudBottom, barTop, onLayout };
+  return { hudSlot, trackerRoot, setNotes, setTracker, setInfo, say, setPrompt, hudBottom, barTop, onLayout };
 }
