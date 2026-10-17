@@ -2,9 +2,9 @@ name = "bezique"
 entry = "src/main.js"
 template = "src/index.html"
 style = "src/style.css"
-kit_styles = ["src/tutor.css"]
 output = "bezique.html"
 crate = "bezique-wasm"
+kit_styles = ["../kit/css/hud.css", "src/badges.css", "src/tracker.css", "src/tutor.css"]
 guideline_bytes = 5242880
 
 [[assets]]

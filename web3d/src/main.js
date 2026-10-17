@@ -16,6 +16,7 @@ import { loadEngine } from "./engine.js";
 import { createNewGame } from "./newgame.js";
 import { gameConfig, loadPrefs, savePrefs, speedFactor, urlOverrides, withUrl } from "./prefs.js";
 import { createSettings } from "./settings.js";
+import { createScoreboard } from "./scoreboard.js";
 import { fromState } from "./model.js";
 import { PAGE_KEYS, dueIn } from "./tutor.js";
 import { createTutorStore } from "./tutorstore.js";
@@ -97,7 +98,6 @@ async function main() {
   let waiting = false; // cards moving: the person may not act
   let chosen = null; // a card picked on a touch screen, to be played by a second tap
   let hover = null;
-  let shown = { totals: { you: 0, them: 0 }, hand: { you: 0, them: 0 } };
 
   const view = () => ({ chosen, zones: zonesNow() });
   const legal = () => (raw?.prompt?.kind === "play" ? raw.prompt.legal : []);
@@ -148,6 +148,7 @@ async function main() {
     stage.setInset(window.innerWidth >= 900 ? 360 : 0); // the panels stand in the left margin (style.css)
     stage.setStrips({ top: ui.hudBottom() + 6, foot: window.innerHeight - ui.barTop() + 6, raised: 0 }, { instant: true });
   }
+  const board = createScoreboard({ ui, director, zones: zonesNow, overlay: document.getElementById("overlay"), reduced: () => window.matchMedia?.("(prefers-reduced-motion: reduce)").matches });
   ui.onLayout(frame);
   frame();
   stage.onReframe = () => director.relayout();
@@ -195,8 +196,7 @@ async function main() {
 
   // ---- showing a state --------------------------------------------------------
   function sync() {
-    shown = { totals: { ...raw.totals }, hand: { ...raw.hand_scores } };
-    ui.setScores(shown);
+    board.rest(raw);
     ui.setInfo({ trump: raw.trump_symbol ?? null, stock: raw.stock ?? 64, hand: raw.hand_number ?? null, level: raw.level });
   }
 
@@ -208,21 +208,15 @@ async function main() {
     director.redecorate();
   }
 
-  function applyEvent(e) {
+  function applyEvent(e, index) {
     ui.say(e.text);
-    if (e.kind === "took_trick" || e.kind === "declared") {
-      shown.hand[e.who] += e.points;
-      shown.totals[e.who] += e.points;
-    } else if (e.kind === "hand_ends") {
-      shown.hand = { you: 0, them: 0 };
-    }
-    ui.setScores(shown);
+    board.event(S.events, index);
   }
 
   // `how`: "deal" (a new sitting, dealt out from the pack), "direct" (an undo
   // or a sitting restored: the cards at once) or "advance" (the next move played out).
   function present(next, how) {
-    const first = S ? S.events.length : 0;
+    const first = S && how !== "deal" ? S.events.length : 0;
     const state = { model: fromState(next), events: next.events, raw: next };
     const before = how === "advance" ? raw : null;
     raw = next;
@@ -236,18 +230,19 @@ async function main() {
     S = state;
     tutorial(before, next, how === "direct" ? null : timing);
     if (how === "direct" || !timing) {
+      board.reset(next.events);
       rested();
       return;
     }
-    shown = how === "deal" ? { totals: { you: 0, them: 0 }, hand: { you: 0, them: 0 } } : shown;
+    if (how === "deal") board.reset(next.events, { empty: true });
     for (const [index, ms] of Object.entries(timing.beats)) {
       const e = next.events[Number(index)];
-      if (e && Number(index) >= first) director.at(ms, () => applyEvent(e));
+      if (e && Number(index) >= first) director.at(ms, () => applyEvent(e, Number(index)));
     }
   }
 
   function persist() {
-    if (raw && raw.record) store.set(SITTING, { v: raw.record_version, level: raw.level, persona: prefs.persona, erratic: prefs.erratic, seed, hints: raw.aids.hints, record: raw.record });
+    if (raw && raw.record) store.set(SITTING, { v: raw.record_version, level: raw.level, persona: prefs.persona, erratic: prefs.erratic, seed, hints: raw.aids.hints, tracker: raw.aids.tracker, record: raw.record });
   }
 
   // A setting within the game, taking effect at once. The other aids' keys
@@ -276,6 +271,7 @@ async function main() {
     director.cancelTimed();
     engine.new(gameConfig(prefs, { seed }));
     if (prefs.hints) engine.send("set hints on");
+    if (prefs.tracker) engine.send("set tracker on");
     present(engine.state(), "deal");
     persist();
   }
@@ -291,6 +287,7 @@ async function main() {
     let s = engine.new(gameConfig(prefs, { seed }));
     if (s.record_version !== saved.v) return false;
     if (saved.hints) engine.send("set hints on");
+    if (saved.tracker) engine.send("set tracker on");
     for (const command of saved.record) {
       if (command.startsWith("*")) continue;
       const r = engine.send(command);
@@ -331,6 +328,13 @@ async function main() {
         present(r.state, "direct");
         persist();
       }
+    } else if (name === "tracker") {
+      prefs.tracker = !raw.aids.tracker;
+      savePrefs();
+      const r = engine.send(`set tracker ${prefs.tracker ? "on" : "off"}`);
+      raw = r.state;
+      persist();
+      rested();
     } else if (name === "hints") {
       const on = !raw.aids.hints;
       settings.set("hints", on);
@@ -375,7 +379,7 @@ async function main() {
   });
 
   // The test hook: what the browser checks read and drive.
-  window.bezique3d = { setFaces: (c) => { const r = setFaces(c); savePrefs(prefs); return r; }, facesShown: () => facesShown, state: () => raw, act, onAct, director, stage, ui, engine, waiting: () => waiting, screenPoint: (id) => director.screenPoint(S.model && placementCode(id)) };
+  window.bezique3d = { board, setFaces: (c) => { const r = setFaces(c); savePrefs(prefs); return r; }, facesShown: () => facesShown, state: () => raw, act, onAct, director, stage, ui, engine, waiting: () => waiting, screenPoint: (id) => director.screenPoint(S.model && placementCode(id)) };
   function placementCode(id) {
     return director.placement().find((m) => m.cardId === id)?.code;
   }
