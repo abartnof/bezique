@@ -8,6 +8,7 @@ pub mod cards;
 pub mod deal;
 pub mod game;
 pub mod hand;
+pub mod hints;
 pub mod lookahead;
 pub mod melds;
 pub mod observation;

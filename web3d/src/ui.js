@@ -2,6 +2,8 @@
 // Plain DOM, no libraries. createUi(root, { onAct }) -> { setScores, setInfo,
 // say, setPrompt, hudBottom, barTop, onLayout }.
 
+import { hintView } from "./hinttext.js";
+
 function el(tag, cls, text, parent) {
   const e = document.createElement(tag);
   if (cls) e.className = cls;
@@ -92,7 +94,29 @@ export function createUi(root, { onAct }) {
     sayTimer = setTimeout(() => ticker.classList.remove("ui-show"), 4000);
   }
 
-  function setPrompt(raw, { busy, hint } = {}) {
+  // The hint line: what to do (the cards named), the rule behind it in a
+  // quieter line, and a "Why?" with the period source (src/hinttext.js).
+  function renderHint(hint, layers) {
+    hintLine.textContent = "";
+    const v = hintView(hint, layers);
+    hintLine.hidden = !(v && (v.do || v.rule));
+    if (hintLine.hidden) return;
+    if (v.do) el("div", "ui-hint-do", v.do, hintLine);
+    if (v.rule) {
+      el("div", "ui-hint-rule", v.rule, hintLine);
+      const btn = el("button", "ui-hint-whybtn", "Why?", hintLine);
+      const why = el("div", "ui-hint-why", v.why, hintLine);
+      why.hidden = true;
+      btn.type = "button";
+      btn.setAttribute("aria-expanded", "false");
+      btn.onclick = () => {
+        why.hidden = !why.hidden;
+        btn.setAttribute("aria-expanded", String(!why.hidden));
+      };
+    }
+  }
+
+  function setPrompt(raw, { busy, hint, layers } = {}) {
     raw = raw || {};
     const prompt = raw.prompt || {};
     const kind = prompt.kind;
@@ -101,8 +125,7 @@ export function createUi(root, { onAct }) {
     root.querySelectorAll(".ui-modal").forEach((m) => m.remove());
 
     hintOn = !!hint;
-    hintLine.hidden = !(hint && hint.text);
-    hintLine.textContent = hint && hint.text ? hint.text : "";
+    renderHint(hint, layers);
 
     if (raw.error) say(raw.error);
 

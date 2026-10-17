@@ -454,6 +454,11 @@ impl Session {
     /// With hints on, what the top rung would do in the person's place: the
     /// command to send, and in words.
     pub fn hint(&self) -> Option<(String, String)> {
+        self.advice().map(|(c, t, _)| (c, t))
+    }
+
+    /// The hint with its reason, machine-readable (`hints::Reason`).
+    pub fn advice(&self) -> Option<(String, String, crate::hints::Reason)> {
         if !self.aids.hints {
             return None;
         }
@@ -465,7 +470,8 @@ impl Session {
         let view = View::of(game, Side::A);
         let advice = rung_with(agents::TOP, &crate::agents::Style::default()).choose(&view, &legal);
         let index = legal.iter().position(|a| *a == advice)?;
-        Some(match advice {
+        let reason = crate::hints::classify(&view, &legal, &advice);
+        let (command, said) = match advice {
             Action::Play(card) => (
                 format!("play {}", card.0),
                 format!("Play the {}.", card.code()),
@@ -474,7 +480,8 @@ impl Session {
                 format!("declare {index}"),
                 self.option(game.hand(), &other).text,
             ),
-        })
+        };
+        Some((command, said, reason))
     }
 
     pub fn outcome(&self) -> Option<Outcome> {

@@ -22,6 +22,7 @@
 use bezique_core::cards::{Card, CardSet, Suit};
 use bezique_core::game::Side;
 use bezique_core::hand::Phase;
+use bezique_core::hints::Param;
 use bezique_core::observation::View;
 use bezique_core::opponent;
 use bezique_core::session::{Event, EventKind, Prompt, Session, Settings};
@@ -305,9 +306,23 @@ pub fn state(session: &Session) -> String {
             ("double", o.double.to_string()),
         ])
     });
-    let hint = session
-        .hint()
-        .map(|(command, said)| object(&[("command", text(&command)), ("text", text(&said))]));
+    let hint = session.advice().map(|(command, said, reason)| {
+        let mut params = vec![("key", text(reason.key))];
+        for (name, p) in &reason.params {
+            params.push((
+                name,
+                match p {
+                    Param::Card(c) | Param::Word(c) => text(c),
+                    Param::Int(n) => n.to_string(),
+                },
+            ));
+        }
+        object(&[
+            ("command", text(&command)),
+            ("text", text(&said)),
+            ("reason", object(&params)),
+        ])
+    });
     fields.extend([
         ("prompt", prompt(&p)),
         (
