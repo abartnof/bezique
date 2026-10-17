@@ -1,0 +1,867 @@
+{
+ "version": 1,
+ "default_mode": "normal",
+ "modes": {
+  "quiet": {
+   "call": 1.0,
+   "remark": 0.0,
+   "chatter": 0.0
+  },
+  "normal": {
+   "call": 1.0,
+   "remark": 0.6,
+   "chatter": 0.12
+  },
+  "chatty": {
+   "call": 1.0,
+   "remark": 1.0,
+   "chatter": 0.45
+  }
+ },
+ "personas": {
+  "balanced": {},
+  "concentrates": {
+   "play_them_low": 1.8,
+   "play_you_low": 1.6,
+   "play_them_trump": 1.4,
+   "stock_low": 1.5,
+   "last_eight": 1.5
+  },
+  "close": {
+   "play_them_brisque": 0.6,
+   "play_them_high": 0.6,
+   "decl_you_marriage": 0.7,
+   "pace": 1.5,
+   "hand_ahead_them": 0.7,
+   "hand_ahead_you": 1.3
+  },
+  "bezique": {
+   "decl_you_bezique": 1.8,
+   "decl_you_double": 1.8,
+   "decl_you_four": 1.5,
+   "dix_you": 1.4,
+   "decl_them_lucky": 1.5
+  }
+ },
+ "sources": {
+  "F97": {
+   "cite": "Foster, Foster's Complete Hoyle (1897), Bezique, pp. 337-345",
+   "file": "docs/sources/foster-1897-bezique.txt"
+  },
+  "C96": {
+   "cite": "Cady, Bezique (1896), the rules of play (no page recorded in the text copy)",
+   "file": "docs/sources/cady-1896-bezique.txt"
+  },
+  "WP70": {
+   "cite": "Westminster Papers (1870), a correspondent calling bezique the slowest of slow games; second hand, docs/LITERATURE.md section 3.4 [S16]",
+   "file": "docs/LITERATURE.md"
+  },
+  "T": {
+   "cite": "Interpretation: table talk and card-room banter of the period are not recorded in the sources read, so these remarks are the table's own, kept few and plain",
+   "file": ""
+  }
+ },
+ "groups": {
+  "start": {
+   "kind": "call",
+   "moment": "the sitting begins",
+   "lines": [
+    {
+     "t": "Good evening. Two packs, sixty-four cards, a thousand up.",
+     "s": "F97",
+     "l": "p. 339"
+    },
+    {
+     "t": "Ace, ten, king, queen, jack, nine, eight, seven: that is the rank.",
+     "s": "F97",
+     "l": "p. 338"
+    },
+    {
+     "t": "Cut for the deal: the higher card chooses.",
+     "s": "F97",
+     "l": "p. 339"
+    },
+    {
+     "t": "Bezique: queen of spades, jack of diamonds, and some patience.",
+     "s": "F97",
+     "l": "p. 341"
+    },
+    {
+     "t": "A game for two. I shall explain as we go.",
+     "s": "T"
+    }
+   ]
+  },
+  "cut_you_high": {
+   "kind": "call",
+   "moment": "the cut: yours is higher",
+   "lines": [
+    {
+     "t": "You cut higher: the choice of dealing is yours.",
+     "s": "F97",
+     "l": "p. 339"
+    },
+    {
+     "t": "Your cut is the higher. Will you deal, or leave it to me?",
+     "s": "F97",
+     "l": "p. 339"
+    }
+   ]
+  },
+  "cut_them_high": {
+   "kind": "call",
+   "moment": "the cut: mine is higher",
+   "lines": [
+    {
+     "t": "The higher cut is mine, so I choose to deal.",
+     "s": "F97",
+     "l": "p. 339"
+    },
+    {
+     "t": "I cut higher: the first deal, then.",
+     "s": "F97",
+     "l": "p. 339"
+    }
+   ]
+  },
+  "deal_them": {
+   "kind": "call",
+   "moment": "your opponent deals",
+   "lines": [
+    {
+     "t": "My deal: eight cards each, the seventeenth turned for trumps.",
+     "s": "F97",
+     "l": "p. 339"
+    },
+    {
+     "t": "Three, two, three, and the trump turned up. You lead.",
+     "s": "F97",
+     "l": "pp. 339-340"
+    },
+    {
+     "t": "I deal; you, not dealing, lead any card you like.",
+     "s": "F97",
+     "l": "p. 339"
+    }
+   ]
+  },
+  "deal_you": {
+   "kind": "call",
+   "moment": "you deal",
+   "lines": [
+    {
+     "t": "Your deal: the dealing alternates, and I lead first.",
+     "s": "C96"
+    },
+    {
+     "t": "Deal away: three, two, three. I begin.",
+     "s": "F97",
+     "l": "p. 339"
+    },
+    {
+     "t": "The non-dealer leads, so I shall begin.",
+     "s": "F97",
+     "l": "pp. 339-340"
+    }
+   ]
+  },
+  "seven_them": {
+   "kind": "remark",
+   "moment": "a seven is turned up and the dealer (your opponent) scores ten",
+   "lines": [
+    {
+     "t": "A seven turned up: ten for the dealer, and that is I.",
+     "s": "F97",
+     "l": "p. 339"
+    },
+    {
+     "t": "Ten for the seven turned up. A fortunate start.",
+     "s": "C96"
+    }
+   ]
+  },
+  "seven_you": {
+   "kind": "remark",
+   "moment": "a seven is turned up and the dealer (you) scores ten",
+   "lines": [
+    {
+     "t": "A seven turned up: ten to you as dealer.",
+     "s": "F97",
+     "l": "p. 339"
+    },
+    {
+     "t": "Ten to you for the seven, and trumps are made. Lucky.",
+     "s": "C96"
+    }
+   ]
+  },
+  "play_them_brisque": {
+   "kind": "chatter",
+   "moment": "your opponent plays an ace or a ten",
+   "lines": [
+    {
+     "t": "A brisque: ten for whoever takes it.",
+     "s": "F97",
+     "l": "p. 340"
+    },
+    {
+     "t": "Aces and tens are the brisques, ten points apiece.",
+     "s": "F97",
+     "l": "p. 340"
+    },
+    {
+     "t": "Only a trick with a brisque in it is worth the winning, bar the lead.",
+     "s": "F97",
+     "l": "p. 340"
+    }
+   ]
+  },
+  "play_them_trump": {
+   "kind": "chatter",
+   "moment": "your opponent plays a trump",
+   "lines": [
+    {
+     "t": "A trump: it beats any plain suit.",
+     "s": "F97",
+     "l": "p. 340"
+    },
+    {
+     "t": "Trumps win plain suits, and I need not follow suit while the stock lasts.",
+     "s": "F97",
+     "l": "p. 340"
+    }
+   ]
+  },
+  "play_them_high": {
+   "kind": "chatter",
+   "moment": "your opponent plays a king or queen",
+   "lines": [
+    {
+     "t": "A high card, to keep the lead.",
+     "s": "F97",
+     "l": "p. 340"
+    },
+    {
+     "t": "The lead is worth keeping: it carries the right to declare.",
+     "s": "F97",
+     "l": "p. 340"
+    }
+   ]
+  },
+  "play_them_low": {
+   "kind": "chatter",
+   "moment": "your opponent plays a seven, eight, nine or jack",
+   "lines": [
+    {
+     "t": "A small card: nothing here worth winning.",
+     "s": "F97",
+     "l": "p. 340"
+    },
+    {
+     "t": "A small one. While the stock lasts, nobody need follow suit.",
+     "s": "F97",
+     "l": "p. 340"
+    },
+    {
+     "t": "Just a seven, to see what you hold.",
+     "s": "T"
+    }
+   ]
+  },
+  "play_you_brisque": {
+   "kind": "chatter",
+   "moment": "you play an ace or a ten",
+   "lines": [
+    {
+     "t": "A brisque on the table: ten to whoever wins it.",
+     "s": "F97",
+     "l": "p. 340"
+    },
+    {
+     "t": "You lead a brisque. I shall give that some thought.",
+     "s": "T"
+    }
+   ]
+  },
+  "play_you_trump": {
+   "kind": "chatter",
+   "moment": "you play a trump",
+   "lines": [
+    {
+     "t": "A trump: that wins unless I hold a higher one.",
+     "s": "F97",
+     "l": "p. 340"
+    },
+    {
+     "t": "Trumps already? Quite in order while the stock lasts.",
+     "s": "F97",
+     "l": "p. 340"
+    }
+   ]
+  },
+  "play_you_high": {
+   "kind": "chatter",
+   "moment": "you play a king or queen",
+   "lines": [
+    {
+     "t": "A high card: if it holds, the lead stays yours.",
+     "s": "F97",
+     "l": "p. 340"
+    },
+    {
+     "t": "Playing to keep the lead, I think.",
+     "s": "T"
+    }
+   ]
+  },
+  "play_you_low": {
+   "kind": "chatter",
+   "moment": "you play a small card",
+   "lines": [
+    {
+     "t": "A small card thrown: there is no need to follow suit yet.",
+     "s": "F97",
+     "l": "p. 340"
+    },
+    {
+     "t": "Prudent: nothing in this one worth giving away.",
+     "s": "T"
+    }
+   ]
+  },
+  "trick_them": {
+   "kind": "remark",
+   "moment": "your opponent takes a trick",
+   "lines": [
+    {
+     "t": "That trick is mine, and with it the right to declare.",
+     "s": "F97",
+     "l": "p. 340"
+    },
+    {
+     "t": "I take it and draw first: the winner always does.",
+     "s": "F97",
+     "l": "p. 340"
+    },
+    {
+     "t": "Mine, and the lead with it.",
+     "s": "F97",
+     "l": "p. 340"
+    }
+   ]
+  },
+  "trick_you": {
+   "kind": "remark",
+   "moment": "you take a trick",
+   "lines": [
+    {
+     "t": "Yours: declare before you draw, if you hold anything.",
+     "s": "F97",
+     "l": "p. 341"
+    },
+    {
+     "t": "That one is yours; the winner draws first.",
+     "s": "F97",
+     "l": "p. 340"
+    },
+    {
+     "t": "Well taken.",
+     "s": "T"
+    }
+   ]
+  },
+  "trick_rich_them": {
+   "kind": "remark",
+   "moment": "your opponent takes a trick worth twenty or more",
+   "lines": [
+    {
+     "t": "{points} in one trick: brisques are worth the taking.",
+     "s": "F97",
+     "l": "p. 340"
+    },
+    {
+     "t": "{points} to me there. The cards fell kindly.",
+     "s": "T"
+    }
+   ]
+  },
+  "trick_rich_you": {
+   "kind": "remark",
+   "moment": "you take a trick worth twenty or more",
+   "lines": [
+    {
+     "t": "{points} in that trick to you: brisques tell.",
+     "s": "F97",
+     "l": "p. 340"
+    },
+    {
+     "t": "{points} to you, and well earned.",
+     "s": "T"
+    }
+   ]
+  },
+  "streak_you": {
+   "kind": "chatter",
+   "moment": "you take three tricks running",
+   "lines": [
+    {
+     "t": "Three tricks running to you: the cards are with you.",
+     "s": "T"
+    },
+    {
+     "t": "You have the run of the cards just now.",
+     "s": "T"
+    }
+   ]
+  },
+  "streak_them": {
+   "kind": "chatter",
+   "moment": "your opponent takes three tricks running",
+   "lines": [
+    {
+     "t": "The run of the cards is mine for the moment. It will turn.",
+     "s": "T"
+    },
+    {
+     "t": "Three running: I cannot claim it as skill, only luck.",
+     "s": "T"
+    }
+   ]
+  },
+  "decl_them": {
+   "kind": "call",
+   "moment": "your opponent declares: the formula as the engine words it",
+   "lines": [
+    {
+     "t": "{formula}",
+     "s": "F97",
+     "l": "pp. 342-343"
+    }
+   ]
+  },
+  "decl_them_lucky": {
+   "kind": "remark",
+   "moment": "your opponent declares a sequence, double bezique or four aces",
+   "lines": [
+    {
+     "t": "The cards were kind to me there.",
+     "s": "T"
+    },
+    {
+     "t": "I could not have asked for a better draw.",
+     "s": "T"
+    }
+   ]
+  },
+  "decl_you_marriage": {
+   "kind": "remark",
+   "moment": "you declare a marriage in a plain suit",
+   "lines": [
+    {
+     "t": "A marriage: king and queen of one suit, twenty.",
+     "s": "F97",
+     "l": "p. 341"
+    },
+    {
+     "t": "Twenty for the marriage; it would be forty in trumps.",
+     "s": "F97",
+     "l": "p. 341"
+    }
+   ]
+  },
+  "decl_you_royal": {
+   "kind": "remark",
+   "moment": "you declare the royal marriage",
+   "lines": [
+    {
+     "t": "The royal marriage: king and queen of trumps, forty.",
+     "s": "F97",
+     "l": "p. 341"
+    },
+    {
+     "t": "Forty for the trump marriage, and the sequence may follow.",
+     "s": "F97",
+     "l": "p. 342"
+    }
+   ]
+  },
+  "decl_you_sequence": {
+   "kind": "remark",
+   "moment": "you declare the sequence in trumps",
+   "lines": [
+    {
+     "t": "Ace, ten, king, queen, jack of trumps: two-fifty!",
+     "s": "F97",
+     "l": "p. 341"
+    },
+    {
+     "t": "A sequence in trumps: two hundred and fifty. Splendid.",
+     "s": "F97",
+     "l": "p. 341"
+    }
+   ]
+  },
+  "decl_you_bezique": {
+   "kind": "remark",
+   "moment": "you declare bezique",
+   "lines": [
+    {
+     "t": "Queen of spades and jack of diamonds: forty for bezique.",
+     "s": "F97",
+     "l": "p. 341"
+    },
+    {
+     "t": "Bezique! A second pair would make it five hundred.",
+     "s": "F97",
+     "l": "p. 341"
+    }
+   ]
+  },
+  "decl_you_double": {
+   "kind": "remark",
+   "moment": "you declare double bezique",
+   "lines": [
+    {
+     "t": "Double bezique: five hundred, the great prize of the game.",
+     "s": "F97",
+     "l": "p. 341"
+    },
+    {
+     "t": "Both queens and both jacks: five hundred. My congratulations.",
+     "s": "F97",
+     "l": "p. 341"
+    }
+   ]
+  },
+  "decl_you_four": {
+   "kind": "remark",
+   "moment": "you declare four aces, kings, queens or jacks",
+   "lines": [
+    {
+     "t": "Four of a kind: aces a hundred, kings eighty, queens sixty, jacks forty.",
+     "s": "F97",
+     "l": "p. 341"
+    },
+    {
+     "t": "A fine four. Only one declaration to a trick, remember.",
+     "s": "F97",
+     "l": "p. 341"
+    }
+   ]
+  },
+  "dix_them": {
+   "kind": "remark",
+   "moment": "your opponent exchanges or shows the seven of trumps",
+   "lines": [
+    {
+     "t": "The seven of trumps, ten points, exchanged for the turn-up.",
+     "s": "F97",
+     "l": "p. 340"
+    },
+    {
+     "t": "Ten for the seven of trumps, once the trick is won.",
+     "s": "F97",
+     "l": "p. 340"
+    }
+   ]
+  },
+  "dix_you": {
+   "kind": "remark",
+   "moment": "you exchange or show the seven of trumps",
+   "lines": [
+    {
+     "t": "Ten for the seven of trumps: a fair exchange.",
+     "s": "F97",
+     "l": "p. 340"
+    },
+    {
+     "t": "The seven goes for the turn-up, and ten to you. Well spotted.",
+     "s": "F97",
+     "l": "p. 340"
+    }
+   ]
+  },
+  "stock_low": {
+   "kind": "remark",
+   "moment": "the stock is running low",
+   "lines": [
+    {
+     "t": "The stock runs low; only a few draws are left.",
+     "s": "F97",
+     "l": "p. 343"
+    },
+    {
+     "t": "Count the stock if you wish: a few tricks yet before it is spent.",
+     "s": "F97",
+     "l": "p. 343"
+    }
+   ]
+  },
+  "stock_out": {
+   "kind": "call",
+   "moment": "the stock is exhausted",
+   "lines": [
+    {
+     "t": "The stock is spent: the cards laid down go back into the hands.",
+     "s": "F97",
+     "l": "p. 343"
+    },
+    {
+     "t": "No more declarations now that the stock is gone.",
+     "s": "F97",
+     "l": "p. 341"
+    }
+   ]
+  },
+  "stock_last_you": {
+   "kind": "remark",
+   "moment": "you take the last card of the stock",
+   "lines": [
+    {
+     "t": "You take the last card, and the turn-up comes to me.",
+     "s": "F97",
+     "l": "p. 343"
+    }
+   ]
+  },
+  "stock_last_them": {
+   "kind": "remark",
+   "moment": "your opponent takes the last card of the stock",
+   "lines": [
+    {
+     "t": "I take the last card, and the turn-up is yours.",
+     "s": "F97",
+     "l": "p. 343"
+    }
+   ]
+  },
+  "last_eight": {
+   "kind": "remark",
+   "moment": "the last eight tricks begin",
+   "lines": [
+    {
+     "t": "Eight tricks left, and each must follow suit and win if it can.",
+     "s": "F97",
+     "l": "p. 343"
+    },
+    {
+     "t": "The last eight tricks: brisques still count ten each.",
+     "s": "C96"
+    },
+    {
+     "t": "The last trick of all is worth ten.",
+     "s": "F97",
+     "l": "p. 343"
+    }
+   ]
+  },
+  "last_trick_you": {
+   "kind": "remark",
+   "moment": "you take the last trick of all",
+   "lines": [
+    {
+     "t": "The last trick of all, and ten for it, to you.",
+     "s": "F97",
+     "l": "p. 343"
+    }
+   ]
+  },
+  "last_trick_them": {
+   "kind": "remark",
+   "moment": "your opponent takes the last trick of all",
+   "lines": [
+    {
+     "t": "The last trick of all is mine: ten for it.",
+     "s": "F97",
+     "l": "p. 343"
+    }
+   ]
+  },
+  "hand_ahead_them": {
+   "kind": "remark",
+   "moment": "the hand ends, your opponent ahead in the game",
+   "lines": [
+    {
+     "t": "That is the hand. I lead by {gap}, but a thousand is a long road.",
+     "s": "C96"
+    },
+    {
+     "t": "The cards have run my way this hand, and that is all it is.",
+     "s": "T"
+    }
+   ]
+  },
+  "hand_ahead_you": {
+   "kind": "remark",
+   "moment": "the hand ends, you ahead in the game",
+   "lines": [
+    {
+     "t": "That is the hand. You lead by {gap}, and the thousand is near.",
+     "s": "C96"
+    },
+    {
+     "t": "The cards are with you; I am trying to turn them.",
+     "s": "T"
+    }
+   ]
+  },
+  "hand_level": {
+   "kind": "remark",
+   "moment": "the hand ends, the game level",
+   "lines": [
+    {
+     "t": "Level at the end of the hand. A thousand is the game.",
+     "s": "C96"
+    },
+    {
+     "t": "Nothing between us yet.",
+     "s": "T"
+    }
+   ]
+  },
+  "pace": {
+   "kind": "chatter",
+   "moment": "a new hand, some way into the game",
+   "lines": [
+    {
+     "t": "They called bezique the slowest of slow games. We shall see.",
+     "s": "WP70"
+    },
+    {
+     "t": "No hurry: the cards will wait.",
+     "s": "T"
+    }
+   ]
+  },
+  "double_you_threatened": {
+   "kind": "remark",
+   "moment": "the hand ends, and you could still lose a double game",
+   "lines": [
+    {
+     "t": "Mind the double: a thousand before you reach five hundred counts twice.",
+     "s": "F97",
+     "l": "p. 339"
+    },
+    {
+     "t": "Five hundred is your safe harbour: reach it and the game cannot count double.",
+     "s": "F97",
+     "l": "p. 339"
+    }
+   ]
+  },
+  "double_them_threatened": {
+   "kind": "remark",
+   "moment": "the hand ends, and your opponent could still lose a double game",
+   "lines": [
+    {
+     "t": "I must reach five hundred, or the game counts double against me.",
+     "s": "F97",
+     "l": "p. 339"
+    },
+    {
+     "t": "The double is in the air: I need five hundred to be safe.",
+     "s": "F97",
+     "l": "p. 339"
+    }
+   ]
+  },
+  "double_off_you": {
+   "kind": "remark",
+   "moment": "you pass five hundred and the double is off",
+   "lines": [
+    {
+     "t": "Past five hundred: the double game is off the table for you.",
+     "s": "F97",
+     "l": "p. 339"
+    }
+   ]
+  },
+  "double_off_them": {
+   "kind": "remark",
+   "moment": "your opponent passes five hundred and the double is off",
+   "lines": [
+    {
+     "t": "Five hundred reached at last: I cannot be doubled now.",
+     "s": "F97",
+     "l": "p. 339"
+    }
+   ]
+  },
+  "win_you": {
+   "kind": "call",
+   "moment": "you win the game",
+   "lines": [
+    {
+     "t": "A thousand to you: congratulations, well played.",
+     "s": "C96"
+    },
+    {
+     "t": "The game is yours. Shall we have another?",
+     "s": "C96"
+    },
+    {
+     "t": "The cards ran for you tonight, and you used them well.",
+     "s": "T"
+    }
+   ]
+  },
+  "win_you_double": {
+   "kind": "call",
+   "moment": "you win a double game",
+   "lines": [
+    {
+     "t": "A thousand before I reached five hundred: a double game to you. Well played.",
+     "s": "F97",
+     "l": "p. 339"
+    }
+   ]
+  },
+  "win_them": {
+   "kind": "call",
+   "moment": "your opponent wins the game",
+   "lines": [
+    {
+     "t": "The game falls to me this time; the cards helped. Another?",
+     "s": "T"
+    },
+    {
+     "t": "A thousand to me, thanks to the run of the cards. Thank you for the game.",
+     "s": "T"
+    },
+    {
+     "t": "It was close in places. Shall we play again?",
+     "s": "T"
+    }
+   ]
+  },
+  "win_them_double": {
+   "kind": "call",
+   "moment": "your opponent wins a double game",
+   "lines": [
+    {
+     "t": "A thousand while you were short of five hundred: a double game. The cards were unkind to you.",
+     "s": "F97",
+     "l": "p. 339"
+    }
+   ]
+  },
+  "undo": {
+   "kind": "call",
+   "moment": "you take back a move",
+   "lines": [
+    {
+     "t": "Take it back, by all means.",
+     "s": "T"
+    },
+    {
+     "t": "Of course: try another card.",
+     "s": "T"
+    },
+    {
+     "t": "Nothing is lost between friends.",
+     "s": "T"
+    }
+   ]
+  }
+ }
+}

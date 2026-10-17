@@ -75,3 +75,7 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: var(--bg); f
   .ui-chips { justify-content: flex-start; }
   .ui-panel, .ui-bar { max-width: 344px; }
 }
+
+/* Table talk (src/speaker.js): the opponent's line, by its hand. */
+.talk-bubble { position: fixed; z-index: 6; max-width: min(320px, 70vw); box-sizing: border-box; padding: 6px 12px; background: var(--panel); border: 1px solid var(--them); border-radius: 12px; box-shadow: var(--shadow); font-size: 15px; line-height: 1.3; pointer-events: none; opacity: 0; transition: opacity 0.35s; }
+.talk-bubble.talk-show { opacity: 1; }

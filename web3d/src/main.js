@@ -13,10 +13,12 @@ import { chooseSurface } from "../../kit/js/surfaces.js";
 import { choreograph, initialPlacement, opening } from "./choreography.js";
 import { loadEngine } from "./engine.js";
 import { fromState } from "./model.js";
+import { createBubble, createSpeaker } from "./speaker.js";
+import { createTalk } from "./talk.js";
 import { createUi } from "./ui.js";
 import { EYE, EYE_PORTRAIT, ZONES, ZONES_PORTRAIT } from "./zones.js";
 
-/* global WASM_BASE64, ART */
+/* global WASM_BASE64, ART, WORDS */
 
 const params = new URL(window.location.href).searchParams;
 const SITTING = "bezique.sitting.v1";
@@ -53,6 +55,9 @@ async function main() {
   if (params.has("level")) prefs.level = Math.min(5, Math.max(1, Number(params.get("level")) || 3));
   if (params.has("hints")) prefs.hints = params.get("hints") !== "0";
   const savePrefs = () => store.set(PREFS, prefs);
+  // Table talk: quiet | normal | chatty (docs/PHRASES.md).
+  const talkMode = params.get("talk") ?? prefs.talk ?? WORDS.default_mode;
+  prefs.talk = Object.keys(WORDS.modes).includes(talkMode) ? talkMode : WORDS.default_mode;
 
   // ---- the scene, the cards -------------------------------------------------
   const canvas = document.getElementById("stage");
@@ -134,7 +139,28 @@ async function main() {
     director.redecorate();
   }
 
+  // ---- table talk: the opponent's lines, one at a time, in a bubble by its hand
+  const bubble = createBubble({ root: document.getElementById("overlay"), edge: () => director.handEdge("them") });
+  const speaker = createSpeaker({
+    clock: () => director.clock(),
+    later: (ms, fn, kind) => director.at(ms, fn, kind),
+    show: (line) => bubble.show(line),
+    hide: () => bubble.hide(),
+    pace: () => Math.min(1.5, Math.max(0.35, 1 / (SPEEDS[params.get("speed")] ?? 1))),
+  });
+  const talk = createTalk({ words: WORDS, rng: Math.random, say: (line) => speaker.offer(line), mode: prefs.talk });
+  const setTalk = (mode) => {
+    talk.setMode(mode);
+    prefs.talk = mode;
+    savePrefs();
+  };
+  const hushTalk = () => {
+    speaker.stop();
+    director.drop("talk");
+  };
+
   function applyEvent(e) {
+    talk.onEvent(e, { totals: shown.totals });
     ui.say(e.text);
     if (e.kind === "took_trick" || e.kind === "declared") {
       shown.hand[e.who] += e.points;
@@ -179,6 +205,7 @@ async function main() {
     savePrefs();
     seed = Math.floor(params.has("seed") && !S ? Number(params.get("seed")) : Math.random() * 2 ** 32);
     director.cancelTimed();
+    hushTalk();
     engine.new({ level, seed });
     if (prefs.hints) engine.send("set hints on");
     present(engine.state(), "deal");
@@ -228,7 +255,9 @@ async function main() {
       const r = engine.send("undo");
       if (r.ok) {
         director.cancelTimed();
+        hushTalk();
         present(r.state, "direct");
+        talk.onEvent({ kind: "undo" });
         persist();
       }
     } else if (name === "hints") {
@@ -278,7 +307,7 @@ async function main() {
   });
 
   // The test hook: what the browser checks read and drive.
-  window.bezique3d = { state: () => raw, act, onAct, director, stage, ui, engine, waiting: () => waiting, screenPoint: (id) => director.screenPoint(S.model && placementCode(id)) };
+  window.bezique3d = { talk, setTalk, speaker, state: () => raw, act, onAct, director, stage, ui, engine, waiting: () => waiting, screenPoint: (id) => director.screenPoint(S.model && placementCode(id)) };
   function placementCode(id) {
     return director.placement().find((m) => m.cardId === id)?.code;
   }

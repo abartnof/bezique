@@ -11,3 +11,8 @@ placeholder = "/*ART*/"
 path = "art/cards"
 kind = "images"
 count = 33
+
+[[assets]]
+placeholder = "/*WORDS*/"
+path = "words.json"
+kind = "json"
