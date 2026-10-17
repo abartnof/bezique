@@ -17,7 +17,7 @@ export const EYE = Object.freeze({
   target: TARGET,
   fov: 34,
   widthTan: 0.42,
-  reach: Object.freeze({ up: 0.31, foot: 0.315 }),
+  reach: Object.freeze({ up: 0.27, foot: 0.38 }),
 });
 const TARGET_PORTRAIT = Object.freeze([0, 0, -19]);
 export const EYE_PORTRAIT = Object.freeze({
@@ -50,14 +50,14 @@ function arrangement({ eye, yours, theirs, yourTable, theirTable, theirKnown, tr
 
 export const ZONES = arrangement({
   eye: EYE,
-  yours: hand([0, 2.5, 13], EYE, { fan: true, radius: 40, spacing: 4.4, width: 62 }),
-  theirs: hand([0, 7, -42], EYE, { fan: true, radius: 40, spacing: 1.4, width: 30 }),
+  yours: hand([0, 2.5, 13], EYE, { fan: true, radius: 40, spacing: 5.6, width: 62 }),
+  theirs: hand([0, 5, -46], EYE, { fan: true, radius: 40, spacing: 1.4, width: 30 }),
   yourTable: row(-1, 64, 7),
-  theirTable: row(-27, 64, 7),
-  theirKnown: row(-36, 64, 7),
-  trick: { x: 0, z: -15, gap: 1.2 },
-  stock: { x: -42, z: -14 },
-  won: { x: 42, you: 4, them: -32 },
+  theirTable: row(-25.5, 64, 7),
+  theirKnown: row(-35, 64, 7),
+  trick: { x: 0, z: -14.5, gap: 1.2 },
+  stock: { x: -40, z: -14 },
+  won: { x: 40, you: 4, them: -30 },
   cut: { you: { x: -28, z: -14 }, them: { x: -28, z: -24 } },
 });
 
