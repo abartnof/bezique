@@ -14,6 +14,10 @@ A hint answers two questions, in two layers:
   source. The rule is shown quieter than the instruction; a "Why?" opens the
   source line.
 
+Every hint is two sentences: **do** says why this card now (the position's
+own facts), and **rule** states what generalises, so the same situation next
+time needs no hint. Note-keeping ("count the cards") is not a reason.
+
 The hint itself is the top rung's choice, unchanged. The engine does not
 change what it advises; after the choice it classifies it against the other
 legal moves with cheap deterministic tests (`hints::classify`) and sends a
