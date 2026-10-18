@@ -3,7 +3,7 @@
 // doubles; the clock is the director's own manual one.
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { PerspectiveCamera, Quaternion, Vector3 } from "three";
+import { BoxGeometry, Mesh, PerspectiveCamera, Quaternion, Vector3 } from "three";
 import { createDirector } from "../js/director.js";
 
 function setup({ cards = 4, zones = null, view = {}, defaultCards = false } = {}) {
@@ -117,4 +117,24 @@ test("handEdge of an empty hand with no zones anywhere says what is missing", ()
   const { director } = setup();
   director.restart({ cards: [] });
   assert.throws(() => director.handEdge("you"), /zones/);
+});
+
+test("pick names the placement of the mesh hit, whatever order the placement is kept in", () => {
+  const camera = new PerspectiveCamera(30, 1, 1, 1000);
+  camera.position.set(0, 0, 100);
+  camera.lookAt(0, 0, 0);
+  camera.updateMatrixWorld();
+  const stage = { render() {}, camera, renderer: { domElement: { getBoundingClientRect: () => ({ left: 0, top: 0, width: 200, height: 200 }) } } };
+  const deck = { card: () => new Mesh(new BoxGeometry(4, 4, 1)), reveal() {}, decorate() {} };
+  // Placement in reverse of mesh order, as a choreography may keep it.
+  const place = (state) => state.cards.map((code, id) => ({ id, code, zone: "your-hand", pose: { position: new Vector3((id - 1) * 10, 0, 0), quaternion: new Quaternion() } })).reverse();
+  const choreography = { opening: () => ({ cards: [] }), initialPlacement: place, choreograph: (p, n) => ({ placement: place(n), motions: [], beats: {} }) };
+  const director = createDirector({ stage, deck, view: () => ({}), choreography, cards: 3, manual: true });
+  director.restart({ cards: ["AS", "KH", "QD"] });
+  for (const mesh of director.meshes) mesh.updateMatrixWorld(true);
+  // The middle mesh is id 1 at x = 0: the screen's centre.
+  assert.equal(director.pick(100, 100).code, "KH");
+  // QD is at x = 10: 10 / (100 * tan 15 degrees) of the half-width right of centre.
+  assert.equal(director.pick(137, 100).code, "QD");
+  assert.equal(director.pick(63, 100).code, "AS");
 });

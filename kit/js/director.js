@@ -203,7 +203,8 @@ export function createDirector({ stage, deck, view, decorate, rested, choreograp
     pointer.set(((clientX - rect.left) / rect.width) * 2 - 1, -((clientY - rect.top) / rect.height) * 2 + 1);
     raycaster.setFromCamera(pointer, stage.camera);
     const [hit] = raycaster.intersectObjects(meshes, false);
-    return hit ? placement[hit.object.userData.id] : null;
+    // By id, not by position: a placement is not kept in mesh order.
+    return hit ? placement.find((m) => m.id === hit.object.userData.id) ?? null : null;
   }
 
   // Where a point of the table is on the screen.
