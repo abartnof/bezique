@@ -23,6 +23,27 @@ fn tally(seeds: std::ops::Range<u64>, tally: &mut BTreeMap<&'static str, usize>)
                 hints += 1;
                 assert!(!text.is_empty());
                 assert!(KEYS.contains(&reason.key), "unlisted key {}", reason.key);
+                let card = |name: &str| {
+                    reason.params.iter().find_map(|(k, p)| match p {
+                        Param::Card(c) if *k == name => Some(c.clone()),
+                        _ => None,
+                    })
+                };
+                match reason.key {
+                    // The guard names a card other than the one it plays, and the
+                    // master lead is an ace or ten with no higher card of its suit
+                    // named as the card played.
+                    "nothing_decisive" => assert_ne!(card("card"), card("kept")),
+                    "lead_master_brisque" => {
+                        let c = card("card").unwrap();
+                        assert!(c.starts_with('T') || c.starts_with('A'), "{c}");
+                    }
+                    "take_sparing_pieces" => assert_ne!(card("card"), card("kept")),
+                    "solved_endgame" => {
+                        assert!(reason.params.iter().any(|(k, _)| *k == "count"));
+                    }
+                    _ => {}
+                }
                 for (_, p) in &reason.params {
                     if let Param::Card(c) = p {
                         assert!(c.len() == 2, "{c}");
@@ -57,10 +78,12 @@ fn every_hint_is_classified_and_legal() {
     assert!(hints > 300, "{hints}");
     let generic = counts.get("generic").copied().unwrap_or(0);
     println!("{hints} hints: {counts:?}");
+    // About 1 in 65 in the 10-seed run; the old catch-alls are gone.
     assert!(
-        generic * 10 < hints,
+        generic * 30 < hints,
         "too many unclassified: {generic} of {hints}"
     );
+    assert!(!counts.contains_key("lead_cheapest"), "{counts:?}");
     // The common cases all occur.
     for key in [
         "take_brisque",

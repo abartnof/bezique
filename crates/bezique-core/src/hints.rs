@@ -51,7 +51,7 @@ impl Reason {
 }
 
 /// Every key `classify` can return, for the documentation and the tests.
-pub const KEYS: [&str; 28] = [
+pub const KEYS: [&str; 31] = [
     "declare_now",
     "score_carried",
     "single_before_double",
@@ -63,11 +63,13 @@ pub const KEYS: [&str; 28] = [
     "take_to_declare",
     "win_last_stock_trick",
     "take_with_lowest_winner",
+    "take_sparing_pieces",
     "let_brisque_go",
     "throw_lowest",
     "lead_low_nonbrisque",
     "play_declared_card",
-    "lead_cheapest",
+    "lead_master_brisque",
+    "nothing_decisive",
     "keep_for_bezique",
     "keep_marriage",
     "keep_sequence",
@@ -79,6 +81,7 @@ pub const KEYS: [&str; 28] = [
     "last_eight_lead_low",
     "last_eight_lead_ace",
     "draw_out_trump",
+    "solved_endgame",
     "generic",
 ];
 
@@ -238,6 +241,34 @@ fn endgame_cheapest(view: &View, all: &[Card], card: Card, key: &'static str) ->
     })
 }
 
+/// The last eight tricks, where the opponent's hand is exactly the cards not
+/// yet seen: the top rung plays them as an open-hand puzzle, so when no
+/// simpler case fits and the exact solution is the card chosen, say so.
+fn solved_endgame(view: &View, card: Card) -> Reason {
+    let theirs = view.theirs.cards().union(view.unseen());
+    match crate::agents::solve(view) {
+        Some(best) if best.card_type() == card.card_type() => Reason::new("solved_endgame")
+            .card("card", card)
+            .int("count", i64::from(theirs.len())),
+        _ => Reason::new("generic"),
+    }
+}
+
+/// A card worth holding on to: a trump, an ace or a ten, or one a
+/// combination in hand or in prospect still needs.
+fn valuable(view: &View, c: Card) -> bool {
+    c.suit() == view.trump || c.is_brisque() || work(view, c).is_some()
+}
+
+/// The card to name when nothing separates the plays: the dearest of the
+/// other legal cards that is worth keeping.
+fn dearest_kept(view: &View, all: &[Card], card: Card) -> Option<Card> {
+    all.iter()
+        .copied()
+        .filter(|c| c.card_type() != card.card_type() && valuable(view, *c))
+        .max_by_key(|&c| (cost(view.trump, c), c.0))
+}
+
 fn classify_play(view: &View, legal: &[Action], card: Card) -> Reason {
     let trump = view.trump;
     let all = plays(legal);
@@ -257,7 +288,8 @@ fn classify_play(view: &View, legal: &[Action], card: Card) -> Reason {
             }
             // No card wins: the choice is what to give up, and what to keep.
             return endgame_cheapest(view, &all, card, "last_eight_give_up")
-                .map_or_else(|| Reason::new("generic"), |r| r.card("led", led));
+                .map(|r| r.card("led", led))
+                .unwrap_or_else(|| solved_endgame(view, card));
         }
         if card.rank() == Rank::ACE && card.suit() != trump {
             return Reason::new("last_eight_lead_ace").card("card", card);
@@ -284,7 +316,7 @@ fn classify_play(view: &View, legal: &[Action], card: Card) -> Reason {
                 .word("kind", kind);
         }
         return endgame_cheapest(view, &all, card, "last_eight_lead_low")
-            .unwrap_or_else(|| Reason::new("generic"));
+            .unwrap_or_else(|| solved_endgame(view, card));
     }
     if let Some(led) = led {
         let winners: Vec<Card> = all
@@ -324,6 +356,26 @@ fn classify_play(view: &View, legal: &[Action], card: Card) -> Reason {
                     .card("card", card)
                     .card("led", led);
             }
+            // A cheaper winner exists, but every one is a piece of a
+            // combination: the card played is the cheapest that is free.
+            let cheaper: Vec<Card> = winners
+                .iter()
+                .copied()
+                .filter(|&w| cost(w) < cost(card))
+                .collect();
+            if let Some(kept) = cheaper
+                .iter()
+                .copied()
+                .filter(|&w| work(view, w).is_some())
+                .max_by_key(|&w| (cost(w), w.0))
+            {
+                if cheaper.iter().all(|&w| work(view, w).is_some()) {
+                    return Reason::new("take_sparing_pieces")
+                        .card("card", card)
+                        .card("led", led)
+                        .card("kept", kept);
+                }
+            }
             return Reason::new("generic");
         }
         if led.is_brisque() && !winners.is_empty() {
@@ -344,18 +396,14 @@ fn classify_play(view: &View, legal: &[Action], card: Card) -> Reason {
     if view.mine.shown.contains(card) && work(view, card).is_none() {
         return Reason::new("play_declared_card").card("card", card);
     }
-    let lowest_plain = all
-        .iter()
-        .filter(|c| c.suit() != trump)
-        .map(|c| c.rank())
-        .min();
     let spared: Option<Card> = all
         .iter()
         .copied()
         .filter(|c| c.is_brisque() && c.card_type() != card.card_type())
         .max_by_key(|c| (c.rank(), c.0));
     if !card.is_brisque() {
-        if card.suit() == trump || Some(card.rank()) == lowest_plain {
+        // Cheap by the order of play: no legal card costs less.
+        if all.iter().all(|&c| cost(trump, c) >= cost(trump, card)) {
             let key = if led.is_some() {
                 "throw_lowest"
             } else {
@@ -367,7 +415,35 @@ fn classify_play(view: &View, legal: &[Action], card: Card) -> Reason {
                 None => r,
             };
         }
-        return Reason::new("lead_cheapest").card("card", card);
+        // No clear case: a cheap card, and the dear one to hold on to.
+        if !valuable(view, card) {
+            if let Some(kept) = dearest_kept(view, &all, card) {
+                return Reason::new("nothing_decisive")
+                    .card("card", card)
+                    .card("kept", kept);
+            }
+        }
+        return Reason::new("generic");
+    }
+    if led.is_none() && card.suit() != trump {
+        // An ace or ten no higher card of its suit can beat, bar a trump.
+        let out = view.unseen().union(view.theirs.cards());
+        if !out
+            .cards()
+            .any(|c| c.suit() == card.suit() && c.rank() > card.rank())
+        {
+            let r = Reason::new("lead_master_brisque").card("card", card);
+            return match view
+                .mine
+                .cards()
+                .cards()
+                .filter(|c| c.suit() == card.suit() && c.rank() > card.rank())
+                .max_by_key(|c| (c.rank(), c.0))
+            {
+                Some(k) => r.card("kept", k),
+                None => r,
+            };
+        }
     }
     Reason::new("generic")
 }
