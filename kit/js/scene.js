@@ -143,7 +143,9 @@ export function createScene(
   surface.repeat.set(WIDE / TILE_CM, DEEP / TILE_CM);
   const table = new Mesh(new PlaneGeometry(WIDE, DEEP), new MeshBasicMaterial({ map: surface }));
   table.rotation.x = -Math.PI / 2;
-  table.position.z = MIDDLE;
+  // A hair below the plane the cards' undersides rest in: the ink line's hull
+  // lies in that plane, and at the same depth it flickered against the table.
+  table.position.set(0, -0.012, MIDDLE);
   scene.add(table);
   const shade = new Mesh(new PlaneGeometry(WIDE, DEEP), new ShadowMaterial({ color: "#14161a", opacity: 0.3 }));
   shade.rotation.x = -Math.PI / 2;
