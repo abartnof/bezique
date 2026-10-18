@@ -57,7 +57,7 @@ export function rowOffsets(codes, zone) {
   return at.map((v) => v - mid);
 }
 
-function lyingRow(cards, zone, name) {
+function lyingRow(cards, zone, name, stack) {
   const offsets = rowOffsets(cards.map((c) => c.code), zone);
   return cards.map((c, i) => ({
     zone: name,
@@ -65,7 +65,7 @@ function lyingRow(cards, zone, name) {
     code: c.code,
     cardId: c.id,
     faceUp: true,
-    pose: lying({ x: zone.x + offsets[i], z: zone.z, height: i * 0.004, faceUp: true }),
+    pose: lying({ x: zone.x + offsets[i], z: zone.z, height: i * stack, faceUp: true }),
   }));
 }
 
@@ -108,10 +108,10 @@ export function layout(model, view = {}) {
   const sorted = (cards) => [...cards].sort(byHand(model.trump));
 
   slots.push(...yourHand(sorted(model.hand), view, Z));
-  slots.push(...lyingRow(sorted(model.table), Z.yourTable, "your-table"));
+  slots.push(...lyingRow(sorted(model.table), Z.yourTable, "your-table", Z.stack));
   slots.push(...theirHand(model.hidden, Z));
-  slots.push(...lyingRow(sorted(model.known.map((code) => ({ code }))), Z.theirKnown, "their-known"));
-  slots.push(...lyingRow(sorted(model.theirTable), Z.theirTable, "their-table"));
+  slots.push(...lyingRow(sorted(model.known.map((code) => ({ code }))), Z.theirKnown, "their-known", Z.stack));
+  slots.push(...lyingRow(sorted(model.theirTable), Z.theirTable, "their-table", Z.stack));
 
   // The open trick: the lead on the left, the answer beside it.
   model.trick.forEach((t, i) => {
