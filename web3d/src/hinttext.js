@@ -51,6 +51,11 @@ export const REASONS = {
     rule: "When you mean to win a trick, win it with the lowest card that does, and keep the stronger cards for later tricks.",
     src: mine("A reading of the maxims; the books give no rule for it.", CADY, "p. 22"),
   },
+  take_sparing_pieces: {
+    do: (p, n) => `Win the ${n(p.led)} with your ${n(p.card)}: a cheaper winner, your ${n(p.kept)}, is part of a combination you hold, so spend the free card.`,
+    rule: "To win a trick, spend the cheapest winner that belongs to no combination, and keep the kings and queens you mean to marry.",
+    src: mine("The project's generalisation of a period maxim: win with the ace and save the king to marry (The American Hoyle, 1864, as recorded in docs/LITERATURE.md).", "Dick & Fitzgerald, The American Hoyle (1864)", "Bezique, pp. 137-145"),
+  },
   let_brisque_go: {
     do: (p, n) => `Let the ${n(p.led)} go and play your ${n(p.card)}: winning it would cost your ${n(p.winner)}, worth more than the 10 points.`,
     rule: "Do not spend a trump or a strong card on a brisque unless the 10 points repay it.",
@@ -71,10 +76,16 @@ export const REASONS = {
     rule: "Play out cards you have already declared: they are spent, and they show your opponent nothing new.",
     src: book(CADY, "p. 22", "As a rule play your declared cards, which also lets you form the combination again."),
   },
-  lead_cheapest: {
-    do: (p, n) => `Lead the ${n(p.card)}: of the cards you hold, it is the one you will miss least.`,
-    rule: "When no card is clearly worthless, lead the one least likely to score and keep the cards that still can.",
-    src: mine("A reading of the maxims for a hand with no clearly worthless card.", CADY, "p. 22"),
+  lead_master_brisque: {
+    do: (p, n) => `Lead the ${n(p.card)}: no higher card of its suit is left out, so only a trump can take it${p.kept ? `, and your ${n(p.kept)} stays to win a later trick` : ""}.`,
+    rule: "Lead an ace or ten once nothing higher of its suit is left to beat it: only a trump can take it, and the 10 it carries is yours.",
+    src: book(FOSTER, "pp. 366-368", "The lead is a disadvantage unless you can declare, a brisque is in the trick, or you can bring home a plain-suit ten (Binocle chapter, as recorded in docs/LITERATURE.md)."),
+    also: book(CADY, "p. 23", "Do not lead a ten if you can avoid it, but keep it to win tricks with; the exception is a ten that nothing but a trump can beat."),
+  },
+  nothing_decisive: {
+    do: (p, n) => `Nothing clearly decides this one: play the ${n(p.card)}, a card you can spare, and whatever you do keep your ${n(p.kept)}.`,
+    rule: "When no play stands out, spend a low card that scores nothing, and never a trump, an ace, a ten or a card of a combination you are building.",
+    src: mine("Common wisdom, not a book's rule: Cady says no general rule for discarding can be laid down, since it depends on the hand and what has been played; the older books agree on what to part with first (sevens, eights, nines, plain jacks).", CADY, "p. 22"),
   },
   keep_for_bezique: {
     do: (p, n) => `Play the ${n(p.card)} and keep the ${n(p.kept)}: it is half of a bezique, which scores 40.`,
@@ -160,6 +171,12 @@ export const REASONS = {
     do: (p, n) => `Lead the ${n(p.card)}: only a trump can beat an ace of a plain suit, so it wins or draws a trump out.`,
     rule: "In the last eight tricks lead a high plain-suit card: it wins, or it draws a trump from your opponent.",
     src: book(CADY, "p. 23", "Play a high card of a plain suit to force a trump; p. 29: keep the aces for the last eight tricks."),
+  },
+  solved_endgame: {
+    do: (p, n) => `The last eight tricks are open: your opponent holds exactly the ${p.count} cards you cannot see, and played out against them the ${n(p.card)} scores best.`,
+    rule: "In the last eight tricks your opponent's hand is exactly the cards not yet played and not yours: lay them out and play the hand through before you lead.",
+    src: book(CADY, "p. 23", "The play of the last nine tricks is often of the greatest importance: bear in mind which trump and bezique cards are in."),
+    also: book(FOSTER, "pp. 366-368", "Study the exposed cards before the last trick (Binocle chapter, as recorded in docs/LITERATURE.md)."),
   },
   draw_out_trump: {
     do: (p, n) => `Lead the ${n(p.card)}: you hold ${p.trumps} trumps, so lead one to take theirs out.`,

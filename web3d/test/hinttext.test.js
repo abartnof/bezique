@@ -24,7 +24,7 @@ test("a hint names the cards and gives a rule with a source", () => {
 });
 
 test("every reason words itself from its parameters, with no holes", () => {
-  const params = { card: "7D", led: "TC", kept: "QS", partner: "KH", spared: "AH", winner: "AC", turn_up: "KD", points: 40, trumps: 3, meld: "royal_marriage", suit: "hearts" };
+  const params = { card: "7D", led: "TC", kept: "QS", partner: "KH", spared: "AH", winner: "AC", turn_up: "KD", points: 40, trumps: 3, count: 4, meld: "royal_marriage", suit: "hearts" };
   for (const key of Object.keys(REASONS)) {
     const v = hintView(hint(key, params));
     assert.ok(v.do && v.rule && v.why, key);
@@ -39,6 +39,28 @@ test("the project's own readings are marked as such", () => {
   assert.equal(v.interp, true);
   assert.match(v.why, /project's reading/);
   assert.match(sourceLine(REASONS.throw_lowest.src), /^Cady/);
+});
+
+test("a guard hint names what to keep, and says plainly that it is common wisdom", () => {
+  const v = hintView(hint("nothing_decisive", { card: "9H", kept: "AS" }));
+  assert.match(v.do, /nine of hearts/);
+  assert.match(v.do, /keep your ace of spades/);
+  assert.match(v.rule, /never a trump, an ace, a ten/);
+  assert.equal(v.interp, true);
+  assert.match(v.why, /Common wisdom/);
+});
+
+test("the situations that had no rule now have one that names their facts", () => {
+  const master = hintView(hint("lead_master_brisque", { card: "TC", kept: "AC" }));
+  assert.match(master.do, /ten of clubs/);
+  assert.match(master.do, /ace of clubs stays/);
+  assert.match(hintView(hint("lead_master_brisque", { card: "TC" })).do, /only a trump can take it\.$/);
+  const spare = hintView(hint("take_sparing_pieces", { card: "TC", led: "9C", kept: "QC" }));
+  assert.match(spare.do, /your queen of clubs, is part of a combination/);
+  const solved = hintView(hint("solved_endgame", { card: "8C", count: 3 }));
+  assert.match(solved.do, /exactly the 3 cards/);
+  assert.match(solved.rule, /last eight tricks/);
+  assert.equal(REASONS.lead_cheapest, undefined);
 });
 
 test("fact and rule layers switch separately", () => {

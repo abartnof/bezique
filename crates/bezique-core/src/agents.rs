@@ -261,7 +261,7 @@ pub fn describe(level: u8) -> &'static str {
 /// player who has counted: its own, and every card not yet seen. `None` if
 /// the count does not come out, as in a position arranged part-way through
 /// a hand, whose earlier tricks the view does not have.
-fn solve(view: &View) -> Option<Card> {
+pub(crate) fn solve(view: &View) -> Option<Card> {
     let theirs = view.theirs.cards().union(view.unseen());
     let answering = u32::from(view.led.is_some());
     if theirs.len() + answering != view.mine.cards().len() {
