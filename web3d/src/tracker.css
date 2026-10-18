@@ -1,7 +1,7 @@
 /* The "cards out" panel (trackerview.js): a collapsible card in the right margin. */
-.tracker-root { position: absolute; top: 8px; right: 8px; width: 290px; pointer-events: none; z-index: 3; }
+.tracker-root { width: 100%; max-width: 344px; pointer-events: none; }
 .tracker-root:empty { display: none; }
-.tracker-card { pointer-events: auto; background: #1b1f24; color: #f2f4f6; border-radius: 16px; padding: 4px 12px 8px; box-shadow: 0 2px 10px rgba(20, 30, 50, 0.3); font: 13px/1.3 system-ui, sans-serif; }
+.tracker-card { pointer-events: auto; background: #1b1f24; color: #f2f4f6; border-radius: 16px; padding: 4px 12px 8px; box-shadow: 0 2px 10px rgba(20, 30, 50, 0.3); font: 13px/1.3 var(--font); }
 .tracker-head { display: flex; width: 100%; align-items: center; justify-content: space-between; background: none; border: 0; color: inherit; font: inherit; padding: 6px 0; cursor: pointer; min-height: 36px; }
 .tracker-title { font-size: 15px; font-weight: 600; }
 .tracker-chev { display: inline-flex; transition: transform 0.2s; }

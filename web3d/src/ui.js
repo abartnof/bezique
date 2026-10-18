@@ -22,7 +22,7 @@ export function createUi(root, { onAct }) {
   const hudSlot = el("div", "ui-hudslot", null, hud);
   const noteDouble = el("div", "ui-note", "", hud);
   const noteCarried = el("div", "ui-note ui-carried", "", hud);
-  const trackerRoot = el("div", null, null, root);
+  const trackerRoot = el("div", null, null, hud); // "Cards out", under the score
   const chips = el("div", "ui-chips", null, hud);
   const chipTrump = el("span", "ui-chip", null, chips);
   const chipStock = el("span", "ui-chip", null, chips);
@@ -36,13 +36,28 @@ export function createUi(root, { onAct }) {
   hintLine.hidden = true;
   const bar = el("div", "ui-bar", null, bottom);
   const main = el("div", "ui-main", null, bar);
-  const tools = el("div", "ui-tools", null, bar);
+
+  // ---- the menu, top right: the tools, behind one button
+  const menu = el("div", "ui-menu", null, root);
+  const menuBtn = el("button", "ui-btn ui-small ui-menubtn", "\u2630 Menu", menu);
+  menuBtn.type = "button";
+  menuBtn.setAttribute("aria-haspopup", "true");
+  menuBtn.setAttribute("aria-expanded", "false");
+  const tools = el("div", "ui-tools", null, menu);
+  tools.hidden = true;
+  const setMenu = (open) => {
+    tools.hidden = !open;
+    menuBtn.setAttribute("aria-expanded", String(open));
+  };
+  menuBtn.onclick = () => setMenu(tools.hidden);
+  document.addEventListener("pointerdown", (e) => { if (!menu.contains(e.target)) setMenu(false); });
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape") setMenu(false); });
 
   const undoBtn = el("button", "ui-btn ui-small", "Undo", tools);
   const hintBtn = el("button", "ui-btn ui-small", "Hint: off", tools);
   const helpBtn = el("button", "ui-btn ui-small", "Help", tools);
   helpBtn.type = "button";
-  helpBtn.onclick = () => act("help");
+  helpBtn.onclick = () => { setMenu(false); act("help"); };
   const trackerBtn = el("button", "ui-btn ui-small", "Cards out: off", tools);
   const newBtn = el("button", "ui-btn ui-small", "New game", tools);
   const gearBtn = el("button", "ui-btn ui-small", "\u2699 Settings", tools);
@@ -57,8 +72,8 @@ export function createUi(root, { onAct }) {
 
   undoBtn.onclick = () => act("undo");
   hintBtn.onclick = () => act("hints");
-  newBtn.onclick = () => act("new"); // the New game dialog asks, and confirms an abandoned game
-  gearBtn.onclick = () => act("settings");
+  newBtn.onclick = () => { setMenu(false); act("new"); }; // the New game dialog asks, and confirms an abandoned game
+  gearBtn.onclick = () => { setMenu(false); act("settings"); };
   trackerBtn.onclick = () => act("tracker");
 
   // The notes under the score: the double line, and what is carried "to score".
@@ -173,7 +188,9 @@ export function createUi(root, { onAct }) {
   // want it "on" with no text can pass hint: {} (truthy).
 
   function hudBottom() {
-    return Math.max(hud.getBoundingClientRect().bottom, ticker.getBoundingClientRect().bottom);
+    // The "Cards out" panel stands in the margin like the score does: it does not push the table down.
+    const panel = trackerRoot.getBoundingClientRect().height;
+    return Math.max(hud.getBoundingClientRect().bottom, ticker.getBoundingClientRect().bottom) - (panel ? panel + 6 : 0);
   }
   function barTop() {
     return bottom.getBoundingClientRect().top;
