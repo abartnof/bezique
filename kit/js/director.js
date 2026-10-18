@@ -190,7 +190,7 @@ export function createDirector({ stage, deck, view, decorate, rested, choreograp
     moving = true;
     if (manual) frame();
     else wake();
-    return { beats, landed, count };
+    return { beats, landed, count, duration: (result.duration ?? 0) / timeline.speed };
   }
 
   // ---- picking ------------------------------------------------------------

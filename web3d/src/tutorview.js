@@ -39,24 +39,50 @@ export function helpBody(doc, pages, { seen = [], mark = "✓" } = {}) {
   );
 }
 
+// The kicker line of a tip: "Tip", or "Tip 2 of 3" when several fall due at one moment.
+export const kicker = (at = 1, of = 1) => (of > 1 ? `Tip ${at} of ${of}` : "Tip");
+
 // The modal. `on` reports: close({ key, dontShow }), pick(key), tips(boolean), reset().
+// It is a dialog: the focus goes to its default button and stays within it,
+// Enter, Space and Escape close it as the default button does, and a click on
+// the dimmed table behind it does the same (nothing is silently ignored). The
+// focus returns to where it was when the dialog closes.
 export function createTutorView(root, on, doc = document) {
   let modal = null;
   let onKey = null;
-  const close = () => {
+  let before = null;
+  const close = (restore = true) => {
     if (onKey) doc.removeEventListener("keydown", onKey, true);
     onKey = null;
     modal?.remove();
     modal = null;
+    const back = restore ? before : null;
+    if (restore) before = null;
+    if (back && back !== doc.body && back.isConnected !== false) try { back.focus?.(); } catch { /* gone */ }
   };
-  const open = (card, escape) => {
-    close();
+  const open = (card, dismiss) => {
+    const keep = modal ? before : doc.activeElement; // a page over a page returns to the first place
+    close(false);
+    before = keep;
     modal = node(doc, "div", { class: "tutor-modal" }, card);
+    modal.onclick = (e) => {
+      if (e.target === modal) dismiss();
+    };
     root.append(modal);
     onKey = (e) => {
       if (e.key === "Escape") {
         e.preventDefault();
-        escape();
+        dismiss();
+      } else if ((e.key === "Enter" || e.key === " ") && !/^(BUTTON|INPUT|A|LABEL)$/.test(e.target?.tagName ?? "")) {
+        e.preventDefault();
+        dismiss();
+      } else if (e.key === "Tab") {
+        const stops = [...(modal?.querySelectorAll?.("button, input, a[href]") ?? [])];
+        if (!stops.length) return;
+        const at = stops.indexOf(e.target);
+        const next = e.shiftKey ? (at <= 0 ? stops.length - 1 : at - 1) : at < 0 || at === stops.length - 1 ? 0 : at + 1;
+        e.preventDefault();
+        stops[next].focus();
       }
     };
     doc.addEventListener("keydown", onKey, true);
@@ -72,17 +98,21 @@ export function createTutorView(root, on, doc = document) {
   return {
     isOpen: () => modal !== null,
     close,
-    // A page that fell due (or a page read from Help, with `back`).
-    show(page, { back = false } = {}) {
+    // A page that fell due, as the `at`th of `of` at this moment (or a page
+    // read from Help, with `back`).
+    show(page, { back = false, at = 1, of = 1 } = {}) {
       const body = pageBody(doc, page);
       wireLinks(body);
       const tick = node(doc, "input", { type: "checkbox", id: "tutor-off" });
       const done = () => on.close({ key: page.key, dontShow: tick.checked, back });
+      const last = at >= of;
       const foot = back
         ? [button("Back to the list", { "data-focus": "1" }, done)]
-        : [node(doc, "label", { class: "tutor-off", for: "tutor-off" }, tick, " Don't show tips"), button("Got it", { "data-focus": "1" }, done)];
+        : [node(doc, "label", { class: "tutor-off", for: "tutor-off" }, tick, " Don't show tips again"), button(last ? "Got it" : "Next", { "data-focus": "1" }, done)];
+      const head = back ? [] : [node(doc, "div", { class: "tutor-kicker" }, kicker(at, of))];
+      const note = back ? [] : [node(doc, "p", { class: "tutor-note" }, "The game is paused. Enter continues; every tip stays under Menu, then Help.")];
       open(
-        node(doc, "div", { class: "tutor-card", role: "dialog", "aria-modal": "true", "aria-label": page.title }, node(doc, "h2", {}, page.title), body, node(doc, "div", { class: "tutor-foot" }, foot)),
+        node(doc, "div", { class: "tutor-card", role: "dialog", "aria-modal": "true", "aria-label": page.title }, head, node(doc, "h2", {}, page.title), body, node(doc, "div", { class: "tutor-foot" }, foot), note),
         done,
       );
     },

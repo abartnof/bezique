@@ -14,15 +14,15 @@ Text before the first heading is ignored by the parser.
 
 Bezique is played with two packs of 32 cards shuffled together, so every card appears twice. In each suit the cards rank **A, 10, K, Q, J, 9, 8, 7**: the ten stands second.
 
-The higher cut chooses who deals. Each player has eight cards, and the card turned up beside the stock names the **trumps**.
-
-You play for points, and the first to reach **1,000** wins.
+You have eight cards. The card turned up beside the stock names the **trumps**. The first to reach **1,000** points wins.
 
 # The first trick
 
-Lead any card; your opponent answers with any card. There is no need to follow suit.
+The player who is not dealing leads. Tap a card to play it; the other player answers with any card. While the stock lasts there is no need to follow suit.
 
 The higher card of the suit led wins, and so does a trump played to a plain-suit lead. If the two cards are identical, the leader wins.
+
+Under **Menu**, top right, are Undo, Hint, Help (these pages again), New game and Settings. **Hint** names a good card and the rule behind it. **Cards out**, under the score at the top left, lists what has been played.
 
 # Brisques
 

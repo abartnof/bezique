@@ -40,7 +40,8 @@ const OPTION = {
 // events the moment belongs to (the cards hold there), or null for the end
 // of the move.
 const CHECKS = {
-  table: () => ({ event: null }),
+  // The deal is out and the first card is due: the tip names what is on the table, so it waits for it.
+  table: ({ s }) => s.prompt?.kind === "play" && { event: null },
   "first-trick": ({ s }) => s.prompt?.kind === "play" && { event: null },
   brisques: ({ fresh }) => {
     const i = fresh.findIndex(({ e }) => e.kind === "took_trick" && e.points > 0);
@@ -85,6 +86,19 @@ export function dueIn(prev, state, seen = []) {
     if (hit) return { key, event: hit.event };
   }
   return null;
+}
+
+// Every page due at this moment, in order, as [{ key, event }], at most `max`
+// (a tip is a pause in the play, and a pile of them is a wall). The rest stay
+// unseen: a state-based page falls due again when its moment comes round.
+export function dueAll(prev, state, seen = [], max = 3) {
+  const list = [];
+  const have = [...seen];
+  for (let step = dueIn(prev, state, have); step && list.length < max; step = dueIn(prev, state, have)) {
+    list.push(step);
+    have.push(step.key);
+  }
+  return list;
 }
 
 export const due = (prev, state, seen = []) => dueIn(prev, state, seen)?.key ?? null;

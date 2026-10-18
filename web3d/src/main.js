@@ -19,7 +19,7 @@ import { gameConfig, loadPrefs, savePrefs, speedFactor, urlOverrides, withUrl } 
 import { createSettings } from "./settings.js";
 import { createScoreboard } from "./scoreboard.js";
 import { fromState } from "./model.js";
-import { PAGE_KEYS, dueIn } from "./tutor.js";
+import { PAGE_KEYS, dueAll } from "./tutor.js";
 import { createTutorStore } from "./tutorstore.js";
 import { createTutorView } from "./tutorview.js";
 import TUTORIAL from "../tutorial.md";
@@ -178,25 +178,30 @@ async function main() {
   function openHelp() {
     tutorView.help(pages, { seen: tutorStore.seen(), tips: tutorOn() });
   }
-  // Pages due at this change of state, one after another, holding the table's clock until the last is dismissed.
+  // The pages due at this change of state (a few at most), one after another,
+  // the table's clock held until the last is dismissed. A page is marked seen
+  // when it is shown; "Don't show tips" drops the rest.
   function tutorial(prev, next, timing) {
     if (!tutorOn() || tutorView.isOpen()) return;
-    const first = dueIn(prev, next, tutorStore.seen());
-    if (!first) return;
+    const steps = dueAll(prev, next, tutorStore.seen());
+    if (!steps.length) return;
     const run = (release) => {
-      const go = (step) => {
+      const go = (n) => {
+        const step = steps[n];
         tutorStore.add(step.key);
         afterPage = () => {
-          const more = tutorOn() ? dueIn(prev, next, tutorStore.seen()) : null;
-          if (more) go(more);
+          if (tutorOn() && n + 1 < steps.length) go(n + 1);
           else { afterPage = null; tutorView.close(); release?.(); }
         };
-        tutorView.show(pageOf(step.key));
+        tutorView.show(pageOf(step.key), { at: n + 1, of: steps.length });
       };
-      go(first);
+      go(0);
     };
     if (!timing) return run();
-    const ms = first.event !== null && timing.beats[first.event] !== undefined ? timing.beats[first.event] : Math.max(0, ...Object.values(timing.beats));
+    // Held where the first page's moment is seen: at the end of the move for a state, at its beat for an event.
+    const first = steps[0];
+    const end = timing.duration ?? Math.max(0, ...Object.values(timing.beats));
+    const ms = first.event !== null && timing.beats[first.event] !== undefined ? timing.beats[first.event] : end;
     director.gate(ms, run);
   }
 

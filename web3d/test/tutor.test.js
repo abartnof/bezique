@@ -5,9 +5,9 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import test from "node:test";
 import { parseTutorial } from "../../kit/js/tutorial.js";
-import { PAGE_KEYS, dueIn, due } from "../src/tutor.js";
+import { PAGE_KEYS, dueIn, due, dueAll } from "../src/tutor.js";
 import { createTutorStore } from "../src/tutorstore.js";
-import { pageBody, helpBody } from "../src/tutorview.js";
+import { pageBody, helpBody, kicker, createTutorView } from "../src/tutorview.js";
 import { sitting } from "./support/table.js";
 
 // The options a page is about, by the engine's own words (words.rs).
@@ -199,4 +199,93 @@ test("a carried score's page fires at the first option that says so (the engine'
   assert.equal(due(null, options(["Nothing: draw.", "Forty for bezique, and twenty to score."]), rest), "to-score");
   assert.equal(due(null, options(["Nothing: draw.", "Score forty, for the royal marriage, and twenty, and twenty to score."]), rest), "to-score");
   assert.equal(due(null, options(["Nothing: draw.", "Twenty for the marriage in clubs."]), rest), null);
+});
+
+test("the first tips wait for the deal, and a moment's tips are few and in order", () => {
+  const choosing = { events: [], prompt: { kind: "choose_dealer" }, stock: 64, totals: { you: 0, them: 0 } };
+  assert.equal(due(null, choosing, []), null, "nothing over the cut");
+  const dealt = { events: [], prompt: { kind: "play", legal: [] }, stock: 47, turn_up: { card: "9H" }, totals: { you: 0, them: 0 } };
+  assert.deepEqual(dueAll(null, dealt, []).map((p) => p.key), ["table", "first-trick"]);
+  assert.deepEqual(dueAll(null, dealt, ["table"]).map((p) => p.key), ["first-trick"]);
+  assert.deepEqual(dueAll(null, dealt, ["table", "first-trick"]), []);
+  assert.equal(dueAll(null, dealt, [], 1).length, 1);
+  const many = { events: [{ kind: "took_trick", points: 10 }], stock: 20, turn_up: { card: "9H" }, totals: { you: 0, them: 0 }, prompt: { kind: "declare", options: ["Nothing: draw.", "Forty for bezique, and twenty to score.", "Twenty for the marriage", "Four aces", "Seven of trumps"].map((text) => ({ text })) } };
+  const keys = dueAll(null, many, ["table", "first-trick"]).map((p) => p.key);
+  assert.ok(keys.length <= 3 && keys.length >= 2, keys.join());
+  assert.deepEqual(keys, [...keys].sort((a, b) => PAGE_KEYS.indexOf(a) - PAGE_KEYS.indexOf(b)));
+});
+
+test("the tip says how many there are in a row", () => {
+  assert.equal(kicker(1, 1), "Tip");
+  assert.equal(kicker(2, 3), "Tip 2 of 3");
+});
+
+// A fake document with a keyboard and a focus, for the modal.
+function fake() {
+  const listeners = [];
+  const mk = (tag) => ({
+    tag, children: [], attrs: {}, tagName: tag.toUpperCase(), isConnected: true, parent: null,
+    append(...c) { for (const k of c) { this.children.push(k); if (typeof k === "object") k.parent = this; } },
+    setAttribute(k, v) { this.attrs[k] = v; },
+    remove() { this.isConnected = false; },
+    focus() { d.activeElement = this; },
+    querySelector(sel) { return this.querySelectorAll(sel)[0]; },
+    querySelectorAll(sel) {
+      const out = [];
+      const walk = (n) => { for (const k of n.children) if (typeof k === "object") { if (sel === "[data-focus]" ? "data-focus" in k.attrs : sel === "button, input, a[href]" ? ["button", "input"].includes(k.tag) : false) out.push(k); walk(k); } };
+      walk(this);
+      return out;
+    },
+  });
+  const d = {
+    body: mk("body"), activeElement: null,
+    createElement: mk, createTextNode: (t) => String(t),
+    addEventListener: (t, f) => listeners.push([t, f]),
+    removeEventListener: (t, f) => { const i = listeners.findIndex(([, g]) => g === f); if (i >= 0) listeners.splice(i, 1); },
+    key: (key, target = d.activeElement) => { let stopped = false; for (const [t, f] of [...listeners]) if (t === "keydown") f({ key, target, preventDefault() { stopped = true; } }); return stopped; },
+    listeners: () => listeners.length,
+  };
+  d.activeElement = d.body;
+  return d;
+}
+
+test("a tip's dialog: default button focused; Enter, Space, Esc and the backdrop all continue; focus returns", () => {
+  const md = "# One\n\nHello.\n\n# Two\n\nx\n";
+  const pages = parseTutorial(md, ["a", "b"]);
+  const closed = [];
+  for (const how of ["Enter", " ", "Escape", "backdrop"]) {
+    const d = fake();
+    const opener = d.createElement("button");
+    d.activeElement = opener;
+    const root = d.createElement("div");
+    const view = createTutorView(root, { close: (r) => closed.push(r), pick() {}, tips() {}, reset() {} }, d);
+    view.show(pages[0], { at: 1, of: 2 });
+    assert.ok(view.isOpen());
+    assert.equal(d.activeElement.attrs["data-focus"], "1", "the default button has the focus");
+    assert.match(text(root.children[0]), /Tip 1 of 2/);
+    assert.match(text(root.children[0]), /Next/);
+    assert.match(text(root.children[0]), /paused/);
+    const before = closed.length;
+    if (how === "backdrop") { const m = root.children[0]; m.onclick({ target: m }); }
+    else d.key(how, d.body); // not on a button: the key still continues
+    assert.equal(closed.length, before + 1, how);
+    view.close();
+    assert.equal(d.activeElement, opener, "the focus returns to where it was");
+    assert.equal(d.listeners(), 0, "no key handler is left");
+    assert.equal(view.isOpen(), false);
+  }
+});
+
+test("the last of a row says Got it, and Tab stays in the dialog", () => {
+  const pages = parseTutorial("# One\n\nHello.\n", ["a"]);
+  const d = fake();
+  const root = d.createElement("div");
+  const view = createTutorView(root, { close() {}, pick() {}, tips() {}, reset() {} }, d);
+  view.show(pages[0], { at: 2, of: 2 });
+  assert.match(text(root.children[0]), /Got it/);
+  const stops = root.children[0].querySelectorAll("button, input, a[href]");
+  assert.equal(stops.length, 2);
+  d.activeElement = stops[1];
+  assert.ok(d.key("Tab", stops[1]), "Tab is taken");
+  assert.equal(d.activeElement, stops[0], "and wraps to the first stop");
 });
