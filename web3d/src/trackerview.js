@@ -23,7 +23,7 @@ export function createTrackerView(root, { onFold = () => {} } = {}) {
   const chev = el("span", "tracker-chev", null, head);
   chev.innerHTML = CHEV;
   const body = el("div", "tracker-body", null, card);
-  let open = true;
+  let open = false; // closed until the person opens it
   let model = null;
 
   function draw() {

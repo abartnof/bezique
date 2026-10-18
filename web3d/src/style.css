@@ -17,7 +17,7 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: var(--bg); f
 .loading { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; color: var(--muted); font-size: 18px; }
 
 #overlay button, #overlay select { font: inherit; }
-.ui-hud { position: absolute; top: 0; left: 0; right: 0; padding: 8px; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.ui-hud { pointer-events: none; position: absolute; top: 0; left: 0; right: 0; padding: 8px; display: flex; flex-direction: column; align-items: center; gap: 6px; }
 .ui-panel { pointer-events: auto; width: 100%; max-width: 420px; box-sizing: border-box; background: var(--panel); border-radius: 12px; box-shadow: var(--shadow); padding: 8px 12px; }
 .ui-score-row { display: grid; grid-template-columns: 76px auto 1fr; grid-template-rows: auto auto; align-items: baseline; column-gap: 8px; padding: 2px 0; }
 .ui-name { font-size: 14px; color: var(--muted); }
@@ -36,7 +36,7 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: var(--bg); f
 .ui-ticker.ui-show { opacity: 1; transition: opacity 0.1s; }
 .ui-ticker:empty { visibility: hidden; }
 
-.ui-bottom { position: absolute; left: 0; right: 0; bottom: 0; padding: 0 8px calc(8px + env(safe-area-inset-bottom)); display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.ui-bottom { pointer-events: none; position: absolute; left: 0; right: 0; bottom: 0; padding: 0 8px calc(8px + env(safe-area-inset-bottom)); display: flex; flex-direction: column; align-items: center; gap: 6px; }
 .ui-hintline { pointer-events: auto; background: #fff6d8; border: 1px solid var(--hint); border-radius: 8px; padding: 6px 10px; font-size: 14px; max-width: 480px; box-sizing: border-box; }
 .ui-hintline[hidden] { display: none; }
 .ui-hint-do { font-weight: 600; }

@@ -2,9 +2,12 @@
 // opponent's skill, its way of play, how often it slips, and optionally the
 // deal's seed). Values are prefilled from the last game. If a game is in
 // progress, starting abandons it, and the dialog says so before it deals.
-import { LEVEL_LINES, PERSONAS, specsOf } from "./prefs.js";
+import { LEVEL_LINES, PERSONAS, PREF_SPECS, specsOf } from "./prefs.js";
 
 export const NEW_SPECS = specsOf("new");
+// The aids change what the game tells you, so they are chosen before the
+// deal too (they stay switchable at the table).
+export const AID_SPECS = PREF_SPECS.filter((s) => s.key === "hints" || s.key === "tracker");
 
 // How the slider's number reads.
 export function erraticWord(permille) {
@@ -37,6 +40,7 @@ export function normalise(values) {
     if (s.kind === "range") out[s.key] = Math.min(s.max, Math.max(s.min, Math.round(v / s.step) * s.step || 0));
     else out[s.key] = s.options.some((o) => o.value === v) ? v : s.default;
   }
+  for (const s of AID_SPECS) if (s.key in values) out[s.key] = values[s.key] === true || values[s.key] === "true";
   return out;
 }
 
@@ -48,7 +52,7 @@ const el = (tag, cls, text, parent) => {
   return e;
 };
 
-// onStart({ level, persona, erratic }, seed|null). inProgress(): a game is on.
+// onStart({ level, persona, erratic, hints, tracker }, seed|null). inProgress(): a game is on.
 export function createNewGame(root, { prefs, inProgress = () => false, onStart }) {
   let last = normalise(prefs);
   const modal = el("div", "ng-modal", null, root);
@@ -64,7 +68,7 @@ export function createNewGame(root, { prefs, inProgress = () => false, onStart }
     el("h2", "ui-modal-title", "New game", card);
     if (inProgress()) el("p", "ng-warn", "A game is in progress. Starting a new one abandons it.", card);
     el("p", "ng-line", opponentLine(chosen.level, chosen.persona), card);
-    for (const s of NEW_SPECS) {
+    for (const s of [...NEW_SPECS, ...AID_SPECS]) {
       const row = el("div", "st-row", null, card);
       row.dataset.row = s.key;
       el("span", "st-label", s.label, row);

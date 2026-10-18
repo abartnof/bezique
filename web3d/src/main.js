@@ -292,6 +292,8 @@ async function main() {
   // Starts a game from the New game dialog's values (level, persona, erratic).
   function newGame(values = prefs, chosenSeed = null) {
     Object.assign(prefs, { level: values.level, persona: values.persona, erratic: values.erratic });
+    if (typeof values.hints === "boolean") prefs.hints = values.hints;
+    if (typeof values.tracker === "boolean") prefs.tracker = values.tracker;
     savePrefs(prefs);
     newGameDialog.remember(prefs);
     seed = Number.isInteger(chosenSeed) ? chosenSeed : url.seed !== null && !S ? url.seed : Math.floor(Math.random() * 2 ** 32);
@@ -414,7 +416,14 @@ async function main() {
     return director.placement().find((m) => m.cardId === id)?.code;
   }
 
-  if (!restore()) newGame();
+  // No sitting to resume: a new player (or one starting afresh) chooses the game first.
+  if (!restore()) {
+    if (url.seed !== null || url.fresh) newGame();
+    else {
+      newGame(); // the table is dealt behind the dialog
+      newGameDialog.open();
+    }
+  }
 }
 
 main().catch((error) => {
