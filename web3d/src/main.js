@@ -424,10 +424,7 @@ async function main() {
   // No sitting to resume: a new player (or one starting afresh) chooses the game first.
   if (!restore()) {
     if (url.seed !== null || url.fresh) newGame();
-    else {
-      newGame(); // the table is dealt behind the dialog
-      newGameDialog.open();
-    }
+    else newGameDialog.open({ opening: true }); // the deal waits for the choices
   }
 }
 

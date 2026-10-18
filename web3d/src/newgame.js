@@ -59,6 +59,7 @@ export function createNewGame(root, { prefs, inProgress = () => false, onStart }
   card.setAttribute("aria-label", "New game");
   let chosen = {};
   let opener = null;
+  let first = false; // the opening dialog: closing it any other way than Deal deals the last choices
 
   function render() {
     card.textContent = "";
@@ -69,8 +70,7 @@ export function createNewGame(root, { prefs, inProgress = () => false, onStart }
       const row = el("div", "st-row", null, card);
       row.dataset.row = s.key;
       el("span", "st-label", s.label, row);
-      if (s.kind === "toggle") out[s.key] = typeof values[s.key] === "boolean" ? values[s.key] : values[s.key] === "true" ? true : s.default;
-    else if (s.kind === "range") {
+      if (s.kind === "range") {
         const wrap = el("div", "ng-range", null, row);
         const input = el("input", null, null, wrap);
         Object.assign(input, { type: "range", min: s.min, max: s.max, step: s.step, value: chosen[s.key] });
@@ -119,12 +119,14 @@ export function createNewGame(root, { prefs, inProgress = () => false, onStart }
       }
       const values = normalise(chosen);
       last = values;
+      first = false;
       close();
       onStart(values, seed);
     };
   }
 
-  function open() {
+  function open({ opening = false } = {}) {
+    first = opening;
     opener = document.activeElement;
     chosen = { ...last, seedText: "" };
     render();
@@ -134,6 +136,10 @@ export function createNewGame(root, { prefs, inProgress = () => false, onStart }
   function close() {
     modal.hidden = true;
     opener?.focus?.();
+    if (first) {
+      first = false;
+      onStart(last, null);
+    }
   }
   root.addEventListener("keydown", (e) => {
     if (e.key === "Escape" && !modal.hidden) close();
