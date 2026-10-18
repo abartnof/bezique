@@ -5,6 +5,7 @@
 // played out on the cards by the director (choreography.js), with the score
 // and the narration at each event's moment.
 import { createDeck } from "../../kit/js/deck.js";
+import { muted, quietWindow } from "../../kit/js/count.js";
 import { createDirector } from "../../kit/js/director.js";
 import { loadTextures, vectorWidth } from "../../kit/js/art.js";
 import { jumboTextures } from "../../kit/js/faces.js";
@@ -205,7 +206,16 @@ async function main() {
     ui.setInfo({ trump: raw.trump_symbol ?? null, stock: raw.stock ?? 64, hand: raw.hand_number ?? null, level: raw.level });
   }
 
+  // The game's end waits for its count and the victory banner: the cards are
+  // still, but the game-over panel would sit over them.
+  let countUntil = 0;
   function rested() {
+    const wait = countUntil - director.clock();
+    if (raw?.prompt?.kind === "over" && wait > 0) {
+      countUntil = 0;
+      director.at(wait, () => rested());
+      return;
+    }
     waiting = false;
     if (!raw) return;
     sync();
@@ -222,7 +232,10 @@ async function main() {
     hide: () => bubble.hide(),
     pace: () => Math.min(1.5, Math.max(0.35, 1 / speedFactor(prefs, systemReduced()))),
   });
-  const talk = createTalk({ words: WORDS, rng: Math.random, say: (line) => speaker.offer(line), mode: prefs.talk });
+  // Nothing is said while a hand is counted: the badges tell it (kit count.js).
+  let quiet = null; // the count's window, ms from `offset` on the table's clock
+  const counting = (line) => Boolean(quiet) && muted({ from: quiet.from + quiet.offset, to: quiet.to + quiet.offset }, director.clock(), line.text);
+  const talk = createTalk({ words: WORDS, rng: Math.random, say: (line) => !counting(line) && speaker.offer(line), mode: prefs.talk });
   const setTalk = (mode) => {
     talk.setMode(mode);
     prefs.talk = mode;
@@ -266,6 +279,10 @@ async function main() {
       const e = next.events[Number(index)];
       if (e && Number(index) >= first) director.at(ms, () => applyEvent(e, Number(index)));
     }
+    board.count(next.events, first, timing.count);
+    quiet = timing.count ? { ...quietWindow(timing.count), offset: director.clock() } : null;
+    const slow = director.timeline.speed <= 10;
+    countUntil = timing.count && slow ? director.clock() + timing.count.end + 2500 / Math.max(0.25, Math.min(director.timeline.speed, 4)) : 0;
   }
 
   function persist() {

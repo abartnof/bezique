@@ -213,7 +213,10 @@ the ladder rerun after the full review. Levels run 1 to 5.
       slips, seed); table talk in the period's formulae (`docs/PHRASES.md`,
       `tools/phrases.py`); six personalities on the skill ladder
       (`docs/OPPONENT.md`, `RECORD_VERSION` 4). Phone layout: a first cut,
-      deliberately not worked on.
+      deliberately not worked on. The hand-end count (`handcount.js`) tells each
+      scorable unit in turn as a badge at its place, over a ticking tally, then
+      the total; at the game's end the doubling and the victory follow. All
+      scoring badges are white on black.
       Open: the maintainer's read of `tutorial.md` and the phrase bank;
       the Help list and the tutorial gate's timing (the dix page fires before
       the trick cards are drawn) are unchecked in a browser; the score display
