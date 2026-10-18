@@ -46,11 +46,11 @@ export function createTrackerView(root, { onFold = () => {} } = {}) {
       const r = el("div", `tracker-row${row.trump ? " tracker-trump" : ""}`, null, grid);
       el("span", `tracker-suit tracker-suit-${row.suit}`, row.glyph, r);
       for (const c of row.cells) {
-        const cell = el("span", `tracker-cell tracker-out-${c.out}${c.kind === "brisque" ? " tracker-brisque" : ""}${c.bezique ? " tracker-bez" : ""}`, c.out ? String(c.out) : "·", r);
+        const cell = el("span", `tracker-cell tracker-out-${c.out}`, c.out ? String(c.out) : "·", r);
         cell.title = `${c.rank === "T" ? "10" : c.rank}${row.glyph}: ${c.out} unseen`;
       }
     }
-    el("p", "tracker-key", "Number of each card still unseen. Gold: brisques (aces, tens). Ringed: bezique cards.", body);
+    el("p", "tracker-key", "Number of each card still unseen. Dashed: all seen.", body);
   }
 
   head.addEventListener("click", () => {

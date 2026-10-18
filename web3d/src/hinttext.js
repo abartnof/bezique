@@ -141,10 +141,20 @@ export const REASONS = {
     rule: "In the last eight tricks, follow suit and win the trick if you can, with a higher card of the suit or a trump.",
     src: book(FOSTER, "p. 343", "The second player must follow suit, and must win the trick if he can."),
   },
-  last_eight_choice: {
-    do: (p, n) => `Play the ${n(p.card)}: counting the cards left, it does best.`,
-    rule: "In the last eight tricks keep count of the trumps and bezique cards that are out, and choose the card that wins what is left.",
-    src: mine("The hint here comes from an exact count; the books say only that this play matters most and calls for memory.", CADY, "p. 23"),
+  last_eight_give_up: {
+    do: (p, n) => `You cannot win the ${n(p.led)}: give up the ${n(p.card)}${p.spared ? `, and keep your ${n(p.spared)}` : ""}.`,
+    rule: "When you cannot win a trick, give up your least valuable card: trumps, aces and tens are for tricks you can win.",
+    src: mine("A reading of the maxims; Cady says to throw away worthless cards unless there is a reason to win the trick.", CADY, "p. 22"),
+  },
+  last_eight_lead_master: {
+    do: (p, n) => `Lead the ${n(p.card)}: no higher card of that suit is still out${p.kind === "trump" ? ", so nothing can take it" : ", so only a trump can take it"}.`,
+    rule: "Before you lead, ask what could beat the card. If nothing can, lead it: the trick is yours.",
+    src: mine("A reading of the maxims: Cady (p. 23) has the last eight tricks decided by playing the cards that must win.", CADY, "p. 23"),
+  },
+  last_eight_lead_low: {
+    do: (p, n) => `Lead the ${n(p.card)}, your cheapest card${p.spared ? `, and keep your ${n(p.spared)} for a trick it can win` : ""}.`,
+    rule: "When no card of yours is sure to win, lead your least valuable one and keep the strong cards until they can win.",
+    src: mine("A reading of the maxims; Cady (p. 22) leads the lowest card when there is no reason to lead another.", CADY, "p. 22"),
   },
   last_eight_lead_ace: {
     do: (p, n) => `Lead the ${n(p.card)}: only a trump can beat an ace of a plain suit.`,

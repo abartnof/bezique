@@ -60,13 +60,15 @@ interpretations. No rule is presented as a book's unless the book says it.
 | `exchange_dix` / `show_dix` | Exchanging the seven of trumps, or showing it when the turn-up is one | Exchange the seven of trumps for the turn-up as soon as you win a trick, before you draw | Foster p. 340 |
 | `pass` | Drawing without declaring | Declaring is optional; passing waives it until the next trick won | Foster p. 340 |
 | `last_eight_must_win` | Last eight tricks, following, every legal card wins | Follow suit and win if you can | Foster p. 343 |
-| `last_eight_choice` | Last eight tricks, any other choice (the engine solves the position exactly) | Count the trumps and bezique cards out and choose the card that wins what is left | **Interpretation**; Cady p. 23 says only that this play matters most |
+| `last_eight_give_up` | Last eight tricks, following, no legal card wins, and the hint gives up the cheapest | When you cannot win, give up your least valuable card; trumps, aces and tens are for tricks you can win | **Interpretation**; Cady p. 22 |
+| `last_eight_lead_master` | Last eight tricks, leading a card no higher card of its suit still out can beat | Before you lead, ask what could beat the card; if nothing can, lead it | **Interpretation**; Cady p. 23 |
+| `last_eight_lead_low` | Last eight tricks, leading the cheapest card when nothing is sure to win | Lead your least valuable card and keep the strong ones until they can win | **Interpretation**; Cady p. 22 |
 | `last_eight_lead_ace` | Last eight tricks, leading a plain-suit ace | Lead a high plain-suit card: it wins, or draws a trump | Cady pp. 23, 29 |
 | `draw_out_trump` | Last eight tricks, leading a trump while holding three or more | With three or more trumps, lead your highest to draw your opponent's | **Interpretation**; Cady p. 23 differs (lowest trump when reduced to trumps) |
 | `generic` | Anything else | (instruction only) | |
 
 Parameters by key: cards `card` (the one to play) in every play, `led` for a
-following play, `spared` for `throw_lowest` and `lead_low_nonbrisque`, `kept`
+following play, `spared` for `throw_lowest`, `lead_low_nonbrisque`, `last_eight_give_up` and `last_eight_lead_low`, `kind` (`trump` or `plain`) for `last_eight_lead_master`, `kept`
 (and `partner`, `points` for marriages) for the `keep_*` keys, `turn_up` for
 `exchange_dix`, `trumps` for `draw_out_trump`; declarations carry `meld`
 (`royal_marriage`, `marriage`, `sequence`, `bezique`, `double_bezique`,
@@ -78,7 +80,7 @@ following play, `spared` for `throw_lowest` and `lead_low_nonbrisque`, `kept`
 varied play: every hint is classified into a listed key, none panics, and the
 hinted command is always accepted by the engine. In the 10-seed run about 1 in
 75 hints is `generic`; the most frequent keys are `lead_low_nonbrisque`,
-`throw_lowest`, `last_eight_choice` and `save_seven_for_dix`. The node test
+`throw_lowest`, `last_eight_give_up` and `save_seven_for_dix`. The node test
 `web3d/test/hinttext.test.js` checks that the client's keys equal the engine's,
 that every wording is complete and short, and that unknown reasons fall back to
 the engine's text.

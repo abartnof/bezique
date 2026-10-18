@@ -51,7 +51,7 @@ impl Reason {
 }
 
 /// Every key `classify` can return, for the documentation and the tests.
-pub const KEYS: [&str; 26] = [
+pub const KEYS: [&str; 28] = [
     "declare_now",
     "score_carried",
     "single_before_double",
@@ -74,7 +74,9 @@ pub const KEYS: [&str; 26] = [
     "keep_four",
     "save_seven_for_dix",
     "last_eight_must_win",
-    "last_eight_choice",
+    "last_eight_give_up",
+    "last_eight_lead_master",
+    "last_eight_lead_low",
     "last_eight_lead_ace",
     "draw_out_trump",
     "generic",
@@ -211,6 +213,31 @@ fn plays(legal: &[Action]) -> Vec<Card> {
         .collect()
 }
 
+/// The cost of giving a card up: a trump costs most, then an ace or ten, then
+/// by rank.
+fn cost(trump: Suit, c: Card) -> (bool, bool, Rank) {
+    (c.suit() == trump, c.is_brisque(), c.rank())
+}
+
+/// `key` for a card that is the cheapest of the legal plays, with the dearest
+/// it spares; `None` if some other card is cheaper.
+fn endgame_cheapest(view: &View, all: &[Card], card: Card, key: &'static str) -> Option<Reason> {
+    let trump = view.trump;
+    if all.iter().any(|&c| cost(trump, c) < cost(trump, card)) {
+        return None;
+    }
+    let r = Reason::new(key).card("card", card);
+    let spared = all
+        .iter()
+        .copied()
+        .filter(|&c| c.card_type() != card.card_type() && cost(trump, c) > cost(trump, card))
+        .max_by_key(|&c| (cost(trump, c), c.0));
+    Some(match spared {
+        Some(c) => r.card("spared", c),
+        None => r,
+    })
+}
+
 fn classify_play(view: &View, legal: &[Action], card: Card) -> Reason {
     let trump = view.trump;
     let all = plays(legal);
@@ -228,9 +255,9 @@ fn classify_play(view: &View, legal: &[Action], card: Card) -> Reason {
                     .card("card", card)
                     .card("led", led);
             }
-            return Reason::new("last_eight_choice")
-                .card("card", card)
-                .card("led", led);
+            // No card wins: the choice is what to give up, and what to keep.
+            return endgame_cheapest(view, &all, card, "last_eight_give_up")
+                .map_or_else(|| Reason::new("generic"), |r| r.card("led", led));
         }
         if card.rank() == Rank::ACE && card.suit() != trump {
             return Reason::new("last_eight_lead_ace").card("card", card);
@@ -241,7 +268,23 @@ fn classify_play(view: &View, legal: &[Action], card: Card) -> Reason {
                 .card("card", card)
                 .int("trumps", trumps as i64);
         }
-        return Reason::new("last_eight_choice").card("card", card);
+        // A lead nothing still out can beat in its suit.
+        let out = view.unseen().union(view.theirs.cards());
+        if !out
+            .cards()
+            .any(|c| c.suit() == card.suit() && c.rank() > card.rank())
+        {
+            let kind = if card.suit() == trump {
+                "trump"
+            } else {
+                "plain"
+            };
+            return Reason::new("last_eight_lead_master")
+                .card("card", card)
+                .word("kind", kind);
+        }
+        return endgame_cheapest(view, &all, card, "last_eight_lead_low")
+            .unwrap_or_else(|| Reason::new("generic"));
     }
     if let Some(led) = led {
         let winners: Vec<Card> = all

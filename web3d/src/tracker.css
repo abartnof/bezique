@@ -16,9 +16,6 @@
 .tracker-suit-H, .tracker-suit-D { color: #ff8a80; }
 .tracker-cell { box-sizing: border-box; text-align: center; border-radius: 4px; border: 1px solid #4a525c; min-height: 22px; line-height: 20px; font-variant-numeric: tabular-nums; font-weight: 700; }
 .tracker-out-0 { color: #646d77; border-style: dashed; font-weight: 400; }
-.tracker-out-1 { background: #2f363d; }
-.tracker-out-2 { background: #e8ebef; color: #121417; border-color: #e8ebef; }
-.tracker-brisque.tracker-out-1, .tracker-brisque.tracker-out-2 { box-shadow: inset 0 -3px 0 #e0b13a; }
-.tracker-bez { outline: 2px solid #8fb6f2; outline-offset: 0; }
+.tracker-out-1, .tracker-out-2 { background: #e8ebef; color: #121417; border-color: #e8ebef; }
 .tracker-trump .tracker-suit { background: #e0b13a; color: #1b1f24; border-radius: 4px; }
 @media (max-aspect-ratio: 85/100), (max-width: 900px) { .tracker-root { display: none; } }
