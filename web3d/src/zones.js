@@ -24,7 +24,7 @@ export const EYE_PORTRAIT = Object.freeze({
   ...CAMERA_PORTRAIT,
   position: over(TARGET_PORTRAIT, 96),
   target: TARGET_PORTRAIT,
-  reach: Object.freeze({ up: 0.32, down: -0.34, across: 0.24 }),
+  reach: Object.freeze({ up: 0.32, down: -0.34, across: 0.25 }),
   hand: Object.freeze({ across: 0.21, still: 0.21, perFill: 0.21 }),
 });
 
@@ -66,11 +66,11 @@ export const ZONES_PORTRAIT = arrangement({
   yours: hand([0, 2, 13], EYE_PORTRAIT, { fan: false, pitch: 3.9, width: 34 }),
   theirs: hand([0, 6, -36], EYE_PORTRAIT, { fan: true, radius: 30, spacing: 1.1, width: 20 }),
   yourTable: row(-1, 34, 4.2),
-  theirTable: row(-25, 34, 4.2),
+  theirTable: row(-24, 34, 4.2),
   theirKnown: row(-33, 34, 4.2),
   trick: { x: 0, z: -14, gap: 1 },
   stock: { x: -17, z: -14 },
-  won: { x: 17, you: 6, them: -28 },
+  won: { x: 20.5, you: 6, them: -28 },
   cut: { you: { x: -9, z: -14 }, them: { x: -9, z: -24 } },
 });
 

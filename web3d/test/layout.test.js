@@ -4,6 +4,7 @@
 // as piles. Seen through the page's own camera (framing.js, EYE) at the
 // desktop sizes.
 import assert from "node:assert/strict";
+import { Vector3 } from "three";
 import test from "node:test";
 import { cameraFor } from "../../kit/js/framing.js";
 import { JUMBO } from "../../kit/js/faces.js";
@@ -11,7 +12,7 @@ import { cardCorners } from "../../kit/js/kinematics.js";
 import { CARD } from "../../kit/js/units.js";
 import { layout, PILE_STEP, rowOffsets, spacingFor } from "../src/layout.js";
 import { fromState, packModel } from "../src/model.js";
-import { EYE, ZONES } from "../src/zones.js";
+import { EYE, ZONES, ZONES_PORTRAIT } from "../src/zones.js";
 import { decide, sitting } from "./support/table.js";
 
 const WINDOWS = [[1280, 720], [1440, 900], [1920, 1080]];
@@ -151,4 +152,45 @@ test("the eye's reach covers what the layouts need, and not far more", async () 
   assert.ok(EYE.reach.up >= need.up - 0.005 && EYE.reach.up <= need.up + 0.04, `up ${EYE.reach.up} vs ${need.up.toFixed(3)}`);
   assert.ok(EYE.reach.foot >= -need.down - 0.005 && EYE.reach.foot <= -need.down + 0.04, `foot ${EYE.reach.foot} vs ${(-need.down).toFixed(3)}`);
   assert.ok(EYE.widthTan >= need.across - 0.005 && EYE.widthTan <= need.across + 0.06, `width ${EYE.widthTan} vs ${need.across.toFixed(3)}`);
+});
+
+// Two card slabs (thickness and all) share no volume: a separating axis test.
+function slabsOverlap(a, b) {
+  const axes = (p) => [new Vector3(1, 0, 0), new Vector3(0, 1, 0), new Vector3(0, 0, 1)].map((v) => v.applyQuaternion(p.quaternion));
+  const half = [CARD.width / 2, CARD.height / 2, CARD.thickness / 2];
+  const A = axes(a), B = axes(b);
+  const d = b.position.clone().sub(a.position);
+  const tests = [...A, ...B];
+  for (const u of A) for (const v of B) tests.push(new Vector3().crossVectors(u, v));
+  for (const t of tests) {
+    if (t.lengthSq() < 1e-9) continue;
+    t.normalize();
+    const r = (axs) => axs.reduce((s, ax, i) => s + half[i] * Math.abs(ax.dot(t)), 0);
+    if (Math.abs(d.dot(t)) >= r(A) + r(B) - 1e-4) return false;
+  }
+  return true;
+}
+
+test("no card's body passes through another's, in either arrangement", async () => {
+  const states = [crowded()];
+  const m = crowded();
+  m.stock = 30;
+  m.turnUp = "7D";
+  states.push(m, { ...packModel(), stock: 62, cut: { you: "AS", them: "KH" } }); // the cut comes before any card is played
+  for (const { all } of sittings) states.push(...(await all).filter((_, i) => i % 7 === 0));
+  const clashes = new Set();
+  for (const [name, zones] of [["landscape", ZONES], ["portrait", ZONES_PORTRAIT]]) {
+    for (const chosen of [null, 100, 0]) {
+      for (const model of states) {
+        const slots = layout(model, { zones, chosen });
+        for (let i = 0; i < slots.length; i++)
+          for (let j = i + 1; j < slots.length; j++) {
+            const a = slots[i], b = slots[j];
+            if (a.zone === b.zone && /^(stock|won-)/.test(a.zone)) continue; // a pile's steps are checked by its height
+            if (slabsOverlap(a.pose, b.pose)) clashes.add(`${name}: ${a.zone} through ${b.zone}`);
+          }
+      }
+    }
+  }
+  assert.deepEqual([...clashes], []);
 });
