@@ -1,11 +1,12 @@
 // Points shown where they are earned: a badge ("+40 bezique") that rises from
-// the cards that scored, a short count when a hand ends, and a celebration
-// when the game is won. The descriptors are pure (scoring.js items in, plain
-// objects out); createBadges draws them in a layer over the canvas and keeps
-// to the director's clock (`later`), so they hold when the table is held and
-// quicken with the speed. Nothing here takes the pointer or sits over the
-// person's hand: badges rise from the table's own rows and the stock.
-import { CATEGORIES, TARGET } from "./scoring.js";
+// the cards that scored; when a hand ends, the same units told again, one
+// badge each at its place over a tally that ticks up (handcount.js); and a
+// celebration when the game is won. The descriptors are pure (scoring.js items
+// in, plain objects out); createBadges draws them in a layer over the canvas
+// and keeps to the director's clock (`later`), so they hold when the table is
+// held and quicken with the speed. Nothing here takes the pointer or sits over
+// the person's hand: badges rise from the table's own rows, piles and stock.
+import { TARGET } from "./scoring.js";
 
 // Where on the table a scoring item is earned: a declaration over its player's
 // laid row, brisques and the last trick over the trick, the sevens at the stock
@@ -27,16 +28,6 @@ export function badgeFor(item) {
     anchor: anchorOf(item),
     big: item.pts >= 100,
   };
-}
-
-// The hand-end count from the running state: a line a category that scored,
-// then the hand's total. `names` words the two sides.
-export function settlementOf(state, hand, { totals = state.totals } = {}) {
-  const h = state.hands[hand];
-  if (!h) return null;
-  const rows = CATEGORIES.filter(([k]) => h[k].you + h[k].them > 0).map(([k, label]) => ({ cat: k, label, you: h[k].you, them: h[k].them }));
-  const sum = (w) => CATEGORIES.reduce((n, [k]) => n + h[k][w], 0);
-  return { hand, rows, total: { you: sum("you"), them: sum("them") }, totals: { ...totals } };
 }
 
 // The words of the game's end, in the person's terms.
@@ -73,8 +64,40 @@ export function createBadges(root, { later, speed = () => 1, project, reduced = 
     return () => mine === epoch;
   };
 
+  // The tally of the hand being counted, high in the middle: "Hand 3   85 - 40".
+  let tally = null;
+  function tallyOf(hand) {
+    if (tally && tally.hand === hand && tally.epoch === epoch) return tally;
+    const node = el("div", "bd-tally", null, layer);
+    const mid = project("trick", "you");
+    if (mid) node.style.top = `${mid.y}px`;
+    el("span", "bd-tally-hand", `Hand ${hand}`, node);
+    el("span", "bd-tally-who", "You", node);
+    el("span", "bd-tally-you", "0", node);
+    el("span", "bd-tally-sep", "–", node);
+    el("span", "bd-tally-them", "0", node);
+    el("span", "bd-tally-who", "Opp", node);
+    const set = ({ you, them }, { final = false, names } = {}) => {
+      node.querySelector(".bd-tally-you").textContent = String(you);
+      node.querySelector(".bd-tally-them").textContent = String(them);
+      node.classList.toggle("bd-final", final);
+      if (names) node.setAttribute("aria-label", `Hand ${hand}: ${names.you} ${you}, ${names.them} ${them}`);
+    };
+    tally = { hand, epoch, node, set, fade: (after) => remove(node, after) };
+    return tally;
+  }
+
+  // A badge's words, with the side that scored told in words, not in colour.
+  function sided(node, who, text) {
+    el("span", "bd-side", who === "you" ? "You" : "Opp", node);
+    node.append(text);
+  }
+
+  // Placed at a screen point, kept inside the window (a pile at the edge of the table).
   function place(node, { x, y }) {
-    node.style.left = `${x}px`;
+    const half = node.offsetWidth / 2 + 6;
+    const width = layer.clientWidth || window.innerWidth;
+    node.style.left = `${Math.max(half, Math.min(width - half, x))}px`;
     node.style.top = `${y}px`;
   }
 
@@ -85,40 +108,51 @@ export function createBadges(root, { later, speed = () => 1, project, reduced = 
       const b = badgeFor(item);
       const at = project(b.anchor, b.who);
       if (!at) return null;
-      const node = el("div", `bd-badge bd-${b.who} bd-${b.kind}${b.big ? " bd-big" : ""}`, b.text, layer);
+      const node = el("div", `bd-badge bd-${b.who} bd-${b.kind}${b.big ? " bd-big" : ""}`, null, layer);
+      sided(node, b.who, b.text);
       node.style.setProperty("--life", `${ms(2000)}ms`);
       place(node, { x: at.x + nth * 6, y: at.y - nth * 30 });
       remove(node, ms(2100));
       return node;
     },
 
-    // The count after a hand: each scoring line told, the numbers popping out of it.
-    settle(summary, { names = { you: "You", them: "Opponent" } } = {}) {
-      if (instant() || !summary) return null;
-      const alive = live();
-      const card = el("div", "bd-settle", null, layer);
-      card.style.setProperty("--life", `${ms(4200)}ms`);
-      el("div", "bd-settle-title", `Hand ${summary.hand} counted`, card);
-      const head = el("div", "bd-settle-row bd-settle-head", null, card);
-      el("span", null, names.you, head);
-      el("span", null, "", head);
-      el("span", null, names.them, head);
-      const rows = [...summary.rows, { label: "Hand", you: summary.total.you, them: summary.total.them, sum: true }];
-      rows.forEach((r, i) => {
-        later(ms(350 + i * 450), () => {
-          if (!alive()) return;
-          const row = el("div", `bd-settle-row${r.sum ? " bd-sum" : ""}`, null, card);
-          const you = el("span", `bd-you${r.you ? "" : " bd-none"}`, r.you ? String(r.you) : "–", row);
-          el("span", "bd-label", r.label, row);
-          const them = el("span", `bd-them${r.them ? "" : " bd-none"}`, r.them ? String(r.them) : "–", row);
-          if (!reduced()) {
-            if (r.you && !r.sum) this.sparks(you, r.you, "you");
-            if (r.them && !r.sum) this.sparks(them, r.them, "them");
-          }
-        });
-      });
-      remove(card, ms(4300));
-      return card;
+    // One unit of the hand's count: its badge, risen at its place on the table
+    // (lifted clear of the last ones there), and the tally ticked up.
+    unit(u) {
+      if (instant()) return null;
+      tallyOf(u.hand).set(u.running);
+      const at = project(u.anchor, u.who);
+      if (!at) return null;
+      const node = el("div", `bd-badge bd-count bd-${u.who} bd-${u.cat}${u.badge.big ? " bd-big" : ""}`, null, layer);
+      sided(node, u.who, u.badge.text);
+      node.style.setProperty("--life", `${ms(1500)}ms`);
+      place(node, { x: at.x, y: at.y - u.stack * 34 });
+      remove(node, ms(1600));
+      return node;
+    },
+
+    // The hand's total: the tally made large, the figures thrown out as sparks.
+    total(step, { names = { you: "You", them: "Opponent" } } = {}) {
+      if (instant()) return null;
+      const t = tallyOf(step.hand);
+      t.set({ you: step.you, them: step.them }, { final: true, names });
+      if (!reduced()) {
+        if (step.you) this.sparks(t.node.querySelector(".bd-tally-you"), step.you, "you");
+        if (step.them) this.sparks(t.node.querySelector(".bd-tally-them"), step.them, "them");
+      }
+      t.fade(ms(1200));
+      return t.node;
+    },
+
+    // The double game, the count's last figure before the banner.
+    double() {
+      if (instant()) return null;
+      const node = el("div", "bd-badge bd-double-badge bd-big", "Double game: it counts twice", layer);
+      node.style.setProperty("--life", `${ms(1900)}ms`);
+      const mid = project("trick", "you");
+      if (mid) place(node, { x: mid.x, y: mid.y + 74 });
+      remove(node, ms(2000));
+      return node;
     },
 
     // Small numbers thrown out of a node, as a firework's sparks.
@@ -148,7 +182,7 @@ export function createBadges(root, { later, speed = () => 1, project, reduced = 
       el("div", "bd-victory-sub", v.sub, node);
       if (v.won && !reduced()) {
         const n = v.double ? 70 : 36;
-        const colours = ["#e0b13a", "#c8442f", "#2f6fd0", "#f4efe2", "#3f9a58"];
+        const colours = ["#ffffff", "#d9d9d9", "#9a9a9a"];
         for (let i = 0; i < n; i++) {
           const c = el("div", "bd-confetti", null, layer);
           c.style.left = `${Math.random() * 100}%`;
@@ -161,7 +195,7 @@ export function createBadges(root, { later, speed = () => 1, project, reduced = 
         const nums = v.double ? 14 : 7;
         for (let i = 0; i < nums; i++) {
           later(ms(300 + i * 280), () => {
-            const s = el("div", `bd-spark bd-big bd-you`, v.double && i % 2 ? "x2" : "+" + [10, 20, 40, 100][i % 4], layer);
+            const s = el("div", "bd-spark bd-big", v.double && i % 2 ? "x2" : "+" + [10, 20, 40, 100][i % 4], layer);
             const a = (Math.PI * 2 * i) / nums;
             s.style.left = `${35 + (i % 4) * 10}%`;
             s.style.top = `${30 + (i % 3) * 8}%`;

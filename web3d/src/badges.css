@@ -1,16 +1,18 @@
 /* Points shown on the table (badges.js): badges that rise from the cards that
-   scored, the count after a hand, the game's celebration. The layer takes no
-   pointer and sits above the canvas, under the dialogs. */
-.bd-layer { position: fixed; inset: 0; pointer-events: none; overflow: hidden; z-index: 4; --bd-you: #2f6fd0; --bd-them: #b4552d; --bd-gold: #e0b13a; }
+   scored, the count after a hand (handcount.js), the game's celebration. All
+   of it white on black, as the score HUD is; a side is told by its label and
+   by where the badge rises, never by a tint. The layer takes no pointer and
+   sits above the canvas, under the dialogs. */
+.bd-layer { position: fixed; inset: 0; pointer-events: none; overflow: hidden; z-index: 4; }
 .bd-badge {
   position: absolute; transform: translate(-50%, -100%); white-space: nowrap;
-  padding: 5px 12px; border-radius: 16px; color: #fff; font: 700 17px/1.2 var(--font);
-  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.35); border: 2px solid rgba(255, 255, 255, 0.85);
+  padding: 5px 12px; border-radius: 16px; background: #000; color: #fff; font: 700 17px/1.2 var(--font);
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.45); border: 2px solid #fff;
   animation: bd-rise var(--life, 2s) cubic-bezier(0.2, 0.7, 0.3, 1) both;
 }
-.bd-badge.bd-you { background: var(--bd-you); }
-.bd-badge.bd-them { background: var(--bd-them); }
-.bd-badge.bd-big { font-size: 24px; padding: 7px 16px; border-color: var(--bd-gold); }
+.bd-badge .bd-side { font-size: 12px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; margin-right: 8px; opacity: 0.75; }
+.bd-badge.bd-big { font-size: 24px; padding: 7px 16px; border-width: 3px; }
+.bd-badge.bd-count { animation-name: bd-rise-short; }
 @keyframes bd-rise {
   0% { opacity: 0; transform: translate(-50%, -60%) scale(0.6); }
   12% { opacity: 1; transform: translate(-50%, -100%) scale(1.12); }
@@ -18,47 +20,50 @@
   80% { opacity: 1; }
   100% { opacity: 0; transform: translate(-50%, -190%) scale(1); }
 }
-
-/* The count after a hand: a small card high in the middle, clear of both hands. */
-.bd-settle {
-  position: absolute; left: 50%; top: 24%; transform: translateX(-50%); min-width: 240px; box-sizing: border-box;
-  padding: 10px 16px 12px; border-radius: 14px; background: rgba(27, 31, 36, 0.92); color: #f2f4f6;
-  font: 15px/1.5 var(--font); box-shadow: 0 6px 22px rgba(0, 0, 0, 0.4);
-  animation: bd-card var(--life, 4s) ease both;
+@keyframes bd-rise-short {
+  0% { opacity: 0; transform: translate(-50%, -70%) scale(0.7); }
+  15% { opacity: 1; transform: translate(-50%, -100%) scale(1.1); }
+  28% { transform: translate(-50%, -100%) scale(1); }
+  75% { opacity: 1; }
+  100% { opacity: 0; transform: translate(-50%, -140%) scale(1); }
 }
-.bd-settle-title { text-align: center; font-weight: 700; margin-bottom: 4px; }
-.bd-settle-row { display: grid; grid-template-columns: 4.5em 1fr 4.5em; align-items: baseline; gap: 8px; animation: bd-line 0.35s ease-out both; }
-.bd-settle-row > :first-child, .bd-settle-row > :last-child { font-variant-numeric: tabular-nums; font-weight: 700; font-size: 18px; }
-.bd-settle-row > :first-child { text-align: right; color: #8fb6f2; }
-.bd-settle-row > :last-child { text-align: left; color: #f0a37c; }
-.bd-settle-row .bd-label { text-align: center; color: #aab2bc; font-size: 13px; }
-.bd-settle-head > * { font-size: 12px !important; font-weight: 500 !important; color: #aab2bc !important; }
-.bd-none { opacity: 0.4; font-weight: 400 !important; }
-.bd-sum { border-top: 1px solid #4a525c; margin-top: 3px; padding-top: 3px; }
-.bd-sum > :first-child, .bd-sum > :last-child { font-size: 22px; }
-@keyframes bd-card { 0% { opacity: 0; transform: translate(-50%, 10px); } 6% { opacity: 1; transform: translate(-50%, 0); } 92% { opacity: 1; } 100% { opacity: 0; } }
-@keyframes bd-line { from { opacity: 0; transform: scale(1.25); } to { opacity: 1; transform: none; } }
+
+/* The hand's tally while it is counted: high in the middle, clear of both hands. */
+.bd-tally {
+  position: absolute; left: 50%; top: 24%; transform: translate(-50%, -50%); display: flex; gap: 12px; align-items: baseline;
+  padding: 8px 18px; border-radius: 14px; background: #000; color: #fff; border: 2px solid #fff;
+  font: 700 22px/1.2 var(--font); font-variant-numeric: tabular-nums; box-shadow: 0 6px 22px rgba(0, 0, 0, 0.45);
+}
+.bd-tally-hand, .bd-tally-who { font-size: 13px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; opacity: 0.75; }
+.bd-tally-sep { opacity: 0.6; }
+.bd-tally.bd-final { font-size: 30px; padding: 10px 24px; }
+.bd-double-badge { animation-name: bd-fade; transform: translate(-50%, 0); }
 
 /* Numbers thrown out of a line, as sparks. */
-.bd-spark { position: absolute; font: 700 16px var(--font); text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6); animation: bd-spark var(--life, 1.3s) ease-out both; }
-.bd-spark.bd-you { color: #9dc2ff; }
-.bd-spark.bd-them { color: #ffb48f; }
-.bd-spark.bd-big { font-size: 30px; color: var(--bd-gold); }
+.bd-spark { position: absolute; color: #fff; font: 700 16px var(--font); text-shadow: 0 0 3px #000, 0 1px 4px #000; animation: bd-spark var(--life, 1.3s) ease-out both; }
+.bd-spark.bd-big { font-size: 30px; }
 @keyframes bd-spark { 0% { opacity: 0; transform: translate(0, 0) scale(0.5); } 15% { opacity: 1; } 100% { opacity: 0; transform: translate(var(--dx), var(--dy)) scale(1.1); } }
 
 /* The game's end. */
 .bd-victory {
   position: absolute; left: 50%; top: 18%; transform: translateX(-50%); text-align: center; color: #fff;
-  padding: 14px 28px; border-radius: 18px; background: rgba(27, 31, 36, 0.88); box-shadow: 0 8px 30px rgba(0, 0, 0, 0.45);
+  padding: 14px 28px; border-radius: 18px; background: #000; border: 2px solid #fff; box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
   animation: bd-card var(--life, 5s) ease both;
 }
 .bd-victory-title { font: 800 30px/1.2 var(--font); }
-.bd-victory-sub { font: 16px var(--font); color: #c9d0d8; margin-top: 2px; }
-.bd-victory.bd-won .bd-victory-title { color: var(--bd-gold); }
-.bd-victory.bd-double { padding: 20px 40px; border: 3px solid var(--bd-gold); }
+.bd-victory-sub { font: 16px var(--font); color: #fff; opacity: 0.8; margin-top: 2px; }
+.bd-victory.bd-double { padding: 20px 40px; border-width: 4px; }
 .bd-victory.bd-double .bd-victory-title { font-size: 40px; }
 .bd-confetti { position: absolute; top: -12px; width: 8px; height: 14px; border-radius: 2px; opacity: 0; animation: bd-fall var(--life, 3s) linear var(--delay, 0s) both; }
+@keyframes bd-card { 0% { opacity: 0; transform: translate(-50%, 10px); } 6% { opacity: 1; transform: translate(-50%, 0); } 92% { opacity: 1; } 100% { opacity: 0; } }
 @keyframes bd-fall { 0% { opacity: 1; transform: translate(0, 0) rotate(0); } 100% { opacity: 0.9; transform: translate(var(--dx), 105vh) rotate(720deg); } }
+
+/* Calm motion: no rise, a fade only. */
+@media (prefers-reduced-motion: reduce) {
+  .bd-badge, .bd-badge.bd-count { animation-name: bd-fade; }
+  .bd-spark { display: none; }
+}
+@keyframes bd-fade { 0% { opacity: 0; } 15% { opacity: 1; } 80% { opacity: 1; } 100% { opacity: 0; } }
 
 /* The score HUD in the left column (kit/css/hud.css), made compact. */
 .ui-hudslot { width: 100%; max-width: 344px; }

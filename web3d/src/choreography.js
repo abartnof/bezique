@@ -9,6 +9,9 @@
 //
 // choreograph(prev, next, placement, view) -> { motions, placement, beats, count, marks, landed }
 //
+//   count      { at, lines: [ms], end } when a hand or the game is counted (handcount.js):
+//              the table is held for it before the cards are collected
+//
 //   placement  where each of the 64 meshes is: [{ id, zone, index, code, cardId, faceUp, pose }]
 //   motions    [{ id, path, delay, duration, reveal }]: `reveal` is the face a
 //              mesh shows from the start of its motion, or { code: null,
@@ -18,6 +21,7 @@
 // The shape follows strohmandeln's choreography.js; the stages are this game's.
 import { Vector3 } from "three";
 import { layDown, pull, slide, toss, transfer } from "../../kit/js/kinematics.js";
+import { countPlan } from "./handcount.js";
 import { layout } from "./layout.js";
 import { packModel, stagesBetween } from "./model.js";
 import { ZONES } from "./zones.js";
@@ -191,6 +195,16 @@ class Run {
     this.motions = [];
     this.clock = 0;
     this.beats = {};
+    this.count = null;
+  }
+
+  // The table held while a hand's (or the game's) count is told: its steps
+  // at their times, and the stage that follows starts when it is over.
+  hold(plan) {
+    const start = this.clock;
+    const lines = plan.times.map((t) => start + t);
+    this.count = this.count ? { ...this.count, lines: [...this.count.lines, ...lines], end: start + plan.end } : { at: plan.at, lines, end: start + plan.end };
+    this.clock = start + plan.end;
   }
 
   step(kind, slots, stage = {}) {
@@ -214,7 +228,7 @@ class Run {
   }
 
   result() {
-    return { motions: this.motions, placement: this.now, duration: this.clock, beats: this.beats, count: null, marks: [], landed: {} };
+    return { motions: this.motions, placement: this.now, duration: this.clock, beats: this.beats, count: this.count, marks: [], landed: {} };
   }
 }
 
@@ -235,7 +249,11 @@ export function choreograph(prev, next, placement, view = {}) {
   const run = new Run(placement);
   const stages = stagesBetween(prev, next);
   if (stages && stages.length) {
-    for (const stage of stages) run.step(stage.kind, layoutOf(stage.model), stage);
+    for (const stage of stages) {
+      const plan = stage.kind === "hand_ends" || stage.kind === "game_ends" ? countPlan(next.events, stage.at) : null;
+      if (plan && plan.steps.length) run.hold(plan);
+      run.step(stage.kind, layoutOf(stage.model), stage);
+    }
     run.step("settle", layoutOf(next.model, view));
   } else {
     run.step(stages ? "settle" : "direct", layoutOf(next.model, view));

@@ -5,7 +5,8 @@
 // own totals.
 import { Vector3 } from "three";
 import { createHud } from "../../kit/js/hud.js";
-import { createBadges, settlementOf } from "./badges.js";
+import { createBadges } from "./badges.js";
+import { plansSince } from "./handcount.js";
 import { apply, carriedNote, doubleNote, fold, hudEvent, hudGame, initial, itemsOf, ledgerOf } from "./scoring.js";
 import { trackerModel } from "./tracker.js";
 import { createTrackerView } from "./trackerview.js";
@@ -31,6 +32,8 @@ export function createScoreboard({ ui, director, zones, overlay, reduced = () =>
       stock: [z.stock.x, 1, z.stock.z],
       yourTable: [0, 1, z.yourTable.z],
       theirTable: [0, 1, z.theirTable.z],
+      wonYou: [z.won.x, 0.5, z.won.you],
+      wonThem: [z.won.x, 0.5, z.won.them],
     }[anchor];
     return at ? director.toScreen(new Vector3(...at)) : null;
   };
@@ -48,8 +51,7 @@ export function createScoreboard({ ui, director, zones, overlay, reduced = () =>
   }
 
   // One event told, at its beat: the running figures, the HUD's popup, the
-  // badge on the table, the count when a hand ends, the celebration when the
-  // game does.
+  // badge on the table, the ledger's hand closed when a hand ends.
   function event(events, i) {
     if (i < upto) return;
     upto = i + 1;
@@ -63,11 +65,27 @@ export function createScoreboard({ ui, director, zones, overlay, reduced = () =>
       hud.score(hudEvent(it));
       badges.show(it, { nth });
     });
-    if (e.kind === "hand_ends") {
-      hud.endHand(e.hand);
-      badges.settle(settlementOf(run, e.hand));
-    }
-    if (e.kind === "game_ends") badges.celebrate({ winner: e.winner, double: e.double }, run.totals);
+    if (e.kind === "hand_ends") hud.endHand(e.hand);
+  }
+
+  // The count a hand's end or the game's brings (handcount.js), told unit by
+  // unit on the director's clock at the times the choreography held the table
+  // for (`timing.lines`, ms from now): a badge a unit, the hand's total, the
+  // doubling, then the victory. `first` is the index of the advance's first
+  // new event.
+  function count(events, first, timing) {
+    if (!timing || instant()) return;
+    const steps = plansSince(events, first).flatMap((p) => p.steps);
+    steps.forEach((step, k) => {
+      const ms = timing.lines[k];
+      if (ms === undefined) return;
+      director.at(ms, () => {
+        if (step.kind === "unit") badges.unit(step);
+        else if (step.kind === "total") badges.total(step);
+        else if (step.kind === "double") badges.double();
+        else if (step.kind === "victory") badges.celebrate({ winner: step.winner, double: step.double }, step.totals);
+      });
+    });
   }
 
   // The table at rest: the HUD matches the engine's figures (a popup still
@@ -89,5 +107,5 @@ export function createScoreboard({ ui, director, zones, overlay, reduced = () =>
     }
   }
 
-  return { hud, badges, reset, event, rest, running: () => run };
+  return { hud, badges, reset, event, count, rest, running: () => run };
 }
