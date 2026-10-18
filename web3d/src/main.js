@@ -269,7 +269,7 @@ async function main() {
   }
 
   function persist() {
-    if (raw && raw.record) store.set(SITTING, { v: raw.record_version, level: raw.level, persona: prefs.persona, erratic: prefs.erratic, seed, hints: raw.aids.hints, tracker: raw.aids.tracker, record: raw.record });
+    if (raw && raw.record) store.set(SITTING, { v: raw.record_version, level: raw.level, persona: prefs.persona, erratic: prefs.erratic, seed, hints: raw.aids.hints, tracker: raw.aids.tracker, playForced: raw.aids.play_forced === true, record: raw.record });
   }
 
   // A setting within the game, taking effect at once. The other aids' keys
@@ -289,19 +289,24 @@ async function main() {
     rested();
   }
 
+  // The aids a game starts with, as the engine's `set` commands.
+  function startAids({ hints, tracker, playForced }) {
+    if (hints) engine.send("set hints on");
+    if (tracker) engine.send("set tracker on");
+    if (playForced) engine.send("set play_forced on");
+  }
+
   // Starts a game from the New game dialog's values (level, persona, erratic).
   function newGame(values = prefs, chosenSeed = null) {
     Object.assign(prefs, { level: values.level, persona: values.persona, erratic: values.erratic });
-    if (typeof values.hints === "boolean") prefs.hints = values.hints;
-    if (typeof values.tracker === "boolean") prefs.tracker = values.tracker;
+    for (const k of ["hints", "tracker", "playForced"]) if (typeof values[k] === "boolean") prefs[k] = values[k];
     savePrefs(prefs);
     newGameDialog.remember(prefs);
     seed = Number.isInteger(chosenSeed) ? chosenSeed : url.seed !== null && !S ? url.seed : Math.floor(Math.random() * 2 ** 32);
     director.cancelTimed();
     hushTalk();
     engine.new(gameConfig(prefs, { seed }));
-    if (prefs.hints) engine.send("set hints on");
-    if (prefs.tracker) engine.send("set tracker on");
+    startAids(gameConfig(prefs));
     present(engine.state(), "deal");
     persist();
   }
@@ -316,8 +321,8 @@ async function main() {
     prefs.erratic = saved.erratic ?? 0;
     let s = engine.new(gameConfig(prefs, { seed }));
     if (s.record_version !== saved.v) return false;
-    if (saved.hints) engine.send("set hints on");
-    if (saved.tracker) engine.send("set tracker on");
+    startAids({ hints: saved.hints, tracker: saved.tracker, playForced: saved.playForced });
+    prefs.playForced = saved.playForced === true;
     for (const command of saved.record) {
       if (command.startsWith("*")) continue;
       const r = engine.send(command);

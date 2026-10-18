@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { DEFAULTS, specsOf } from "../src/prefs.js";
+import { DEFAULTS, gameConfig, specsOf } from "../src/prefs.js";
 import { settingsModel } from "../src/settings.js";
 import { NEW_SPECS, erraticWord, normalise, opponentLine, parseSeed } from "../src/newgame.js";
 
@@ -30,11 +30,28 @@ test("seed parsing", () => {
 });
 
 test("normalise holds values to the specs", () => {
-  assert.deepEqual(normalise({ level: "4", persona: "9", erratic: "5000" }), { level: 4, persona: 0, erratic: 1000 });
+  assert.deepEqual(normalise({ level: "4", persona: "9", erratic: "5000" }), { level: 4, persona: 0, erratic: 1000, hints: false, tracker: true, playForced: false });
+  assert.equal(normalise({ playForced: true }).playForced, true);
+  assert.equal(normalise({ hints: "true", tracker: "junk" }).hints, true);
   assert.equal(normalise({ level: 3, persona: 1, erratic: 130 }).erratic, 150);
 });
 
 test("erraticism words", () => {
   assert.equal(erraticWord(0), "never");
   assert.equal(erraticWord(1000), "very often");
+});
+
+test("every mechanic or aid option is a New game row, and none is in the gear panel", () => {
+  const rows = settingsModel(DEFAULTS).flatMap((s) => s.rows).map((r) => r.key);
+  for (const k of ["level", "persona", "erratic", "hints", "tracker", "playForced"]) {
+    assert.ok(NEW_SPECS.some((s) => s.key === k), k);
+    assert.ok(!rows.includes(k), k);
+  }
+});
+
+test("gameConfig carries the aids to the engine start", () => {
+  const c = gameConfig({ ...DEFAULTS, hints: true, playForced: true }, { seed: 7 });
+  assert.equal(c.hints, true);
+  assert.equal(c.playForced, true);
+  assert.equal(c.tracker, true);
 });

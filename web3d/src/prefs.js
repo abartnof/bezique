@@ -4,8 +4,9 @@
 //   scope "game": within the game, in the gear panel (settings.js), each taking
 //     effect at once and reported to the page through onChange(key, value);
 //   scope "new":  only when a new game starts, in the New game dialog
-//     (newgame.js) and nowhere else: the opponent's skill, personality and
-//     slips. What is kept for them is the last game's choice, prefilled next time.
+//     (newgame.js) and nowhere else: everything that changes the mechanics or
+//     what the game asks and tells (opponent, slips, hints, tracker, forced
+//     plays). The Settings panel holds only cosmetic and help-text choices. What is kept for them is the last game's choice, prefilled next time.
 // Storage that is missing, full or blocked (a private window) is survived: the
 // page then plays from the defaults. The stored record carries `v`, the version
 // of the defaults, so a default changed later is not taken for a choice.
@@ -47,15 +48,18 @@ export const PREF_SPECS = Object.freeze([
   { key: "faces", scope: "game", section: "table", kind: "choice", label: "Card faces", default: "jumbo", options: opts([["jumbo", "Jumbo"], ["classic", "Classic"]]) },
   { key: "speed", scope: "game", section: "table", kind: "choice", label: "Dealing speed", default: "normal", options: opts([["normal", "Normal"], ["fast", "Fast"], ["instant", "Instant"]]) },
   { key: "reducedMotion", scope: "game", section: "table", kind: "choice", label: "Reduced motion", default: "auto", options: opts([["auto", "Auto"], ["on", "On"], ["off", "Off"]]) },
-  { key: "hints", scope: "game", section: "help", kind: "toggle", label: "Hints", default: false, options: onOff },
   { key: "hintRules", scope: "game", section: "help", kind: "toggle", label: "Hints name the rule", default: true, options: onOff },
-  { key: "tracker", scope: "game", section: "help", kind: "toggle", label: "Card tracker", default: true, options: onOff },
   { key: "tutor", scope: "game", section: "help", kind: "toggle", label: "Tips and tutorial", default: true, options: onOff },
   { key: "talk", scope: "game", section: "help", kind: "choice", label: "Table talk", default: "normal", options: opts([["quiet", "Quiet"], ["normal", "Normal"], ["chatty", "Chatty"]]) },
   // ---- when a new game starts
   { key: "level", scope: "new", kind: "choice", label: "Your opponent's skill", default: 3, options: LEVELS },
   { key: "persona", scope: "new", kind: "choice", label: "Your opponent's way of play", default: 0, options: PERSONAS },
   { key: "erratic", scope: "new", kind: "range", label: "Slips sometimes", default: 0, min: 0, max: 1000, step: 50 },
+  // The aids change what the game asks and tells you, so they are chosen
+  // before the deal (the table's own buttons still switch hints and tracker).
+  { key: "hints", scope: "new", kind: "toggle", label: "Hints", default: false, options: onOff },
+  { key: "tracker", scope: "new", kind: "toggle", label: "Card tracker", default: true, options: onOff },
+  { key: "playForced", scope: "new", kind: "toggle", label: "Play a forced card for me", default: false, options: onOff },
 ]);
 
 export const SECTIONS = Object.freeze([
@@ -156,6 +160,9 @@ export function gameConfig(prefs, { seed } = {}) {
     seed: Number.isInteger(seed) ? seed : Math.floor(Math.random() * 2 ** 32),
     persona: prefs.persona,
     erratic: prefs.erratic,
+    hints: prefs.hints === true,
+    tracker: prefs.tracker === true,
+    playForced: prefs.playForced === true,
   };
 }
 

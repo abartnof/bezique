@@ -51,11 +51,11 @@ test("the URL overrides, within the allowed values", () => {
 });
 
 test("gameConfig carries persona and erraticism", () => {
-  assert.deepEqual(gameConfig({ ...DEFAULTS, level: 4, persona: 2, erratic: 100 }, { seed: 7 }), { level: 4, seed: 7, persona: 2, erratic: 100 });
+  assert.deepEqual(gameConfig({ ...DEFAULTS, level: 4, persona: 2, erratic: 100 }, { seed: 7 }), { level: 4, seed: 7, persona: 2, erratic: 100, hints: false, tracker: true, playForced: false });
 });
 
-test("the new-game specs are exactly level, persona, erratic", () => {
-  assert.deepEqual(specsOf("new").map((s) => s.key), ["level", "persona", "erratic"]);
+test("the new-game specs are the opponent, the slips and the aids", () => {
+  assert.deepEqual(specsOf("new").map((s) => s.key), ["level", "persona", "erratic", "hints", "tracker", "playForced"]);
 });
 
 test("speed factor: reduced motion plays at once", () => {
