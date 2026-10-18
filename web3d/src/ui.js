@@ -28,6 +28,9 @@ export function createUi(root, { onAct }) {
   const chipStock = el("span", "ui-chip", null, chips);
   const chipHand = el("span", "ui-chip", null, chips);
   const chipLevel = el("span", "ui-chip", null, chips);
+  // With hints on, which of the game's two phases the hand is in, and what that changes.
+  const phaseBox = el("div", "ui-phase", null, hud);
+  phaseBox.hidden = true;
   const ticker = el("div", "ui-ticker", "", hud);
 
   // ---- bottom bar
@@ -93,6 +96,20 @@ export function createUi(root, { onAct }) {
     chipLevel.hidden = level == null;
   }
 
+  const PHASES = [
+    ["Phase 1 of 2: the stock", "Any card may be played. The trick's winner declares, then draws."],
+    ["Phase 2 of 2: the last eight tricks", "No drawing or declaring. Follow suit and win if able, else trump if able."],
+  ];
+  function setPhase(raw, on) {
+    const dealt = raw && raw.hand_number != null && raw.stock != null && !["choose_dealer", "over"].includes(raw.prompt?.kind);
+    phaseBox.hidden = !(on && dealt);
+    if (phaseBox.hidden) return;
+    const [title, line] = PHASES[raw.stock === 0 ? 1 : 0];
+    phaseBox.textContent = "";
+    el("div", "ui-phase-title", title, phaseBox);
+    el("div", "ui-phase-line", line, phaseBox);
+  }
+
   function say(text) {
     clearTimeout(sayTimer);
     ticker.textContent = text || "";
@@ -131,6 +148,7 @@ export function createUi(root, { onAct }) {
     root.querySelectorAll(".ui-modal").forEach((m) => m.remove());
 
     hintOn = !!hint;
+    setPhase(raw, hintOn);
     renderHint(hint, layers);
 
     if (raw.error) say(raw.error);
