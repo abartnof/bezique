@@ -14,7 +14,8 @@ observation and the opponent's rungs 1–5 with personas and erraticism
 (milestone 7) are done; the terminal client runs on the session. The
 overnight work has been reviewed, and then the whole codebase (the full
 review of 2026-10-02), every finding resolved or deliberately deferred.
-203 tests, all passing. What remains: the maintainer's play-test, the
+The gate (2026-10-19) reports 232 Rust, 200 kit, 113 game and 25 Python
+tests, all passing. What remains: the maintainer's play-test, the
 question of undo, and the 3D table. No further simulation is needed. Planning was completed on
 2026-10-01:
 
@@ -142,6 +143,31 @@ the ladder rerun after the full review. Levels run 1 to 5.
   32 worlds against 16 at rung 5: +1.3 points a hand (se 0.5), at the cap
   of 10,000 pairs, inconclusive by the rule; not adopted for now (it would
   double a level-5 decision's time), to revisit with the page's timing.
+
+## Review of 2026-10-18 and its fixes (2026-10-19)
+
+Six reports in `docs/reviews/`: `rules-engine.md`, `ai-solver-hints.md`,
+`wasm-session-cli.md`, `page-state-input.md`, `page-ui-scoring-hints.md`,
+`render-kit-build.md`. Their findings are resolved (test first where one was
+feasible), except:
+
+- **Rules-engine findings 1 and 2** (announcement options: scoring a carried
+  combination while announcing new ones; declining a free rider). Changes
+  `legal()`, `RECORD_VERSION`, every agent and every past measurement. To be
+  decided after the maintainer's play-test, batched with other
+  action-space changes.
+- **`keep_value` in `agents.rs`** counts available copies the way the hints
+  did before their fix. Changes play; to be re-measured once, with the item
+  above.
+- **The rung 6 rerun** (`measurements/README.md`: its stop is not certified
+  under the corrected sequential rule). Deferred; only if the action-space
+  change goes ahead.
+- Browser check: see below.
+
+The measurement harness's sequential rule is now O'Brien-Fleming throughout
+(`tournament::obf_z`), with the futility stop on the same boundary; the
+personality runs and `rung6-sequential.txt` are marked in
+`measurements/README.md`.
 
 ## Decisions
 

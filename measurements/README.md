@@ -24,7 +24,7 @@ cargo run --release -p bezique-core --bin measure -- <report> [n]
 | `anatomy-rung2-final.txt` | `anatomy 2000` | Rung 2 with the final style: 4.25 hands a game, 12.4% doubles, 95.2% ended mid-hand, the first dealer winning 50.0%; double bezique scored in 2.5% of player-hands (0.2% before the night's fixes). |
 | `lookahead-sweep.txt` | `lookahead 500 <horizon> <worlds>` | Rung 5 (rung 4 looking ahead near the end of the stock) against rung 4, swept over the horizon (face-down cards left when it starts looking) and the worlds sampled. Gains seemed to grow with worlds (8: +27.2, 16: +32.8, 32: +35.3 at horizon 9) and with the horizon up to 9–13, then to fall (21: +19.5, se 4.5). Each point is one run of 500 pairs, so these are suggestions, not findings. Times a hand are rough: other work shared the machine. |
 | `lookahead-confirm.txt` | `MEASURE_SEED=60000000 lookahead 2000 9 16` | The chosen setting, horizon 9 and 16 worlds (the knee, not the maximum), confirmed on fresh seeds: +30.05 points a hand over rung 4 (se 1.29). It became rung 5. |
-| `personality-level2.txt`, `personality-level4.txt` | `personality` / `MEASURE_LEVEL=4 personality` (sequential, O'Brien-Fleming; `docs/OPPONENT.md` §4) | The six personas of 2026-10-17 against balanced at rungs 2 and 4: strength inside +-2 points a hand for four of five, the specialist -1.2 and -1.7; each persona's own style statistic. Supersedes `personas-rung4.txt` (the earlier four personas). |
+| `personality-level2.txt`, `personality-level4.txt` | `personality` / `MEASURE_LEVEL=4 personality` (sequential, O'Brien-Fleming; `docs/OPPONENT.md` §4) | The six personas of 2026-10-17 against balanced at rungs 2 and 4: strength inside +-2 points a hand for four of five, the specialist -1.2 and -1.7; each persona's own style statistic. Supersedes `personas-rung4.txt` (the earlier four personas). **Strength half of the stops not certified under the corrected rule (2026-10-19):** see below. |
 | `personas-rung4.txt` | `MEASURE_LEVEL=4 personas 5000` | The personas at rung 4, where they had only been calibrated at rung 2: concentrates −0.36 (se 0.96), close −0.32 (se 0.84), bezique −1.35 (se 0.89) points a hand against balanced. All within the two-point limit. |
 | `lookahead-declarations.txt` | `lookahead-declarations 1000` | Rung 5 looking ahead in the turn of declaring too (each option valued in the same worlds), against rung 5: −0.94 points a hand (se 0.41). Not kept: rung 4's declaring stands. Declaring lays cards open, and determinised rollouts cannot value what is hidden (DESIGN §10.4, strategy fusion). |
 | `anatomy-rung2-counted.txt` | `anatomy 2000` (after the full review of 2026-10-02) | The final rung 2 again, combinations now counted from the finished hands tallied: double bezique 1.0% of player-hands (not 2.5%), the sequence 5.7% (not 7.8%); every other figure identical to `anatomy-rung2-final.txt`. |
@@ -34,9 +34,31 @@ cargo run --release -p bezique-core --bin measure -- <report> [n]
 | `ladder-after-review.txt` | `ladder 2000` (at `fbd6d3c`, after the full review's play fixes) | The ladder on play as it now stands (`RECORD_VERSION` 2): rung 2 over 1 +98.5 (92.0% of games), rung 3 over 2 +18.7 (58.3%), rung 4 over 3 +2.3 (51.4%), rung 5 over 4 +30.7 (se 1.3; 63.0%, game points +0.32 a game); the fixes changed little. |
 | `anatomy-rung5-counted.txt` | `MEASURE_LEVEL=5 anatomy 1000` (at `fbd6d3c`) | Rung 5 against itself on play as it now stands, combinations counted correctly: 4.23 hands a game, 13.4% doubles, 95.5% ended mid-hand, the first dealer winning 53.0% (se 1.6); double bezique 1.0% of player-hands, the sequence 6.9%. |
 | `worlds-32-sequential.txt` | `worlds 32` (sequential; at `96893fc`, after the full review) | Rung 5 with 32 worlds against rung 5 (16): +1.30 points a hand (se 0.49) at the cap of 10,000 pairs, z = 2.65: short of the bound of 3 fixed in advance, so inconclusive by the rule. Pooled with `lookahead-32-worlds.txt` (+2.44, se 1.27, other seeds), about +1.4 (se 0.46): probably real but small, at twice the cost of a decision. Not adopted; to revisit when the page's speed can be measured. Under this rule with no effect at all, about 2.3% of runs would stop "clear" wrongly (simulated by the review); a run stopping early overstates the effect. |
-| `rung6-sequential.txt` | `rung6` (sequential; at `4965999`, after the review of rung 6) | Rung 6 (rung 5 playing for the game in the last stock tricks, on the race model) against rung 5, in mirrored games by game points: +0.000 a game (se 0.009) after 1,100 pairs, of which 1,011 split; stopped as nothing worth having (within ±0.02 game points a game at two standard errors). Not kept as a level. |
+| `rung6-sequential.txt` | `rung6` (sequential; at `4965999`, after the review of rung 6) | Rung 6 (rung 5 playing for the game in the last stock tricks, on the race model) against rung 5, in mirrored games by game points: +0.000 a game (se 0.009) after 1,100 pairs, of which 1,011 split; stopped as nothing worth having (within ±0.02 game points a game at two standard errors). Not kept as a level. **Not certified under the corrected rule (2026-10-19):** see "Sequential runs and the corrected rule" below. |
 | `ladder-rung5.txt` | `ladder 2000` | The five-rung ladder (2026-10-02, after the solver's speed-up): rungs 2–4 exactly as in `ladder-tuned-style.txt`, so the faster solver plays as before; rung 5 over rung 4 +30.5 points a hand (se 1.3), 62.4% of games (se 0.8). |
 | `ladder.txt` | `ladder 2000` | The ladder as rebuilt: rung 2 over rung 1 +79.0 (se 2.4), 87.5% of games; rung 3 (memory and the exact endgame) over rung 2 +19.2 (se 0.8), 58.0% of games. |
+
+## Sequential runs and the corrected rule (2026-10-19)
+
+The review `docs/reviews/wasm-session-cli.md` found the stopping rule in
+`tournament.rs` was not O'Brien-Fleming (constant z) and its "nothing worth
+having" stop an unadjusted repeated peek. Both are fixed (boundary
+`z_k = c sqrt(K/k)`, `c` 2.04 at K=5 rising to 2.17 at K=60; the futility
+interval uses the same `z_k`). The recorded files are unedited. Effect on them:
+
+- `rung6-sequential.txt`: the stop, at 1,100 pairs and look 11 of 60, used an
+  unadjusted 2 se interval. Under the corrected rule z is about 5.1 and the
+  interval about ±0.046, so the run would not have stopped. The estimate
+  (+0.000, se 0.009) stands; "within ±0.02" is not certified.
+- `personality-level2.txt`, `personality-level4.txt`: the "strength inside
+  the tolerance" half of each stop used an unadjusted 95% interval, and the
+  boundary (2.09 at K=16) was about 1% low. Style-clear stops are barely
+  affected. The specialist runs ended at the ceiling and are unaffected.
+- `worlds-32-sequential.txt`, `rollout-memory.txt`: ended at the cap, not on
+  a clear effect; unaffected.
+
+What would close it: a rerun of the affected runs under the new rule, with
+floor, ceiling and batch size fixed beforehand. Not run.
 
 **A correction (full review of 2026-10-02).** The anatomy reports made
 before `anatomy-rung2-counted.txt` counted combinations announced in every
