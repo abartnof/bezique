@@ -94,6 +94,7 @@ export function createNewGame(root, { prefs, inProgress = () => false, onStart }
           b.onclick = () => {
             chosen[s.key] = o.value;
             render();
+            card.querySelector(`[data-key="${s.key}"][aria-checked="true"]`)?.focus();
           };
         }
       }
@@ -126,6 +127,7 @@ export function createNewGame(root, { prefs, inProgress = () => false, onStart }
   }
 
   function open({ opening = false } = {}) {
+    if (!modal.hidden) return; // already open (the opening dialog keeps its first deal)
     first = opening;
     opener = document.activeElement;
     chosen = { ...last, seedText: "" };
