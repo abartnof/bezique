@@ -259,9 +259,7 @@ fn walk_crossing_chance(c: f64, looks: u64) -> f64 {
         for (i, out) in next.iter_mut().enumerate() {
             let from = i.saturating_sub(reach);
             let to = (i + reach + 1).min(n);
-            *out = (from..to)
-                .map(|j| density[j] * pdf(x[i] - x[j]) * h)
-                .sum();
+            *out = (from..to).map(|j| density[j] * pdf(x[i] - x[j]) * h).sum();
         }
         density = next;
     }
@@ -513,7 +511,10 @@ mod tests {
         let h = hands(40, 30, &maxims, &legal);
         for (i, &margin) in h.margins.iter().enumerate() {
             let seed = 40 + i as u64;
-            let expected: i64 = [false, true].iter().map(|&s| banked_margin(seed, s).0).sum();
+            let expected: i64 = [false, true]
+                .iter()
+                .map(|&s| banked_margin(seed, s).0)
+                .sum();
             assert_eq!(margin, expected, "seed {seed}");
         }
     }
@@ -526,10 +527,16 @@ mod tests {
             .filter(|&seed| banked_margin(seed, false).1)
             .take(3)
             .collect();
-        assert!(!hit.is_empty(), "no seed in 0..400 turns up the seven of trumps");
+        assert!(
+            !hit.is_empty(),
+            "no seed in 0..400 turns up the seven of trumps"
+        );
         for seed in hit {
             let h = hands(seed, 1, &maxims, &legal);
-            let expected: i64 = [false, true].iter().map(|&s| banked_margin(seed, s).0).sum();
+            let expected: i64 = [false, true]
+                .iter()
+                .map(|&s| banked_margin(seed, s).0)
+                .sum();
             assert_eq!(h.margins[0], expected, "seed {seed}");
             // The naive total would have counted the 10.
             let mut agents: [Box<dyn Agent>; 2] = [maxims(0), legal(0)];
@@ -558,7 +565,11 @@ mod tests {
         // The rule itself (K = 5: z_5 = 2.04, z_3 = 2.63).
         assert_eq!(rule.looks(), 5);
         assert_eq!(rule.stop(100, 0.1, 0.2), Some(Stop::NothingWorthHaving));
-        assert_eq!(rule.stop(80, 0.1, 0.5), None, "an interval of ±1.0 is too wide");
+        assert_eq!(
+            rule.stop(80, 0.1, 0.5),
+            None,
+            "an interval of ±1.0 is too wide"
+        );
         assert_eq!(rule.stop(60, 0.5, 0.2), None);
         assert_eq!(rule.stop(60, 1.4, 0.5), Some(Stop::Clear));
         assert_eq!(rule.stop(30, 9.0, 1.0), None, "no look before the minimum");

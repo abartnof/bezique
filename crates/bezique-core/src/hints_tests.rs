@@ -58,7 +58,13 @@ fn view(mine: CardSet, theirs: CardSet, unseen: CardSet, stock: usize, phase: Ph
 /// Mid-hand, the stock lasting: every card not mine is unseen.
 fn stock_view(mine: &str) -> View {
     let mine = set(mine);
-    view(mine, CardSet::EMPTY, CardSet::PACK.minus(mine), 12, Phase::Lead)
+    view(
+        mine,
+        CardSet::EMPTY,
+        CardSet::PACK.minus(mine),
+        12,
+        Phase::Lead,
+    )
 }
 
 fn following(mine: &str, led: Card) -> View {
@@ -129,7 +135,13 @@ fn a_combination_with_no_copy_left_to_come_is_not_kept_for() {
     // come to the queen of spades held.
     let mine = set("QS KC 8D 9D 8C 9C 7C 8S");
     let jds = set("JD JD");
-    let mut v = view(mine, jds, CardSet::PACK.minus(mine).minus(jds), 12, Phase::Lead);
+    let mut v = view(
+        mine,
+        jds,
+        CardSet::PACK.minus(mine).minus(jds),
+        12,
+        Phase::Lead,
+    );
     v.theirs.shown = jds;
     let r = reason(&v, "KC");
     assert_ne!(r.key, "keep_for_bezique", "{r:?}");

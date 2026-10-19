@@ -298,7 +298,14 @@ fn a_refused_command_changes_nothing_else() {
     let mut session = sit_down(2, 4, 0, 0);
     play_on(&mut session, 4);
     let before: Value = serde_json::from_str(&state(&session)).unwrap();
-    for bad in ["play 999", "play", "declare 99", "dealer you", "set nothing on", "garbage"] {
+    for bad in [
+        "play 999",
+        "play",
+        "declare 99",
+        "dealer you",
+        "set nothing on",
+        "garbage",
+    ] {
         assert!(!session.send(bad), "{bad}");
         let mut after: Value = serde_json::from_str(&state(&session)).unwrap();
         assert!(after["error"].is_string(), "{bad}");
@@ -346,6 +353,9 @@ fn the_exports_before_and_after_sitting_down() {
     assert_eq!(send(&[0xff, 0xfe], 2), 0, "invalid UTF-8 is not a command");
     bezique_new(2, 6, 0, 0);
     let s: Value = serde_json::from_str(&current()).unwrap();
-    assert!(s["record"].as_array().unwrap().is_empty(), "a new table replaces the old");
+    assert!(
+        s["record"].as_array().unwrap().is_empty(),
+        "a new table replaces the old"
+    );
     assert!(s["error"].is_null());
 }

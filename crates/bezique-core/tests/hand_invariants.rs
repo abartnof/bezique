@@ -164,7 +164,11 @@ fn declaring_happens_only_while_the_stock_lasts_and_play_follows_the_rules() {
 /// those that win the trick if any do, else all of them.
 fn reference_replies(held: CardSet, led: Card, trump: Suit) -> CardSet {
     let following = held.in_suit(led.suit());
-    let pool = if following.is_empty() { held } else { following };
+    let pool = if following.is_empty() {
+        held
+    } else {
+        following
+    };
     let winning = CardSet::of(
         &pool
             .cards()

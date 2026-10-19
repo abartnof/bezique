@@ -1246,7 +1246,12 @@ mod tests {
     #[test]
     fn a_repeated_set_is_recorded_once() {
         let mut s = Session::new(12, Settings::default());
-        for c in ["set hints on", "set hints on", "set tracker on", "set tracker on"] {
+        for c in [
+            "set hints on",
+            "set hints on",
+            "set tracker on",
+            "set tracker on",
+        ] {
             assert!(s.send(c));
         }
         assert_eq!(s.record(), ["set hints on", "set tracker on"]);
@@ -1265,7 +1270,8 @@ mod tests {
             assert!(straight.send(&c));
         }
         old.extend(straight.record()[1..].iter().cloned());
-        let replayed = Session::replay(12, Settings::default(), &old).expect("the old record loads");
+        let replayed =
+            Session::replay(12, Settings::default(), &old).expect("the old record loads");
         assert_eq!(replayed.record(), straight.record());
         let mut replayed = replayed;
         assert!(replayed.can_undo() && replayed.send("undo"));

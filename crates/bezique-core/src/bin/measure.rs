@@ -109,9 +109,13 @@ fn parsed<T: std::str::FromStr>(text: &str, wanted: &str) -> T {
 /// `MEASURE_LEVEL`, or `default`; a value that is not a level is refused,
 /// not ignored (ignoring it would measure the wrong rung).
 fn level_from_env(default: u8) -> u8 {
-    let level = std::env::var("MEASURE_LEVEL").map_or(default, |s| parsed(&s, "a level in MEASURE_LEVEL"));
+    let level =
+        std::env::var("MEASURE_LEVEL").map_or(default, |s| parsed(&s, "a level in MEASURE_LEVEL"));
     if !(1..=bezique_core::agents::TOP).contains(&level) {
-        usage(&format!("MEASURE_LEVEL={level} is outside 1..={}", bezique_core::agents::TOP));
+        usage(&format!(
+            "MEASURE_LEVEL={level} is outside 1..={}",
+            bezique_core::agents::TOP
+        ));
     }
     level
 }
@@ -277,9 +281,7 @@ fn last_stock_trick(pairs: u64) {
 /// `lookahead <pairs> [horizon] [worlds]`.
 fn lookahead(pairs: u64, rest: &[String]) {
     let horizon = rest.first().map_or(9, |s| parsed(s, "a horizon"));
-    let worlds = rest
-        .get(1)
-        .map_or(16, |s| parsed(s, "a number of worlds"));
+    let worlds = rest.get(1).map_or(16, |s| parsed(s, "a number of worlds"));
     let ahead = move |_: u64| -> Box<dyn Agent> {
         Box::new(Lookahead {
             horizon,
@@ -303,9 +305,7 @@ fn lookahead(pairs: u64, rest: &[String]) {
 /// stands: `lookahead-vs-five <pairs> <horizon> <worlds>`.
 fn lookahead_vs_five(pairs: u64, rest: &[String]) {
     let horizon = rest.first().map_or(9, |s| parsed(s, "a horizon"));
-    let worlds = rest
-        .get(1)
-        .map_or(32, |s| parsed(s, "a number of worlds"));
+    let worlds = rest.get(1).map_or(32, |s| parsed(s, "a number of worlds"));
     let variant = move |_: u64| -> Box<dyn Agent> {
         Box::new(Lookahead {
             horizon,
@@ -810,15 +810,27 @@ fn personality(level: u8, only: Option<&str>) {
                 .split(',')
             {
                 match kv.split_once('=') {
-                    Some(("bezique", v)) => tuned.bezique = parsed(v, "a whole number in MEASURE_VARIANT"),
+                    Some(("bezique", v)) => {
+                        tuned.bezique = parsed(v, "a whole number in MEASURE_VARIANT")
+                    }
                     Some(("leaning", "plain")) => {
                         tuned.leaning = bezique_core::agents::Leaning::Plain
                     }
-                    Some(("sequence", v)) => tuned.sequence = parsed(v, "a whole number in MEASURE_VARIANT"),
-                    Some(("marriage", v)) => tuned.marriage = parsed(v, "a whole number in MEASURE_VARIANT"),
-                    Some(("four", v)) => tuned.four = parsed(v, "a whole number in MEASURE_VARIANT"),
-                    Some(("take_brisque", v)) => tuned.take_brisque = parsed(v, "a whole number in MEASURE_VARIANT"),
-                    Some(("lead_brisques", v)) => tuned.lead_brisques = parsed(v, "a whole number in MEASURE_VARIANT"),
+                    Some(("sequence", v)) => {
+                        tuned.sequence = parsed(v, "a whole number in MEASURE_VARIANT")
+                    }
+                    Some(("marriage", v)) => {
+                        tuned.marriage = parsed(v, "a whole number in MEASURE_VARIANT")
+                    }
+                    Some(("four", v)) => {
+                        tuned.four = parsed(v, "a whole number in MEASURE_VARIANT")
+                    }
+                    Some(("take_brisque", v)) => {
+                        tuned.take_brisque = parsed(v, "a whole number in MEASURE_VARIANT")
+                    }
+                    Some(("lead_brisques", v)) => {
+                        tuned.lead_brisques = parsed(v, "a whole number in MEASURE_VARIANT")
+                    }
                     _ => {}
                 }
             }
