@@ -197,7 +197,7 @@ test("a carried score's page fires at the first option that says so (the engine'
   const options = (texts) => ({ events: [{ kind: "took_trick" }], stock: 20, turn_up: { card: "9H" }, totals: { you: 0, them: 0 }, prompt: { kind: "declare", options: texts.map((text) => ({ text })) } });
   const rest = PAGE_KEYS.filter((k) => !["to-score"].includes(k));
   assert.equal(due(null, options(["Nothing: draw.", "Forty for bezique, and twenty to score."]), rest), "to-score");
-  assert.equal(due(null, options(["Nothing: draw.", "Score forty, for the royal marriage, and twenty, and twenty to score."]), rest), "to-score");
+  assert.equal(due(null, options(["Nothing: draw.", "Score forty for the royal marriage, and twenty, and twenty to score."]), rest), "to-score");
   assert.equal(due(null, options(["Nothing: draw.", "Twenty for the marriage in clubs."]), rest), null);
 });
 

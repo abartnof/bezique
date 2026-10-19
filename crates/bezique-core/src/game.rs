@@ -50,7 +50,7 @@ pub fn cut_for_deal(rng: &mut Rng) -> Cut {
     let mut rounds = Vec::new();
     loop {
         let a = Card(rng.below(64) as u8);
-        let b = Card((u64::from(a.0) + 1 + rng.below(63)) as u8 % 64);
+        let b = Card(((u64::from(a.0) + 1 + rng.below(63)) % 64) as u8);
         rounds.push([a, b]);
         if a.rank() != b.rank() {
             let chooser = if a.rank() > b.rank() {
@@ -234,6 +234,22 @@ impl Game {
 
 #[cfg(test)]
 mod tests {
+    /// The second card of a cut is never the first card itself, and a cut
+    /// ends only on unequal ranks (the index arithmetic wraps at 64).
+    #[test]
+    fn a_cut_shows_two_different_cards_and_ends_on_unequal_ranks() {
+        let mut rng = Rng::seeded(64);
+        for _ in 0..5_000 {
+            let cut = cut_for_deal(&mut rng);
+            for [a, b] in &cut.rounds {
+                assert!(a.0 < 64 && b.0 < 64 && a != b);
+            }
+            let (last, early) = cut.rounds.split_last().unwrap();
+            assert_ne!(last[0].rank(), last[1].rank());
+            assert!(early.iter().all(|[a, b]| a.rank() == b.rank()));
+        }
+    }
+
     use super::*;
     use crate::cards::{CardSet, CardType, Suit};
     use crate::deal::Stock;

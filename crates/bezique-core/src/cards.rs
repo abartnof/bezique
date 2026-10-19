@@ -46,10 +46,12 @@ impl Rank {
     }
 
     pub fn letter(self) -> char {
+        debug_assert!(self.is_valid(), "{self:?} is not a rank");
         RANK_CHARS[self.0 as usize] as char
     }
 
     pub fn name(self) -> &'static str {
+        debug_assert!(self.is_valid(), "{self:?} is not a rank");
         [
             "seven", "eight", "nine", "jack", "queen", "king", "ten", "ace",
         ][self.0 as usize]
@@ -79,14 +81,17 @@ impl Suit {
     }
 
     pub fn letter(self) -> char {
+        debug_assert!(self.is_valid(), "{self:?} is not a suit");
         SUIT_LETTERS[self.0 as usize] as char
     }
 
     pub fn symbol(self) -> char {
+        debug_assert!(self.is_valid(), "{self:?} is not a suit");
         SUIT_SYMBOLS[self.0 as usize]
     }
 
     pub fn name(self) -> &'static str {
+        debug_assert!(self.is_valid(), "{self:?} is not a suit");
         ["spades", "hearts", "diamonds", "clubs"][self.0 as usize]
     }
 }

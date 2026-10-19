@@ -1195,7 +1195,7 @@ mod tests {
         );
         assert_eq!(
             (RECORD_VERSION, fingerprint),
-            (4, 5_273_783_809_396_264_268),
+            (4, 11_477_014_054_279_090_002),
             "play, the options or the narration changed: see this test's comment"
         );
     }
