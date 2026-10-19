@@ -1137,6 +1137,78 @@ mod tests {
         );
     }
 
+    // ---- what check() accepts and options() does not offer ---------------
+    //
+    // Characterisation, not a wanted behaviour: both are open questions for
+    // the maintainer (docs/reviews/rules-engine.md, findings 1 and 2).
+
+    /// Finding 1. With a royal marriage carried, a fresh (second) bezique may
+    /// be announced while the marriage is the combination scored: `check`
+    /// accepts it. `options` offers the bezique scored, and the marriage
+    /// scored alone, but never the pair.
+    #[test]
+    fn check_allows_scoring_a_carried_combination_while_announcing_a_new_one_but_options_does_not_offer_it(
+    ) {
+        let mut h = Holdings::new(set("KH QH QS JD 7S 8S 9S 7D"));
+        let marriage = the(&h, Meld::Marriage(HEARTS));
+        let first = the(&h, Meld::Bezique);
+        announce(&mut h, &[first, marriage]);
+        assert_eq!(h.carried(), vec![marriage]);
+        h.receive(card("QS", 1));
+        h.receive(card("JD", 1));
+        let second = the(&h, Meld::Bezique);
+        assert_eq!(second.cards, CardSet::of(&[card("QS", 1), card("JD", 1)]));
+        let wanted = Announcement {
+            melds: vec![second],
+            score: marriage,
+        };
+        assert_eq!(h.check(HEARTS, &wanted), Ok(()));
+        let options = h.options(HEARTS);
+        assert!(
+            options.iter().any(|a| a.score == second),
+            "the new bezique, scored, is offered"
+        );
+        assert!(
+            options
+                .iter()
+                .any(|a| a.melds.is_empty() && a.score == marriage),
+            "the carried marriage, scored alone, is offered"
+        );
+        assert!(
+            !options
+                .iter()
+                .any(|a| !a.melds.is_empty() && a.score == marriage),
+            "{options:?}: announcing the bezique and scoring the marriage is not offered"
+        );
+    }
+
+    /// Finding 2. A bezique laid with the spade king already shown: the
+    /// queen of spades also marries the king, a free rider. `check` accepts
+    /// the bezique alone; `options` never offers it without the marriage.
+    #[test]
+    fn check_allows_declining_a_free_rider_but_options_always_announces_it() {
+        let h = Holdings {
+            concealed: set("QS JD 7C 8C"),
+            shown: set("KS"),
+            announced: vec![],
+        };
+        let bezique = the(&h, Meld::Bezique);
+        let alone = Announcement {
+            melds: vec![bezique],
+            score: bezique,
+        };
+        assert_eq!(h.check(HEARTS, &alone), Ok(()));
+        let options = h.options(HEARTS);
+        assert!(
+            options.iter().any(|a| a.melds.len() == 2),
+            "{options:?}: the bezique with its marriage"
+        );
+        assert!(
+            !options.iter().any(|a| a.melds == vec![bezique]),
+            "{options:?}: the bezique alone is not offered"
+        );
+    }
+
     // ---- checking announcements ------------------------------------------
 
     #[test]

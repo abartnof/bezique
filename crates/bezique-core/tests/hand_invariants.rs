@@ -1,9 +1,10 @@
 //! Whole hands of random legal play, held to what must be true of every hand.
 
-use bezique_core::cards::{CardSet, Rank};
+use bezique_core::cards::{Card, CardSet, Rank, Suit};
 use bezique_core::deal::{Deal, Seat};
 use bezique_core::hand::{Action, Hand, Phase, Source};
 use bezique_core::rng::{purpose, Rng};
+use bezique_core::tricks::second_wins;
 
 /// The stream of this test's own random choices (moves, coin flips), apart
 /// from the deals'.
@@ -156,4 +157,81 @@ fn declaring_happens_only_while_the_stock_lasts_and_play_follows_the_rules() {
             .count();
         assert_eq!(sevens_in_tricks, 8);
     }
+}
+
+/// Foster's sentence read literally, apart from `tricks::endgame_replies`:
+/// among the cards that follow suit (or, holding none, among all of them),
+/// those that win the trick if any do, else all of them.
+fn reference_replies(held: CardSet, led: Card, trump: Suit) -> CardSet {
+    let following = held.in_suit(led.suit());
+    let pool = if following.is_empty() { held } else { following };
+    let winning = CardSet::of(
+        &pool
+            .cards()
+            .filter(|&card| second_wins(led, card, trump))
+            .collect::<Vec<_>>(),
+    );
+    if winning.is_empty() {
+        pool
+    } else {
+        winning
+    }
+}
+
+/// Through `Hand::legal` and `Hand::apply` on random hands: in the last
+/// eight tricks the second player must follow and win if able, else follow,
+/// else trump, else play anything. `legal` offers one of two twins, so the
+/// comparison is by card type; `apply` accepts exactly the reference cards.
+#[test]
+fn the_endgame_replies_match_fosters_sentence_through_legal_and_apply() {
+    let mut checked = 0;
+    let (mut must_win, mut must_trump) = (0, 0);
+    for seed in 6000..6600 {
+        let mut deal_rng = Rng::stream(seed, purpose::DEALS);
+        let mut choose = Rng::stream(seed, CHOICES);
+        let mut hand = Hand::new(Deal::shuffled(&mut deal_rng));
+        while hand.to_move().is_some() {
+            if let (Phase::Follow, true) = (hand.phase(), hand.in_endgame()) {
+                let led = hand.led().unwrap();
+                let seat = hand.to_move().unwrap();
+                let held = hand.holdings(seat).cards();
+                let expected = reference_replies(held, led, hand.trump());
+                let mut offered: Vec<u8> = hand
+                    .legal()
+                    .into_iter()
+                    .map(|a| match a {
+                        Action::Play(card) => card.card_type().0,
+                        other => panic!("seed {seed}: {other:?} offered in a follow"),
+                    })
+                    .collect();
+                offered.sort_unstable();
+                let mut wanted: Vec<u8> = expected.cards().map(|c| c.card_type().0).collect();
+                wanted.sort_unstable();
+                wanted.dedup();
+                assert_eq!(
+                    offered,
+                    wanted,
+                    "seed {seed}: {held:?} to {led:?}, trumps {:?}",
+                    hand.trump()
+                );
+                for card in held.cards() {
+                    let accepted = hand.clone().apply(Action::Play(card)).is_ok();
+                    assert_eq!(accepted, expected.contains(card), "seed {seed}: {card:?}");
+                }
+                let following = held.in_suit(led.suit());
+                must_win += usize::from(!following.is_empty() && expected.len() < following.len());
+                must_trump += usize::from(
+                    following.is_empty()
+                        && !held.in_suit(hand.trump()).is_empty()
+                        && expected.len() < held.len(),
+                );
+                checked += 1;
+            }
+            let legal = hand.legal();
+            let pick = legal[choose.below(legal.len() as u64) as usize].clone();
+            hand.apply(pick).unwrap();
+        }
+    }
+    assert!(checked > 1_500, "{checked} endgame replies checked");
+    assert!(must_win > 100 && must_trump > 50, "{must_win} {must_trump}");
 }
