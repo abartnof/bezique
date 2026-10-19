@@ -41,14 +41,22 @@ export function seenCodes(s) {
 
 const plural = (n, word) => `${n} ${word}${n === 1 ? "" : "s"}`;
 
-// { out: { code: copies unseen }, unseen, stock, hidden, trump, lines, rows } or null.
+// { out: { code: copies unseen }, conflict, unseen, stock, hidden, trump, lines, rows } or null.
 export function trackerModel(s) {
   const codes = seenCodes(s);
   if (!codes) return null;
   const seen = {};
   for (const c of codes) seen[c] = (seen[c] ?? 0) + 1;
   const out = {};
-  for (const suit of SUITS) for (const rank of RANKS) out[rank + suit] = Math.max(0, COPIES - (seen[rank + suit] ?? 0));
+  // A card seen more often than it exists is a double count in the view, not a
+  // small number to show: it is flagged, and the count is left as it falls.
+  let conflict = false;
+  for (const suit of SUITS)
+    for (const rank of RANKS) {
+      const left = COPIES - (seen[rank + suit] ?? 0);
+      if (left < 0) conflict = true;
+      out[rank + suit] = Math.max(0, left);
+    }
   const count = (pred) => Object.entries(out).reduce((n, [code, k]) => (pred(code[0], code[1]) ? n + k : n), 0);
   const trump = s.trump ? s.trump[0].toUpperCase() : null;
   const stock = s.stock ?? 0;
@@ -68,11 +76,13 @@ export function trackerModel(s) {
   lines.push({ id: "bezique", text: `Bezique: ${qs} queen${qs === 1 ? "" : "s"} of spades and ${jd} jack${jd === 1 ? "" : "s"} of diamonds out` });
   lines.push({ id: "marriages", text: `Kings out: ${count((r) => r === "K")}, queens out: ${count((r) => r === "Q")}` });
 
+  if (conflict) lines.push({ id: "conflict", text: "This count cannot be trusted: a card was counted more than twice." });
+
   const rows = SUITS.map((suit) => ({
     suit,
     glyph: SUIT_GLYPH[suit],
     trump: suit === trump,
     cells: RANKS.map((rank) => ({ code: rank + suit, rank, out: out[rank + suit], kind: rank === "A" || rank === "T" ? "brisque" : "plain", bezique: rank + suit === "QS" || rank + suit === "JD" })),
   }));
-  return { out, unseen, stock, hidden, trump, lines, rows };
+  return { out, conflict, unseen, stock, hidden, trump, lines, rows };
 }

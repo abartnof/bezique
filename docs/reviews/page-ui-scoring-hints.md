@@ -53,3 +53,14 @@ Scope: web3d/src/{ui,hinttext,tutor,tutorview,tracker,trackerview,scoreboard,sco
 ## Unverified
 
 pass wording when declarations were legal; the CSS layering (z-index/pointer-events) and white-on-black badge contrast (badges.css not read); badges.js, talk.js, speaker.js, words.json/personas.json usage and their tests; engine `union` semantics; kit hud `endHand` behaviour.
+
+## Resolution (UI)
+
+- **10 fixed.** `trackerModel` returns `conflict` when a card is seen more than twice and the panel adds a "cannot be trusted" line. The whole-game test (unseen total equals stock + their_hidden at every state) already existed; it now also asserts `conflict` is false, and a unit test covers the flag.
+- **11 fixed.** `rest()` also compares the HUD's hand count (blocks and counted hands) with the events, not only the totals, and resets when they differ; `reset()` marks a hand live only until its `hand_ends`, so a state between hands does not reset repeatedly. Checked against kit/js/hud.js: `dealt` adds the live block and `endHand` marks it counted; instant play calls neither. Mid-hand `game_ends` is covered by the same comparison (done: all hands counted). Not exercised in a browser (DOM and three needed).
+- **12 partly already covered, hardened.** handcount.test.js already asserts, over played games, that the choreography's held lines equal `plansSince(events, prev.events.length)` steps. `count()` now warns when the steps and timed lines differ, rather than shifting badges silently.
+- **Tests that assert too little: fixed.** scoring.test.js checks every category of every hand against figures worked out from the raw events (brisques, declared, seven, last), one last-trick ten per counted hand, and adds cases for a game ending on the last trick, a game ending mid-hand, and a seven turned up that ends the game. The REASONS-versus-position test belongs with the hint wording.
+- **13 not a bug.** main.js, ui.js and the pages register no game hotkeys; the only document key listeners are the menu's Escape and the tutor's own capture. Nothing receives letters or digits behind a tip. No change.
+- **14 fixed, partly.** The game-over dialog has `role=dialog`, `aria-modal`, a labelled title, takes focus on Play again, is built once per outcome (not on each `setPrompt`), and makes the HUD, bar and menu `inert` while shown. The ticker has `role=status` and the hint line `aria-live=polite`. Tutorial and New game dialogs already trap focus. Not checked with a screen reader.
+- **15 fixed.** The menu's document listeners are removed if `createUi` runs again; Escape returns focus to the Menu button when the menu was open.
+- **ui.js phase-2 line fixed:** now states the same-suit, any-card rule from RULES section 6.

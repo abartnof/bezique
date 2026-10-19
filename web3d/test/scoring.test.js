@@ -113,3 +113,84 @@ test("the double line", () => {
   assert.equal(doubleWatch({ you: 900, them: 600 }).atRisk, false);
   assert.equal(doubleWatch({ you: 100, them: 100 }).leader, null);
 });
+
+// Each category of each hand, worked out here from the raw events and held
+// against the ledger, so errors that offset one another between categories
+// (brisques, the last trick, the sevens) cannot hide in the totals.
+function expectedHand(events, n) {
+  const out = Object.fromEntries(["brisques", "declared", "seven", "last"].map((k) => [k, { you: 0, them: 0 }]));
+  const mine = events.filter((e) => e.hand === n);
+  const ended = mine.some((e) => e.kind === "hand_ends");
+  const tricks = mine.filter((e) => e.kind === "took_trick");
+  tricks.forEach((e, k) => {
+    const last = ended && k === tricks.length - 1;
+    out.brisques[e.who] += e.points - (last ? 10 : 0);
+    if (last) out.last[e.who] += 10;
+  });
+  for (const e of mine) {
+    if (e.kind === "declared") out.declared[e.who] += e.points;
+    if (e.kind === "dix") out.seven[e.who] += 10;
+    if (e.kind === "dealt" && e.turn_up?.card?.startsWith("7")) out.seven[e.dealer] += 10;
+  }
+  return out;
+}
+
+test("every hand's categories match the events, one by one, over whole games", async () => {
+  let hands = 0;
+  let lastTens = 0;
+  let sevens = 0;
+  for (const [level, seed] of [[1, 2], [3, 6], [5, 8], [2, 14], [4, 19]]) {
+    const { s, run } = await reconcile({ level, seed });
+    for (const [n, h] of Object.entries(run.hands)) {
+      const want = expectedHand(s.events, Number(n));
+      for (const cat of Object.keys(want)) assert.deepEqual(h[cat], want[cat], `${cat}, hand ${n}, level ${level} seed ${seed}`);
+      const ended = s.events.some((e) => e.kind === "hand_ends" && e.hand === Number(n));
+      // A counted hand has exactly one last-trick ten, to whoever took the last trick.
+      assert.equal(h.last.you + h.last.them, ended ? 10 : 0, `the last trick, hand ${n}`);
+      lastTens += h.last.you + h.last.them;
+      sevens += h.seven.you + h.seven.them;
+      hands++;
+    }
+  }
+  assert.ok(hands > 5 && lastTens > 0 && sevens > 0);
+});
+
+test("a game that ends on the last trick still counts its last ten, once", () => {
+  const ev = [
+    { kind: "dealt", hand: 3, dealer: "you", turn_up: { id: 1, card: "9H" } },
+    { kind: "took_trick", hand: 3, who: "them", points: 30 },
+    { kind: "hand_ends", hand: 3, you: 0, them: 30 },
+    { kind: "game_ends", hand: 3, winner: "them", double: false },
+  ];
+  assert.deepEqual(itemsOf(ev, 1).map((i) => [i.cat, i.pts]), [["brisques", 20], ["last", 10]]);
+  const end = fold(ev);
+  assert.equal(end.done, true);
+  assert.deepEqual(end.totals, { you: 0, them: 30 });
+  assert.deepEqual(end.hands[3].last, { you: 0, them: 10 });
+  assert.deepEqual(end.hand, { you: 0, them: 30 }, "the engine keeps the last hand's figures at the game's end");
+});
+
+test("a game that ends mid-hand gets no last-trick ten", () => {
+  const ev = [
+    { kind: "dealt", hand: 1, dealer: "you", turn_up: { id: 1, card: "9H" } },
+    { kind: "took_trick", hand: 1, who: "you", points: 20 },
+    { kind: "declared", hand: 1, who: "you", points: 250, text: 'You declare: "Two-fifty in trumps."' },
+    { kind: "game_ends", hand: 1, winner: "you", double: true },
+  ];
+  assert.deepEqual(itemsOf(ev, 1).map((i) => i.cat), ["brisques"]);
+  const end = fold(ev);
+  assert.deepEqual(end.hands[1].last, { you: 0, them: 0 });
+  assert.deepEqual(end.totals, { you: 270, them: 0 });
+});
+
+test("a seven turned up that ends the game scores the dealer's ten", () => {
+  const ev = [
+    { kind: "dealt", hand: 4, dealer: "them", turn_up: { id: 1, card: "7S" } },
+    { kind: "game_ends", hand: 4, winner: "them", double: true },
+  ];
+  assert.deepEqual(itemsOf(ev, 0).map((i) => [i.who, i.cat, i.pts]), [["them", "seven", 10]]);
+  const end = fold(ev);
+  assert.equal(end.done, true);
+  assert.deepEqual(end.hands[4].seven, { you: 0, them: 10 });
+  assert.deepEqual(end.totals, { you: 0, them: 10 });
+});
