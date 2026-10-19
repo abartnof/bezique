@@ -39,9 +39,7 @@ fn main() {
     let args: Vec<String> = std::env::args().skip(1).collect();
     let n = |default: u64| match args.get(1) {
         None => default,
-        Some(s) => s
-            .parse()
-            .unwrap_or_else(|_| panic!("{s:?} is not a number of pairs or games")),
+        Some(s) => parsed(s, "a number of pairs or games"),
     };
     match args.first().map(String::as_str) {
         Some("anatomy") => anatomy(n(2000)),
@@ -51,13 +49,7 @@ fn main() {
         Some("skills") => skills(n(2000)),
         Some("last-stock-trick") => last_stock_trick(n(2000)),
         Some("personas") => personas(n(1000)),
-        Some("personality") => personality(
-            std::env::var("MEASURE_LEVEL")
-                .ok()
-                .and_then(|s| s.parse().ok())
-                .unwrap_or(2),
-            args.get(1).map(String::as_str),
-        ),
+        Some("personality") => personality(level_from_env(2), args.get(1).map(String::as_str)),
         Some("personas-json") => print!("{}", opponent::personas_json()),
         Some("lookahead") => lookahead(n(200), &args[2..]),
         Some("lookahead-declarations") => lookahead_declarations(n(500)),
@@ -101,22 +93,63 @@ impl Agent for NoRiders {
     }
 }
 
+/// Refuses the command line: a message on stderr and exit code 2, as a usage
+/// error is everywhere in this repository.
+fn usage(message: &str) -> ! {
+    eprintln!("measure: {message}");
+    std::process::exit(2);
+}
+
+/// `text` as a `T`, or a usage error saying what was wanted.
+fn parsed<T: std::str::FromStr>(text: &str, wanted: &str) -> T {
+    text.parse()
+        .unwrap_or_else(|_| usage(&format!("{text:?} is not {wanted}")))
+}
+
+/// `MEASURE_LEVEL`, or `default`; a value that is not a level is refused,
+/// not ignored (ignoring it would measure the wrong rung).
+fn level_from_env(default: u8) -> u8 {
+    let level = std::env::var("MEASURE_LEVEL").map_or(default, |s| parsed(&s, "a level in MEASURE_LEVEL"));
+    if !(1..=bezique_core::agents::TOP).contains(&level) {
+        usage(&format!("MEASURE_LEVEL={level} is outside 1..={}", bezique_core::agents::TOP));
+    }
+    level
+}
+
 fn no_riders(_: u64) -> Box<dyn Agent> {
     Box::new(NoRiders(Maxims::default()))
 }
 
 fn report_hands(name: &str, h: &tournament::Hands) {
     println!(
-        "{name}: {:+.2} points a hand for the first ({} mirrored pairs, standard error {:.2}; seeds {}-{})",
+        "{name}: {:+.2} points a hand for the first ({} mirrored pairs, standard error {:.2}; 95% interval [{:+.2}, {:+.2}] at a single look, z = 1.96; [floor, ceiling, used] = [{}, {}, {}]; seeds {}-{})",
         h.mean(),
         h.pairs,
         h.standard_error(),
+        h.mean() - 1.96 * h.standard_error(),
+        h.mean() + 1.96 * h.standard_error(),
+        h.pairs,
+        h.pairs,
+        h.pairs,
         h.first_seed,
         h.first_seed + u64::from(h.pairs) - 1
     );
 }
 
-fn report_games(name: &str, g: &tournament::Games) {
+/// `fixed`: a run of a set number of pairs, one look, so a 95% interval; a
+/// sequential run prints its own interval line after this one.
+fn report_games(name: &str, g: &tournament::Games, fixed: bool) {
+    if fixed {
+        println!(
+            "{name}: game points {:+.3} a game, 95% interval [{:+.3}, {:+.3}] at a single look, z = 1.96; [floor, ceiling, used] = [{}, {}, {}] pairs",
+            g.points_a_game(),
+            g.points_a_game() - 1.96 * g.points_standard_error(),
+            g.points_a_game() + 1.96 * g.points_standard_error(),
+            g.pairs(),
+            g.pairs(),
+            g.pairs()
+        );
+    }
     println!(
         "{name}: the first won {} of {} games, {:.1}% (standard error {:.1}); game points {:+.3} a game (se {:.3}, a double counting two); pairs swept {}-{}, split {}; doubles {}-{}; {:.2} hands a game; seeds {}-{}",
         g.wins[0],
@@ -144,9 +177,7 @@ fn seeds(default: u64) -> u64 {
     match std::env::var("MEASURE_SEED") {
         Err(_) => default,
         Ok(s) => {
-            let shift: u64 = s
-                .parse()
-                .unwrap_or_else(|_| panic!("MEASURE_SEED={s:?} is not a plain number"));
+            let shift: u64 = parsed(&s, "a plain number in MEASURE_SEED");
             default + shift
         }
     }
@@ -155,13 +186,15 @@ fn seeds(default: u64) -> u64 {
 /// Rung 2 with one weight of its style changed, against the default, in
 /// mirrored hands: a positive margin means the change plays better.
 fn tune(args: &[String]) {
-    let field = args.first().expect("a field of Style");
-    let pairs: u64 = args
-        .get(1)
-        .and_then(|s| s.parse().ok())
-        .expect("a number of pairs");
+    let Some(field) = args.first() else {
+        usage("tune <field> <pairs> <value>...: a field of Style is wanted")
+    };
+    let Some(pairs) = args.get(1) else {
+        usage("tune <field> <pairs> <value>...: a number of pairs is wanted")
+    };
+    let pairs: u64 = parsed(pairs, "a number of pairs");
     for value in &args[2..] {
-        let value: i32 = value.parse().expect("a whole number");
+        let value: i32 = parsed(value, "a whole number");
         let mut style = Style::default();
         let slot = match field.as_str() {
             "trump" => &mut style.trump,
@@ -177,7 +210,7 @@ fn tune(args: &[String]) {
             "take_to_declare" => &mut style.take_to_declare,
             "lead_brisques" => &mut style.lead_brisques,
             "urgency" => &mut style.urgency,
-            other => panic!("no field {other}"),
+            other => usage(&format!("no field {other} in Style")),
         };
         *slot = value;
         let profile_style = style.clone();
@@ -243,10 +276,10 @@ fn last_stock_trick(pairs: u64) {
 /// Rung 4 looking ahead near the end of the stock, against rung 4:
 /// `lookahead <pairs> [horizon] [worlds]`.
 fn lookahead(pairs: u64, rest: &[String]) {
-    let horizon = rest.first().map_or(9, |s| s.parse().expect("a horizon"));
+    let horizon = rest.first().map_or(9, |s| parsed(s, "a horizon"));
     let worlds = rest
         .get(1)
-        .map_or(16, |s| s.parse().expect("a number of worlds"));
+        .map_or(16, |s| parsed(s, "a number of worlds"));
     let ahead = move |_: u64| -> Box<dyn Agent> {
         Box::new(Lookahead {
             horizon,
@@ -269,10 +302,10 @@ fn lookahead(pairs: u64, rest: &[String]) {
 /// Rung 5 with another horizon and number of worlds, against rung 5 as it
 /// stands: `lookahead-vs-five <pairs> <horizon> <worlds>`.
 fn lookahead_vs_five(pairs: u64, rest: &[String]) {
-    let horizon = rest.first().map_or(9, |s| s.parse().expect("a horizon"));
+    let horizon = rest.first().map_or(9, |s| parsed(s, "a horizon"));
     let worlds = rest
         .get(1)
-        .map_or(32, |s| s.parse().expect("a number of worlds"));
+        .map_or(32, |s| parsed(s, "a number of worlds"));
     let variant = move |_: u64| -> Box<dyn Agent> {
         Box::new(Lookahead {
             horizon,
@@ -306,7 +339,6 @@ fn rollout_memory() {
             batch: 250,
             min: 500,
             max: 8000,
-            z: 3.0,
             worth: 1.0,
         },
         &with,
@@ -376,7 +408,6 @@ fn worlds(worlds: u64) {
             batch: 250,
             min: 500,
             max: 10_000,
-            z: 3.0,
             worth: 1.0,
         },
         &more,
@@ -400,14 +431,18 @@ fn rung6() {
         batch: 100,
         min: 300,
         max: 6000,
-        z: 3.0,
         worth: 0.02,
     };
     let (g, stop) = tournament::games_until(seeds(16_000_000), rule, &six, &five);
-    report_games("rung 6 against rung 5, games", &g);
+    report_games("rung 6 against rung 5, games", &g, false);
     println!(
-        "    sequential on game points: batches of {}, looks from {} pairs, stop at |z| >= {} or when the effect is within ±{} at two standard errors, cap {}; stopped: {stop:?}",
-        rule.batch, rule.min, rule.z, rule.worth, rule.max
+        "    game points a game, {}",
+        rule.describe(
+            u64::from(g.pairs()),
+            g.points_a_game(),
+            g.points_standard_error(),
+            stop
+        )
     );
 }
 
@@ -421,10 +456,17 @@ fn sequential_hands(
     b: tournament::Make,
 ) {
     let (h, stop) = tournament::hands_until(first_seed, rule, a, b);
-    report_hands(name, &h);
     println!(
-        "    sequential: batches of {}, looks from {} pairs, stop at |z| >= {} or when the effect is within ±{} at two standard errors, cap {}; stopped: {stop:?}",
-        rule.batch, rule.min, rule.z, rule.worth, rule.max
+        "{name}: {:+.2} points a hand for the first ({} mirrored pairs, standard error {:.2}; seeds {}-{})",
+        h.mean(),
+        h.pairs,
+        h.standard_error(),
+        h.first_seed,
+        h.first_seed + u64::from(h.pairs) - 1
+    );
+    println!(
+        "    {}",
+        rule.describe(u64::from(h.pairs), h.mean(), h.standard_error(), stop)
     );
 }
 
@@ -450,10 +492,7 @@ fn personas(pairs: u64) {
     // that part much as the top rung does (they differ in about 1.5% of
     // those decisions: memory, and the last stock trick) and far faster, so
     // MEASURE_LEVEL=2 calibrates; the costs at the top are checked after.
-    let top = std::env::var("MEASURE_LEVEL")
-        .ok()
-        .and_then(|s| s.parse().ok())
-        .unwrap_or(bezique_core::agents::TOP);
+    let top = level_from_env(bezique_core::agents::TOP);
     let balanced = opponent::persona("balanced").unwrap();
     for p in opponent::personas() {
         let style = p.style.clone();
@@ -519,6 +558,7 @@ fn ladder(pairs: u64) {
         report_games(
             &format!("rung {level} against rung {}, games", level - 1),
             &tournament::games(base + 500_000, pairs / 2, &upper, &lower),
+            true,
         );
     }
 }
@@ -533,10 +573,7 @@ fn riders(pairs: u64) {
 /// What a game between two players of one rung is made of: rung 2, or
 /// `MEASURE_LEVEL`.
 fn anatomy(games: u64) {
-    let level: u8 = std::env::var("MEASURE_LEVEL")
-        .ok()
-        .and_then(|s| s.parse().ok())
-        .unwrap_or(2);
+    let level = level_from_env(2);
     let mut hands_per_game = BTreeMap::new();
     let (mut doubles, mut mid_hand, mut first_dealer_won) = (0u64, 0u64, 0u64);
     let mut hands = 0u64;
@@ -744,8 +781,9 @@ fn personality(level: u8, only: Option<&str>) {
     const FLOOR: u64 = 2000;
     let tol = opponent::TOLERANCE;
     println!(
-        "personality at level {level}: persona against balanced, mirrored first hands; batch {BATCH}, floor {FLOOR}, ceiling {} pairs, O'Brien-Fleming z_k = 2.09 sqrt({LOOKS}/k), tolerance ±{tol} points a hand (95% interval)",
-        BATCH * LOOKS
+        "personality at level {level}: persona against balanced, mirrored first hands; batch {BATCH}, floor {FLOOR}, ceiling {} pairs, O'Brien-Fleming z_k = {:.3} sqrt({LOOKS}/k) (shared with the sequential rule), tolerance ±{tol} points a hand (the same z_k interval)",
+        BATCH * LOOKS,
+        tournament::obf_constant(LOOKS)
     );
     println!("seeds from {}", seeds(20_000_000));
     // The headline statistic of each persona (index into STATS).
@@ -772,15 +810,15 @@ fn personality(level: u8, only: Option<&str>) {
                 .split(',')
             {
                 match kv.split_once('=') {
-                    Some(("bezique", v)) => tuned.bezique = v.parse().unwrap(),
+                    Some(("bezique", v)) => tuned.bezique = parsed(v, "a whole number in MEASURE_VARIANT"),
                     Some(("leaning", "plain")) => {
                         tuned.leaning = bezique_core::agents::Leaning::Plain
                     }
-                    Some(("sequence", v)) => tuned.sequence = v.parse().unwrap(),
-                    Some(("marriage", v)) => tuned.marriage = v.parse().unwrap(),
-                    Some(("four", v)) => tuned.four = v.parse().unwrap(),
-                    Some(("take_brisque", v)) => tuned.take_brisque = v.parse().unwrap(),
-                    Some(("lead_brisques", v)) => tuned.lead_brisques = v.parse().unwrap(),
+                    Some(("sequence", v)) => tuned.sequence = parsed(v, "a whole number in MEASURE_VARIANT"),
+                    Some(("marriage", v)) => tuned.marriage = parsed(v, "a whole number in MEASURE_VARIANT"),
+                    Some(("four", v)) => tuned.four = parsed(v, "a whole number in MEASURE_VARIANT"),
+                    Some(("take_brisque", v)) => tuned.take_brisque = parsed(v, "a whole number in MEASURE_VARIANT"),
+                    Some(("lead_brisques", v)) => tuned.lead_brisques = parsed(v, "a whole number in MEASURE_VARIANT"),
                     _ => {}
                 }
             }
@@ -806,11 +844,11 @@ fn personality(level: u8, only: Option<&str>) {
             rows.extend(part.into_iter().map(|(_, r)| r));
             let n = rows.len() as u64;
             let k = n / BATCH;
-            let z = 2.09 * (LOOKS as f64 / k as f64).sqrt();
+            let z = tournament::obf_z(LOOKS, k);
             let (m, se) = mean_se(&rows, 0);
             let (hm, hse) = mean_se(&rows, headline(p.key));
             let strength_off = m + z * se < -tol || m - z * se > tol;
-            let inside = (m - 1.96 * se) > -tol && (m + 1.96 * se) < tol;
+            let inside = (m - z * se) > -tol && (m + z * se) < tol;
             let style_clear = hse > 0.0 && hm.abs() >= z * hse;
             if n >= FLOOR && (strength_off || (inside && style_clear)) {
                 let why = if strength_off {
@@ -825,10 +863,12 @@ fn personality(level: u8, only: Option<&str>) {
             }
         };
         let n = rows.len();
-        let z = 2.09 * (LOOKS as f64 / k as f64).sqrt();
+        let z = tournament::obf_z(LOOKS, k);
         println!(
-            "\n{} ({}), {n} pairs used; stopped: {stop}; boundary at last look z = {z:.2}",
-            p.key, p.name
+            "\n{} ({}), look {k} of {LOOKS}: [floor, ceiling, used] = [{FLOOR}, {}, {n}] pairs; stopped: {stop}; boundary at last look z = {z:.2}",
+            p.key,
+            p.name,
+            BATCH * LOOKS
         );
         for (i, name) in STATS.iter().enumerate() {
             let (m, se) = mean_se(&rows, i);
@@ -838,9 +878,9 @@ fn personality(level: u8, only: Option<&str>) {
                 ""
             };
             println!(
-                "    {name:<36} {m:+8.3}  95% interval [{:+.3}, {:+.3}]  z {:+.1}{mark}",
-                m - 1.96 * se,
-                m + 1.96 * se,
+                "    {name:<36} {m:+8.3}  interval at z_k [{:+.3}, {:+.3}]  z {:+.1}{mark}",
+                m - z * se,
+                m + z * se,
                 if se > 0.0 { m / se } else { 0.0 }
             );
         }

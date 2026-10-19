@@ -314,7 +314,10 @@ impl Session {
     /// beside `RECORD_VERSION`).
     pub fn replay(seed: u64, settings: Settings, record: &[String]) -> Result<Session, String> {
         let session = Session::rebuild(seed, settings, record, Vec::new())?;
-        if session.record != record {
+        // Compared with consecutive repeats of a `set` collapsed on both
+        // sides, so that a record saved before they were collapsed still
+        // loads: it replays to the same game.
+        if tidy(&session.record) != tidy(record) {
             return Err(
                 "the record replays differently: it was made by another version".to_string(),
             );
@@ -511,7 +514,14 @@ impl Session {
                     "tracker" => self.aids.tracker = on,
                     _ => return Err(format!("there is no aid called {aid}")),
                 }
-                self.record.push(format!("set {aid} {setting}"));
+                // A `set` that repeats the entry just before it changes
+                // nothing, so it is not recorded again (a page that restores
+                // a sitting sends its aids once more, and the record would
+                // grow at every reload).
+                let entry = format!("set {aid} {setting}");
+                if self.record.last() != Some(&entry) {
+                    self.record.push(entry);
+                }
                 self.run();
                 Ok(())
             }
@@ -658,7 +668,8 @@ impl Session {
         // An aid switched on since can make the table play the decision just
         // taken back (a forced card, with play_forced): then there was no
         // decision there, and undo goes back to the one before.
-        if again.record.len() >= self.record.len() - 1
+        let collapsed = record.len() - tidy(&record).len();
+        if again.record.len() + collapsed >= self.record.len() - 1
             && format!("{:?}", again.view()) == format!("{:?}", self.view())
         {
             if !again.can_undo() {
@@ -995,6 +1006,19 @@ impl Session {
 /// not the choice of dealer. The first deal comes from the seed, and the
 /// choice decides only which of its hands is whose: taking it back would
 /// show the person the hand the opponent then holds.
+/// `record` with each consecutive repeat of a `set` entry dropped: the form
+/// in which records are compared, so that one saved with the repeats still
+/// replays.
+fn tidy(record: &[String]) -> Vec<String> {
+    let mut out: Vec<String> = Vec::with_capacity(record.len());
+    for entry in record {
+        if !(entry.starts_with("set ") && out.last() == Some(entry)) {
+            out.push(entry.clone());
+        }
+    }
+    out
+}
+
 fn undoable(entry: &str) -> bool {
     !entry.starts_with('*') && !entry.starts_with("set ") && !entry.starts_with("dealer ")
 }
@@ -1213,6 +1237,38 @@ mod tests {
             .expect("a table-made entry");
         record[auto] = "*declare 9".to_string();
         assert!(Session::replay(11, Settings::default(), &record).is_err());
+    }
+
+    /// A `set` that repeats the entry just before it is not recorded again;
+    /// a toggle back and forth is. A record saved with the repeats (as a
+    /// page that restored a sitting made, one per reload) still replays, to
+    /// the collapsed record, and undo still works after it.
+    #[test]
+    fn a_repeated_set_is_recorded_once() {
+        let mut s = Session::new(12, Settings::default());
+        for c in ["set hints on", "set hints on", "set tracker on", "set tracker on"] {
+            assert!(s.send(c));
+        }
+        assert_eq!(s.record(), ["set hints on", "set tracker on"]);
+        for c in ["set hints off", "set hints on"] {
+            assert!(s.send(c));
+        }
+        assert_eq!(s.record().len(), 4, "toggles are not repeats");
+        // An old record, with the repeats in it.
+        let mut old: Vec<String> = ["set hints on", "set hints on", "set hints on"]
+            .map(String::from)
+            .to_vec();
+        let mut straight = Session::new(12, Settings::default());
+        assert!(straight.send("set hints on"));
+        for _ in 0..6 {
+            let c = first(&straight).expect("a decision");
+            assert!(straight.send(&c));
+        }
+        old.extend(straight.record()[1..].iter().cloned());
+        let replayed = Session::replay(12, Settings::default(), &old).expect("the old record loads");
+        assert_eq!(replayed.record(), straight.record());
+        let mut replayed = replayed;
+        assert!(replayed.can_undo() && replayed.send("undo"));
     }
 
     /// Undo replays the opponent's known moves rather than thinking them
