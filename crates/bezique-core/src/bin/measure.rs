@@ -39,9 +39,7 @@ fn main() {
     let args: Vec<String> = std::env::args().skip(1).collect();
     let n = |default: u64| match args.get(1) {
         None => default,
-        Some(s) => s
-            .parse()
-            .unwrap_or_else(|_| panic!("{s:?} is not a number of pairs or games")),
+        Some(s) => parsed(s, "a number of pairs or games"),
     };
     match args.first().map(String::as_str) {
         Some("anatomy") => anatomy(n(2000)),
@@ -51,13 +49,7 @@ fn main() {
         Some("skills") => skills(n(2000)),
         Some("last-stock-trick") => last_stock_trick(n(2000)),
         Some("personas") => personas(n(1000)),
-        Some("personality") => personality(
-            std::env::var("MEASURE_LEVEL")
-                .ok()
-                .and_then(|s| s.parse().ok())
-                .unwrap_or(2),
-            args.get(1).map(String::as_str),
-        ),
+        Some("personality") => personality(level_from_env(2), args.get(1).map(String::as_str)),
         Some("personas-json") => print!("{}", opponent::personas_json()),
         Some("lookahead") => lookahead(n(200), &args[2..]),
         Some("lookahead-declarations") => lookahead_declarations(n(500)),
@@ -99,6 +91,29 @@ impl Agent for NoRiders {
             other => other,
         }
     }
+}
+
+/// Refuses the command line: a message on stderr and exit code 2, as a usage
+/// error is everywhere in this repository.
+fn usage(message: &str) -> ! {
+    eprintln!("measure: {message}");
+    std::process::exit(2);
+}
+
+/// `text` as a `T`, or a usage error saying what was wanted.
+fn parsed<T: std::str::FromStr>(text: &str, wanted: &str) -> T {
+    text.parse()
+        .unwrap_or_else(|_| usage(&format!("{text:?} is not {wanted}")))
+}
+
+/// `MEASURE_LEVEL`, or `default`; a value that is not a level is refused,
+/// not ignored (ignoring it would measure the wrong rung).
+fn level_from_env(default: u8) -> u8 {
+    let level = std::env::var("MEASURE_LEVEL").map_or(default, |s| parsed(&s, "a level in MEASURE_LEVEL"));
+    if !(1..=bezique_core::agents::TOP).contains(&level) {
+        usage(&format!("MEASURE_LEVEL={level} is outside 1..={}", bezique_core::agents::TOP));
+    }
+    level
 }
 
 fn no_riders(_: u64) -> Box<dyn Agent> {
@@ -162,9 +177,7 @@ fn seeds(default: u64) -> u64 {
     match std::env::var("MEASURE_SEED") {
         Err(_) => default,
         Ok(s) => {
-            let shift: u64 = s
-                .parse()
-                .unwrap_or_else(|_| panic!("MEASURE_SEED={s:?} is not a plain number"));
+            let shift: u64 = parsed(&s, "a plain number in MEASURE_SEED");
             default + shift
         }
     }
@@ -173,13 +186,15 @@ fn seeds(default: u64) -> u64 {
 /// Rung 2 with one weight of its style changed, against the default, in
 /// mirrored hands: a positive margin means the change plays better.
 fn tune(args: &[String]) {
-    let field = args.first().expect("a field of Style");
-    let pairs: u64 = args
-        .get(1)
-        .and_then(|s| s.parse().ok())
-        .expect("a number of pairs");
+    let Some(field) = args.first() else {
+        usage("tune <field> <pairs> <value>...: a field of Style is wanted")
+    };
+    let Some(pairs) = args.get(1) else {
+        usage("tune <field> <pairs> <value>...: a number of pairs is wanted")
+    };
+    let pairs: u64 = parsed(pairs, "a number of pairs");
     for value in &args[2..] {
-        let value: i32 = value.parse().expect("a whole number");
+        let value: i32 = parsed(value, "a whole number");
         let mut style = Style::default();
         let slot = match field.as_str() {
             "trump" => &mut style.trump,
@@ -195,7 +210,7 @@ fn tune(args: &[String]) {
             "take_to_declare" => &mut style.take_to_declare,
             "lead_brisques" => &mut style.lead_brisques,
             "urgency" => &mut style.urgency,
-            other => panic!("no field {other}"),
+            other => usage(&format!("no field {other} in Style")),
         };
         *slot = value;
         let profile_style = style.clone();
@@ -261,10 +276,10 @@ fn last_stock_trick(pairs: u64) {
 /// Rung 4 looking ahead near the end of the stock, against rung 4:
 /// `lookahead <pairs> [horizon] [worlds]`.
 fn lookahead(pairs: u64, rest: &[String]) {
-    let horizon = rest.first().map_or(9, |s| s.parse().expect("a horizon"));
+    let horizon = rest.first().map_or(9, |s| parsed(s, "a horizon"));
     let worlds = rest
         .get(1)
-        .map_or(16, |s| s.parse().expect("a number of worlds"));
+        .map_or(16, |s| parsed(s, "a number of worlds"));
     let ahead = move |_: u64| -> Box<dyn Agent> {
         Box::new(Lookahead {
             horizon,
@@ -287,10 +302,10 @@ fn lookahead(pairs: u64, rest: &[String]) {
 /// Rung 5 with another horizon and number of worlds, against rung 5 as it
 /// stands: `lookahead-vs-five <pairs> <horizon> <worlds>`.
 fn lookahead_vs_five(pairs: u64, rest: &[String]) {
-    let horizon = rest.first().map_or(9, |s| s.parse().expect("a horizon"));
+    let horizon = rest.first().map_or(9, |s| parsed(s, "a horizon"));
     let worlds = rest
         .get(1)
-        .map_or(32, |s| s.parse().expect("a number of worlds"));
+        .map_or(32, |s| parsed(s, "a number of worlds"));
     let variant = move |_: u64| -> Box<dyn Agent> {
         Box::new(Lookahead {
             horizon,
@@ -477,10 +492,7 @@ fn personas(pairs: u64) {
     // that part much as the top rung does (they differ in about 1.5% of
     // those decisions: memory, and the last stock trick) and far faster, so
     // MEASURE_LEVEL=2 calibrates; the costs at the top are checked after.
-    let top = std::env::var("MEASURE_LEVEL")
-        .ok()
-        .and_then(|s| s.parse().ok())
-        .unwrap_or(bezique_core::agents::TOP);
+    let top = level_from_env(bezique_core::agents::TOP);
     let balanced = opponent::persona("balanced").unwrap();
     for p in opponent::personas() {
         let style = p.style.clone();
@@ -561,10 +573,7 @@ fn riders(pairs: u64) {
 /// What a game between two players of one rung is made of: rung 2, or
 /// `MEASURE_LEVEL`.
 fn anatomy(games: u64) {
-    let level: u8 = std::env::var("MEASURE_LEVEL")
-        .ok()
-        .and_then(|s| s.parse().ok())
-        .unwrap_or(2);
+    let level = level_from_env(2);
     let mut hands_per_game = BTreeMap::new();
     let (mut doubles, mut mid_hand, mut first_dealer_won) = (0u64, 0u64, 0u64);
     let mut hands = 0u64;
@@ -801,15 +810,15 @@ fn personality(level: u8, only: Option<&str>) {
                 .split(',')
             {
                 match kv.split_once('=') {
-                    Some(("bezique", v)) => tuned.bezique = v.parse().unwrap(),
+                    Some(("bezique", v)) => tuned.bezique = parsed(v, "a whole number in MEASURE_VARIANT"),
                     Some(("leaning", "plain")) => {
                         tuned.leaning = bezique_core::agents::Leaning::Plain
                     }
-                    Some(("sequence", v)) => tuned.sequence = v.parse().unwrap(),
-                    Some(("marriage", v)) => tuned.marriage = v.parse().unwrap(),
-                    Some(("four", v)) => tuned.four = v.parse().unwrap(),
-                    Some(("take_brisque", v)) => tuned.take_brisque = v.parse().unwrap(),
-                    Some(("lead_brisques", v)) => tuned.lead_brisques = v.parse().unwrap(),
+                    Some(("sequence", v)) => tuned.sequence = parsed(v, "a whole number in MEASURE_VARIANT"),
+                    Some(("marriage", v)) => tuned.marriage = parsed(v, "a whole number in MEASURE_VARIANT"),
+                    Some(("four", v)) => tuned.four = parsed(v, "a whole number in MEASURE_VARIANT"),
+                    Some(("take_brisque", v)) => tuned.take_brisque = parsed(v, "a whole number in MEASURE_VARIANT"),
+                    Some(("lead_brisques", v)) => tuned.lead_brisques = parsed(v, "a whole number in MEASURE_VARIANT"),
                     _ => {}
                 }
             }
