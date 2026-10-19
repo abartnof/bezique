@@ -52,7 +52,7 @@ export function createDirector({ stage, deck, view, decorate, rested, choreograp
 
   function dress() {
     decorate?.(timeline.busy() ? [] : placement, deck, meshes);
-    if (timeline.busy()) for (const m of placement) deck.decorate(meshes[m.id], {});
+    if (timeline.busy()) for (const m of placement) deck.decorate(meshes[m.id], { dim: false });
   }
 
   // ---- the clock ----------------------------------------------------------

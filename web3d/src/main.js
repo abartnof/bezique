@@ -82,7 +82,7 @@ async function main() {
   // The card faces: high-visibility Jumbo Index by default (every rank and
   // suit in the corner, the ten as 10), the classic art on request; drawn in
   // the browser, changeable at run time (`bezique3d.setFaces`).
-  const faceSets = { classic: textures.faces };
+  const faceSets = { classic: { ...textures.faces } }; // a copy: the deck keeps its own map too
   let facesShown = "classic";
   function setFaces(choice) {
     const want = choice === "classic" ? "classic" : "jumbo";

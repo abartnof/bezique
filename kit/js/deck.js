@@ -36,11 +36,14 @@ export function createDeck(stage, textures, { inkWidth = 2.5 } = {}) {
   // materials are one per mesh (the texture still shared), so dimming one
   // twin leaves the other. `known` is keyed by the mesh and its code.
   const known = new WeakMap();
+  // The deck's own map of the faces shown now: the caller's sets (classic,
+  // Jumbo) are never written to, so either can be set again.
+  const faceNow = { ...textures.faces };
   const cardMeshes = [];
   const materialsOf = (mesh, code) => {
     let byCode = known.get(mesh);
     if (!byCode) known.set(mesh, (byCode = {}));
-    return (byCode[code] ??= cardMaterials({ face: textures.faces[code], back: textures.back, ramp }));
+    return (byCode[code] ??= cardMaterials({ face: faceNow[code], back: textures.back, ramp }));
   };
 
   function card(code = null) {
@@ -64,11 +67,11 @@ export function createDeck(stage, textures, { inkWidth = 2.5 } = {}) {
   // Change every face's art -- to the Jumbo Index faces, or back to the
   // classic ones (faces.js) -- on the cards where they lie.
   function setFaces(faces) {
-    Object.assign(textures.faces, faces);
+    Object.assign(faceNow, faces);
     for (const mesh of cardMeshes) {
       const byCode = known.get(mesh) ?? {};
       for (const [code, materials] of Object.entries(byCode)) {
-        materials[0].map = textures.faces[code];
+        materials[0].map = faceNow[code];
         materials[0].needsUpdate = true;
       }
     }
@@ -76,11 +79,12 @@ export function createDeck(stage, textures, { inkWidth = 2.5 } = {}) {
 
   // Which line a card is drawn with, and whether its face is dimmed (a card
   // that may not be played). Faces are one material per card, so dimming
-  // one dims only that card.
-  function decorate(mesh, { line = "plain", dim = false } = {}) {
+  // one dims only that card. `dim` left out keeps the card as it is (a hint
+  // mark's line must not undo the dimming).
+  function decorate(mesh, { line = "plain", dim } = {}) {
     mesh.children[0].material = inks[line];
     const code = mesh.userData.code;
-    if (code) materialsOf(mesh, code)[0].color.setScalar(dim ? 0.72 : 1);
+    if (code && dim !== undefined) materialsOf(mesh, code)[0].color.setScalar(dim ? 0.72 : 1);
   }
 
   return { card, reveal, decorate, setFaces, geometry, ink };
