@@ -107,16 +107,34 @@ fn no_riders(_: u64) -> Box<dyn Agent> {
 
 fn report_hands(name: &str, h: &tournament::Hands) {
     println!(
-        "{name}: {:+.2} points a hand for the first ({} mirrored pairs, standard error {:.2}; seeds {}-{})",
+        "{name}: {:+.2} points a hand for the first ({} mirrored pairs, standard error {:.2}; 95% interval [{:+.2}, {:+.2}] at a single look, z = 1.96; [floor, ceiling, used] = [{}, {}, {}]; seeds {}-{})",
         h.mean(),
         h.pairs,
         h.standard_error(),
+        h.mean() - 1.96 * h.standard_error(),
+        h.mean() + 1.96 * h.standard_error(),
+        h.pairs,
+        h.pairs,
+        h.pairs,
         h.first_seed,
         h.first_seed + u64::from(h.pairs) - 1
     );
 }
 
-fn report_games(name: &str, g: &tournament::Games) {
+/// `fixed`: a run of a set number of pairs, one look, so a 95% interval; a
+/// sequential run prints its own interval line after this one.
+fn report_games(name: &str, g: &tournament::Games, fixed: bool) {
+    if fixed {
+        println!(
+            "{name}: game points {:+.3} a game, 95% interval [{:+.3}, {:+.3}] at a single look, z = 1.96; [floor, ceiling, used] = [{}, {}, {}] pairs",
+            g.points_a_game(),
+            g.points_a_game() - 1.96 * g.points_standard_error(),
+            g.points_a_game() + 1.96 * g.points_standard_error(),
+            g.pairs(),
+            g.pairs(),
+            g.pairs()
+        );
+    }
     println!(
         "{name}: the first won {} of {} games, {:.1}% (standard error {:.1}); game points {:+.3} a game (se {:.3}, a double counting two); pairs swept {}-{}, split {}; doubles {}-{}; {:.2} hands a game; seeds {}-{}",
         g.wins[0],
@@ -306,7 +324,6 @@ fn rollout_memory() {
             batch: 250,
             min: 500,
             max: 8000,
-            z: 3.0,
             worth: 1.0,
         },
         &with,
@@ -376,7 +393,6 @@ fn worlds(worlds: u64) {
             batch: 250,
             min: 500,
             max: 10_000,
-            z: 3.0,
             worth: 1.0,
         },
         &more,
@@ -400,14 +416,18 @@ fn rung6() {
         batch: 100,
         min: 300,
         max: 6000,
-        z: 3.0,
         worth: 0.02,
     };
     let (g, stop) = tournament::games_until(seeds(16_000_000), rule, &six, &five);
-    report_games("rung 6 against rung 5, games", &g);
+    report_games("rung 6 against rung 5, games", &g, false);
     println!(
-        "    sequential on game points: batches of {}, looks from {} pairs, stop at |z| >= {} or when the effect is within ±{} at two standard errors, cap {}; stopped: {stop:?}",
-        rule.batch, rule.min, rule.z, rule.worth, rule.max
+        "    game points a game, {}",
+        rule.describe(
+            u64::from(g.pairs()),
+            g.points_a_game(),
+            g.points_standard_error(),
+            stop
+        )
     );
 }
 
@@ -421,10 +441,17 @@ fn sequential_hands(
     b: tournament::Make,
 ) {
     let (h, stop) = tournament::hands_until(first_seed, rule, a, b);
-    report_hands(name, &h);
     println!(
-        "    sequential: batches of {}, looks from {} pairs, stop at |z| >= {} or when the effect is within ±{} at two standard errors, cap {}; stopped: {stop:?}",
-        rule.batch, rule.min, rule.z, rule.worth, rule.max
+        "{name}: {:+.2} points a hand for the first ({} mirrored pairs, standard error {:.2}; seeds {}-{})",
+        h.mean(),
+        h.pairs,
+        h.standard_error(),
+        h.first_seed,
+        h.first_seed + u64::from(h.pairs) - 1
+    );
+    println!(
+        "    {}",
+        rule.describe(u64::from(h.pairs), h.mean(), h.standard_error(), stop)
     );
 }
 
@@ -519,6 +546,7 @@ fn ladder(pairs: u64) {
         report_games(
             &format!("rung {level} against rung {}, games", level - 1),
             &tournament::games(base + 500_000, pairs / 2, &upper, &lower),
+            true,
         );
     }
 }
@@ -744,8 +772,9 @@ fn personality(level: u8, only: Option<&str>) {
     const FLOOR: u64 = 2000;
     let tol = opponent::TOLERANCE;
     println!(
-        "personality at level {level}: persona against balanced, mirrored first hands; batch {BATCH}, floor {FLOOR}, ceiling {} pairs, O'Brien-Fleming z_k = 2.09 sqrt({LOOKS}/k), tolerance ±{tol} points a hand (95% interval)",
-        BATCH * LOOKS
+        "personality at level {level}: persona against balanced, mirrored first hands; batch {BATCH}, floor {FLOOR}, ceiling {} pairs, O'Brien-Fleming z_k = {:.3} sqrt({LOOKS}/k) (shared with the sequential rule), tolerance ±{tol} points a hand (the same z_k interval)",
+        BATCH * LOOKS,
+        tournament::obf_constant(LOOKS)
     );
     println!("seeds from {}", seeds(20_000_000));
     // The headline statistic of each persona (index into STATS).
@@ -806,11 +835,11 @@ fn personality(level: u8, only: Option<&str>) {
             rows.extend(part.into_iter().map(|(_, r)| r));
             let n = rows.len() as u64;
             let k = n / BATCH;
-            let z = 2.09 * (LOOKS as f64 / k as f64).sqrt();
+            let z = tournament::obf_z(LOOKS, k);
             let (m, se) = mean_se(&rows, 0);
             let (hm, hse) = mean_se(&rows, headline(p.key));
             let strength_off = m + z * se < -tol || m - z * se > tol;
-            let inside = (m - 1.96 * se) > -tol && (m + 1.96 * se) < tol;
+            let inside = (m - z * se) > -tol && (m + z * se) < tol;
             let style_clear = hse > 0.0 && hm.abs() >= z * hse;
             if n >= FLOOR && (strength_off || (inside && style_clear)) {
                 let why = if strength_off {
@@ -825,10 +854,12 @@ fn personality(level: u8, only: Option<&str>) {
             }
         };
         let n = rows.len();
-        let z = 2.09 * (LOOKS as f64 / k as f64).sqrt();
+        let z = tournament::obf_z(LOOKS, k);
         println!(
-            "\n{} ({}), {n} pairs used; stopped: {stop}; boundary at last look z = {z:.2}",
-            p.key, p.name
+            "\n{} ({}), look {k} of {LOOKS}: [floor, ceiling, used] = [{FLOOR}, {}, {n}] pairs; stopped: {stop}; boundary at last look z = {z:.2}",
+            p.key,
+            p.name,
+            BATCH * LOOKS
         );
         for (i, name) in STATS.iter().enumerate() {
             let (m, se) = mean_se(&rows, i);
@@ -838,9 +869,9 @@ fn personality(level: u8, only: Option<&str>) {
                 ""
             };
             println!(
-                "    {name:<36} {m:+8.3}  95% interval [{:+.3}, {:+.3}]  z {:+.1}{mark}",
-                m - 1.96 * se,
-                m + 1.96 * se,
+                "    {name:<36} {m:+8.3}  interval at z_k [{:+.3}, {:+.3}]  z {:+.1}{mark}",
+                m - z * se,
+                m + z * se,
                 if se > 0.0 { m / se } else { 0.0 }
             );
         }
