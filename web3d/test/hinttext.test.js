@@ -56,7 +56,7 @@ test("the situations that had no rule now have one that names their facts", () =
   assert.match(master.do, /ace of clubs stays/);
   assert.match(hintView(hint("lead_master_brisque", { card: "TC" })).do, /only a trump can take it\.$/);
   const spare = hintView(hint("take_sparing_pieces", { card: "TC", led: "9C", kept: "QC" }));
-  assert.match(spare.do, /your queen of clubs, is part of a combination/);
+  assert.match(spare.do, /your queen of clubs, is worth keeping for a combination/);
   const solved = hintView(hint("solved_endgame", { card: "8C", count: 3 }));
   assert.match(solved.do, /exactly the 3 cards/);
   assert.match(solved.rule, /last eight tricks/);
@@ -105,4 +105,18 @@ test("real hints from played sittings all word themselves", async () => {
     }
   }
   assert.ok(seen > 30);
+});
+
+test("hint wording claims no more than the engine checks", () => {
+  const throwLowest = hintView(hint("throw_lowest", { card: "7D", spared: "AC" }));
+  assert.doesNotMatch(throwLowest.do, /will not win|cannot win/);
+  assert.doesNotMatch(throwLowest.rule, /will not win|cannot win/);
+  // A plain master can still be trumped: the rule must not promise the trick.
+  assert.doesNotMatch(REASONS.last_eight_lead_master.rule, /yours/);
+  assert.match(hintView(hint("lead_master_brisque", { card: "TC" })).rule, /unless they trump it/);
+  // The lowest lead is "cheapest you can lead", not "low".
+  assert.doesNotMatch(hintView(hint("lead_low_nonbrisque", { card: "KC" })).do, /it is low/);
+  assert.match(hintView(hint("draw_out_trump", { card: "AH", trumps: 3 })).do, /your highest/);
+  // No measured figure is quoted that the measurements do not hold.
+  assert.doesNotMatch(REASONS.win_last_stock_trick.src.note, /2\.5/);
 });

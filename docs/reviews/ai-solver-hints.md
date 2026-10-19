@@ -105,3 +105,19 @@ be one of several equal-valued ones.
   specified, not audited.
 - `game_value_of` (rung 6) read only for structure; its race-feature path is not checked.
 - Nothing was executed; findings 1 and 2 are from reading, with no reproducing test written.
+
+## Resolution
+
+Tests: `crates/bezique-core/src/hints_tests.rs` (hand-built positions; each failed before the fix).
+
+1. Fixed. `draw_out_trump` fires only for the highest trump held; wording says "your highest".
+2. Fixed. `work` takes the card played: it is left out of the hand count, and `keep_for_bezique` is skipped when the card played is a half of the bezique.
+3. Partly a non-bug. Whatever wins an ace or ten is an ace, a ten or a trump, so the cheapest winner is always worth keeping and the proposed `valuable` test would be vacuous. Fixed: the named winner is the cheapest (plain before trump), not the first in legal order; wording no longer claims a value ("worth more than the 10 points" removed).
+4. Fixed. `throw_lowest` and `lead_low_nonbrisque` require the card to be no combination piece, else `nothing_decisive`/`generic`.
+5. Fixed in `hints.rs`: a copy is available only if held (not counting the card played) or unseen. Not changed in `agents.rs` (`keep_value` uses the same count); it is a play-quality change that would shift measurements, so it is deferred to a measured change.
+6. Fixed. A plain master lead requires that the opponent holds no trump or has a card of the suit to follow with (in the last eight their hand is exactly known); wording no longer promises the trick.
+7. Fixed in `docs/HINTS.md` (rows state the rank condition and the exclusion of the card played).
+8. Fixed in wording ("a combination to score").
+9. Wording only: the solved-endgame card "scores as well as any", since equal-valued cards tie.
+
+Also: the `union` of two `CardSet`s is a bitwise or over physical copies (one bit each), so a twin seen and a twin unseen count twice (page finding 9; test added).

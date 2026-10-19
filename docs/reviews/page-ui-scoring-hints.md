@@ -53,3 +53,21 @@ Scope: web3d/src/{ui,hinttext,tutor,tutorview,tracker,trackerview,scoreboard,sco
 ## Unverified
 
 pass wording when declarations were legal; the CSS layering (z-index/pointer-events) and white-on-black badge contrast (badges.css not read); badges.js, talk.js, speaker.js, words.json/personas.json usage and their tests; engine `union` semantics; kit hud `endHand` behaviour.
+
+## Resolution
+
+Hint items (engine tests in `crates/bezique-core/src/hints_tests.rs`, wording tests in `web3d/test/hinttext.test.js`). Items 10-15 and the UI nits belong to other owners and are not addressed here.
+
+1. Fixed by rewording: "You are not taking this trick" (the engine does not force a win in the stock phase); the rule and `docs/HINTS.md` say the same.
+2. Fixed. The winner named is the cheapest winner; the value claim is removed.
+3. Fixed. The card played is excluded from the hand count and from the combination the kept card serves.
+4. Fixed. The rule no longer says the trick is yours; the engine fires the plain master lead only when the opponent cannot trump it.
+5. Fixed. `draw_out_trump` leads the highest trump, as the rule says; the book's different advice stays noted as such in the source line.
+6. Fixed ("unless they trump it").
+7. Fixed ("worth keeping for a combination").
+8. Fixed ("the cheapest card you can lead").
+9. Not a bug: `CardSet::union` is a bitwise or with one bit per physical copy; a test records it.
+16. Fixed in `web3d/tutorial.md`: Cards out counts the cards not yet seen.
+17. Fixed: the page says only "double game", as `docs/RULES.md` does.
+Nits: take_brisque and last_eight_lead_ace rules reworded. `measurements/skills-final-style.txt` exists but holds no 2.5 figure (+1.79 and +18.59 for other comparisons), so the figure is removed from the hint and `docs/HINTS.md`; the rule is marked as not measured on its own.
+Test gap: a `can_win` assertion is unnecessary after the rewording; the wording test asserts the claim is gone.
