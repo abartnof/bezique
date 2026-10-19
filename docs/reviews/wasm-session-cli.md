@@ -213,6 +213,7 @@ here. Nothing was measured; tests only, each short.
   tolerance" half of each stop used an unadjusted 95% interval, and the
   boundary 2.09 was about 1% low at K=16. Style-clear stops are barely
   affected. Not rerun.
-- Runs that stopped at the cap (`worlds-32-sequential`, `rollout-memory`) or
-  declared a clear effect at constant z = 3.0 are unaffected: 3.0 was more
-  conservative than the corrected boundary at every look past the first few.
+- Runs that stopped at the cap (`worlds-32-sequential`, `rollout-memory`) are
+  unaffected. A constant z = 3.0 is about the Pocock level for 30 to 60
+  looks, so a "clear" stop under it keeps the overall error near 5% (not
+  checked beyond that); none of these runs ended on a clear effect.
