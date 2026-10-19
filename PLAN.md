@@ -162,7 +162,7 @@ feasible), except:
 - **The rung 6 rerun** (`measurements/README.md`: its stop is not certified
   under the corrected sequential rule). Deferred; only if the action-space
   change goes ahead.
-- Browser check: see below.
+- Browser check: the page fixes (restore, preferences, faces, dialogs, reframe) have node tests only for part of their behaviour and have not yet been tried in a browser; to do before the play-test.
 
 The measurement harness's sequential rule is now O'Brien-Fleming throughout
 (`tournament::obf_z`), with the futility stop on the same boundary; the
