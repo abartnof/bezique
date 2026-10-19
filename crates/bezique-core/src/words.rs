@@ -54,7 +54,7 @@ pub fn announcement(a: &Announcement, trump: Suit, carried_after: &[Declared]) -
         scoring(a.score.meld, trump)
     } else {
         format!(
-            "Score {}, for {}",
+            "Score {} for {}",
             points(a.score.meld.points(trump)),
             crate::melds::name(a.score.meld, trump)
         )
@@ -164,11 +164,11 @@ mod tests {
         };
         assert_eq!(
             announcement(&a, HEARTS, &rest),
-            "Score forty, for the royal marriage, and twenty, and twenty to score."
+            "Score forty for the royal marriage, and twenty, and twenty to score."
         );
         assert_eq!(
             announcement(&a, HEARTS, &[]),
-            "Score forty, for the royal marriage."
+            "Score forty for the royal marriage."
         );
     }
 

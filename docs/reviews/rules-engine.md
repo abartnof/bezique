@@ -98,3 +98,52 @@ No correctness bug against RULES.md was found. Ranked:
 - `rng.rs`, `observation.rs`, the web layer, and any caller of `options`.
 - `hand.rs` tests after line 760 and `melds.rs` greedy rider branch beyond
   its test. Nothing was executed, including `cargo test`.
+
+## Resolution
+
+- **1. Awaiting the maintainer's decision.** Verified by a characterisation
+  test (`melds.rs`, `check_allows_scoring_a_carried_combination_...`): with a
+  royal marriage carried and a second bezique laid, `check` accepts
+  "announce the bezique, score the marriage"; `options` offers the bezique
+  scored and the marriage scored alone, never that pair. Changing it widens
+  `Holdings::options`, hence `Hand::legal`, so it would touch: the golden
+  fingerprint and `RECORD_VERSION` (4; saved records would be refused), the
+  order and number of declaring options in every agent's search
+  (`agents.rs`, `lookahead.rs`, `solver.rs`, `opponent.rs`), `hints.rs`
+  (matches on `Declare` by `score.meld`), `session.rs` prompts, the web page's
+  declare menu, and every measurement made against the current action space
+  (strengths would need re-running; the effect is probably small, since the
+  option only matters when a carried score is worth more or less than a new
+  one that cannot itself be carried). Not implemented.
+- **2. Awaiting the maintainer's decision.** Verified likewise
+  (`check_allows_declining_a_free_rider_...`): `check` accepts a bezique laid
+  alone while the queen also marries a shown king; `options` always adds the
+  marriage. The same surfaces as finding 1 are touched, and agents gain a
+  choice that can only matter through the marking rule (an announced rider
+  bars a later equal-value marriage). Not implemented.
+- **3. Fixed.** RULES.md says equal ranks cut again, whatever the suits.
+- **4. Fixed, no behaviour change.** `game.rs` takes the modulo before the
+  cast; a test checks every cut shows two distinct cards and ends on unequal
+  ranks.
+- **5. Fixed.** "Score forty for the royal marriage" (no comma), in
+  `words.rs` for both forms; no other line of the table had the pattern. The
+  golden fingerprint is re-pinned (wording only; `RECORD_VERSION` unchanged),
+  and the web test string and a comment in `scoring.js` follow. The generated
+  page was not rebuilt, so it still shows the old comma until the next build;
+  `scoredFromCarry` matches `"score ` and is unaffected.
+- **6. Fixed.** `debug_assert!(is_valid())` in `Rank::letter/name` and
+  `Suit::letter/symbol/name`.
+- **Endgame reference through `Hand::apply`: done**
+  (`hand_invariants.rs`): 600 random hands, `legal()` compared with Foster's
+  sentence by card type, and `apply` accepting exactly the reference cards;
+  floors guard that win-if-able and must-trump cases occur.
+- **Carried scores lost and shown cards returned at exhaustion: done**
+  (`hand.rs`, `at_exhaustion_a_live_carried_score_is_lost_...`). The claim
+  that it was missing held: the existing last-stock-trick test lost its
+  carried score to a played king before exhaustion.
+- **Deal order: already covered.** `deal.rs`
+  `the_packets_go_three_two_three_pone_first` pins the 3-2-3 order, pone
+  first, and the turn-up at the 17th card; `deal_odds` is only about
+  uniformity, as the review said. No test added.
+- Not done: random-play rarity of a dix at the last stock trick and of a
+  double bezique after a scored single; no test added for either.

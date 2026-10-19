@@ -42,7 +42,7 @@ export function combinationName(text) {
   return "declared";
 }
 
-// Whether a declaration scored a combination announced earlier ("Score forty, for ...").
+// Whether a declaration scored a combination announced earlier ("Score forty for ...").
 export const scoredFromCarry = (text) => /"score /i.test(text);
 
 // The last trick of a hand is the took_trick the hand's end follows.

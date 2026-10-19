@@ -60,8 +60,8 @@ for later, as separate games rather than settings.
 ### 2. Cutting and dealing
 
 - The players cut; the higher card has the choice of seat and decides who
-  deals first (p. 339). Equal cards cut again (*interpretation*: Foster
-  does not say). The players then deal alternately (Cady, p. 15 of the
+  deals first (p. 339). Cards of equal rank cut again, whatever their suits (*interpretation*:
+  Foster does not say). The players then deal alternately (Cady, p. 15 of the
   treatise; [S4]).
 - The dealer gives eight cards to each player, three, then two, then three,
   beginning with the non-dealer (the *pone*), and turns the seventeenth card
@@ -224,7 +224,7 @@ Where no source settles a point, the choice is made here and labelled.
   when a peg reaches the hole; and Cady's double game is reached by scoring
   1,000 "prior to his opponent obtaining 500". Because every score belongs to
   one player at a time, the race cannot tie.
-- **Equal cuts are cut again.** Foster does not say; it is universal practice.
+- **Equal ranks are cut again.** Foster does not say; it is universal practice.
 - **A carried score is lost if one of its cards enters a higher combination
   of the same class before it is scored.** Stated by Cady for the royal
   marriage extended to a sequence and the single bezique extended to a double;

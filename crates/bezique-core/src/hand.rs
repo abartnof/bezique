@@ -939,6 +939,55 @@ mod tests {
         assert_eq!((h.phase(), h.to_move()), (Phase::Lead, Some(Seat::Dealer)));
     }
 
+    /// At exhaustion a carried score still alive is lost, the cards on the
+    /// table return to the hand, and nothing is scored on the way.
+    #[test]
+    fn at_exhaustion_a_live_carried_score_is_lost_and_shown_cards_return() {
+        let mut h = at_the_last_stock_trick();
+        // The pone leads a spade; the dealer takes it with a trump, the king
+        // of hearts, keeping the carried combination's cards untouched.
+        play(&mut h, "9S");
+        let seat = Seat::Dealer;
+        let kh = h
+            .holdings(seat)
+            .cards()
+            .cards()
+            .find(|c| c.card_type() == CardType::parse("KH").unwrap())
+            .unwrap();
+        // Sure that it is the king of hearts that is played, not a king that
+        // a carried score depends on.
+        let carried_cards = h
+            .holdings(seat)
+            .carried()
+            .iter()
+            .fold(CardSet::EMPTY, |s, d| s.union(d.cards));
+        assert!(!carried_cards.is_empty(), "a carried score is alive");
+        assert!(
+            !carried_cards.contains(kh),
+            "{carried_cards:?}: the trump played is not one of its cards"
+        );
+        h.apply(Action::Play(kh)).unwrap();
+        assert_eq!((h.phase(), h.to_move()), (Phase::Declare, Some(seat)));
+        assert!(!h.holdings(seat).carried().is_empty());
+        assert!(h.holdings(seat).shown.cards().next().is_some());
+        let before = h.score(seat);
+        h.apply(Action::Pass).unwrap();
+        assert!(h.in_endgame());
+        assert!(
+            h.holdings(seat).carried().is_empty(),
+            "the carried score is lost"
+        );
+        assert_eq!(h.score(seat), before, "and is not scored");
+        for s in Seat::BOTH {
+            assert!(h.holdings(s).shown.is_empty());
+            assert_eq!(h.holdings(s).concealed.len(), 8);
+        }
+        assert!(!h
+            .legal()
+            .iter()
+            .any(|a| matches!(a, Action::Declare(_) | Action::Dix(_))));
+    }
+
     #[test]
     fn in_the_last_eight_tricks_the_second_must_follow_and_win() {
         let mut h = at_the_last_stock_trick();
