@@ -55,3 +55,26 @@ Scope: web3d/src/{main,model,layout,zones,choreography,cards,newgame,settings,pr
 - Whether the tutorial or settings backdrop blocks the Menu's New game button (item 7), and whether `ui.js` shortcuts can reach `onAct` with `raw === null` (item 5).
 - Portrait/landscape switch: `director` receives `ZONES` at creation while `view()` supplies `zonesNow()`; correct if the kit's `relayout` uses `view().zones`, not checked.
 - Row overlap at maximum counts in portrait (`yourTable` width 34, pitch 4.2) was not measured; layout.test.js covers rows, but not checked against the portrait arrangement.
+
+## Resolution
+
+Fixed (web3d/src/main.js unless noted):
+
+1. Fixed. Tracker and Hints go through one `setAid(aid, on)`, which saves `prefs` whole. `savePrefs` (prefs.js) now refuses a missing or non-object argument; test added.
+2. Fixed. `changed` routes `faces` to `setFaces`. `talk` had the same fault (saved, never applied) and now calls `talk.setMode`. `tutor` is read live by `tutorOn`, so needs nothing.
+3. Fixed. `setAid` redraws only when not `waiting`; otherwise the director's own `rested` applies the new `raw`.
+4. Fixed. `setAid` tests `r.ok` and keeps `raw` and prefs on a refusal.
+5. Fixed. Tracker, Hints and Undo do nothing before the first deal; `newgame.js` `open` returns when already open, so the opening dialog keeps its first deal.
+6. Fixed. `restore` validates the saved shape, runs in try/catch, assigns prefs and seed only after the replay succeeds, and clears the key on failure.
+7. Fixed. `newGame` and Undo close the tutorial page and drop `afterPage` (`closeTutorPage`). Whether the backdrop already blocked the Menu stays unverified; the fix holds either way.
+8. Fixed. `present` resets `countUntil`.
+9. Fixed in newgame.js and settings.js: focus returns to the chosen control after a re-render. Not run in a browser.
+10. Fixed. `present` clears `hover`; a `pointerleave` handler clears it and the cursor. The stale cursor after a turn passes (nit) is not changed.
+11. Not changed; deliberate and still untested (needs a browser).
+12. Deferred. The `hints`, `tracker`, `playForced` fields of `gameConfig` stay as documentation of the protocol; `startAids` applies them. Restore with a toggling record is covered by the comparison below, which ignores `set` entries.
+13. Documented in the `setAid` comment: both aids are also the next game's default.
+
+wasm-session-cli.md 4: fixed. After the replay `restore` compares the engine's record with the saved one, ignoring `set` entries (start-up applies the final aids before the replay, so the two records differ in those alone), and drops the sitting on a mismatch.
+wasm-session-cli.md 5: fixed. `engine.new` throws a RangeError for a non-integer or out-of-range level (1-5), persona (0-65535) or erratic (0-1000).
+
+Not run: main.js, newgame.js, settings.js and engine.js have no node tests (they need a browser or the module's loading); checked with `node --check` only. The new prefs test passes. Remaining nits (stale cursor, `step` of 0, `won` remainder) are unchanged.

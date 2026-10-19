@@ -16,6 +16,14 @@ export async function loadEngine(bytes, onTrap) {
   return guard(
     {
       new: ({ level, seed, persona = 0, erratic = 0 }) => {
+        // JS would coerce a bad value into a wrapped integer: refuse it here.
+        const int = (name, v, lo, hi) => {
+          if (!Number.isInteger(v) || v < lo || v > hi) throw new RangeError(`${name} must be an integer from ${lo} to ${hi}`);
+          return v;
+        };
+        int("level", level, 1, 5);
+        int("persona", persona, 0, 0xffff);
+        int("erratic", erratic, 0, 1000);
         ex.bezique_new(level, seed >>> 0, persona, erratic);
         return state();
       },

@@ -114,6 +114,7 @@ export function loadPrefs(store = defaultStore()) {
 
 // Whether it was kept. A record written by a newer page is not overwritten.
 export function savePrefs(prefs, store = defaultStore()) {
+  if (!prefs || typeof prefs !== "object") return false; // never write an empty record over the kept one
   try {
     if (!store) return false;
     const old = store.getItem(KEY);

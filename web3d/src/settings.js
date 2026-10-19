@@ -40,6 +40,7 @@ export function createSettings(root, { prefs, onChange = () => {} }) {
     current = { ...current, [key]: value };
     onChange(key, value);
     render();
+    panel.querySelector(`[data-key="${key}"][aria-checked="true"], select[data-key="${key}"]`)?.focus();
   }
 
   function render() {

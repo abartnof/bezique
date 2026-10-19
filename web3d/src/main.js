@@ -175,6 +175,11 @@ async function main() {
     tips: (on) => { prefs.tutor = on; savePrefs(prefs); openHelp(); },
     reset: () => { tutorStore.reset(); prefs.tutor = true; savePrefs(prefs); openHelp(); },
   });
+  // A page left open by a game that is being replaced: its release is stale.
+  function closeTutorPage() {
+    afterPage = null;
+    if (tutorView.isOpen()) tutorView.close();
+  }
   function openHelp() {
     tutorView.help(pages, { seen: tutorStore.seen(), tips: tutorOn() });
   }
@@ -261,6 +266,8 @@ async function main() {
   // or a sitting restored: the cards at once) or "advance" (the next move played out).
   function present(next, how) {
     const first = S && how !== "deal" ? S.events.length : 0;
+    countUntil = 0;
+    hover = null;
     const state = { model: fromState(next), events: next.events, raw: next };
     if (next.persona && talk.persona !== next.persona) talk.setPersona(next.persona);
     const before = how === "advance" ? raw : null;
@@ -301,14 +308,25 @@ async function main() {
     savePrefs(prefs);
     if (key === "speed" || key === "reducedMotion") director.setSpeed(speedFactor(prefs, systemReduced()));
     else if (key === "surface") stage.setSurface(chooseSurface({ chosen: value, saved: null }));
-    else if (key === "hints") setHints(value);
+    else if (key === "faces") setFaces(value);
+    else if (key === "talk") talk.setMode(value);
+    else if (key === "hints" || key === "tracker") setAid(key, value);
   }
 
-  function setHints(on) {
-    if (!raw || raw.aids.hints === on) return;
-    raw = engine.send(`set hints ${on ? "on" : "off"}`).state;
+  // Hints or the tracker, on or off: the engine's `set`. A refused command
+  // leaves the table as it was. While cards move or a tutorial page holds the
+  // clock nothing is redrawn here: `rested` applies the new state when the
+  // table comes to rest. Both are also the next game's default (prefs.js).
+  function setAid(aid, on) {
+    if (!raw || raw.aids[aid] === on) return false;
+    const r = engine.send(`set ${aid} ${on ? "on" : "off"}`);
+    if (!r.ok) return false;
+    raw = r.state;
+    prefs[aid] = on;
+    savePrefs(prefs);
     persist();
-    rested();
+    if (!waiting) rested();
+    return true;
   }
 
   // The aids a game starts with, as the engine's `set` commands.
@@ -326,6 +344,7 @@ async function main() {
     newGameDialog.remember(prefs);
     seed = Number.isInteger(chosenSeed) ? chosenSeed : url.seed !== null && !S ? url.seed : Math.floor(Math.random() * 2 ** 32);
     director.cancelTimed();
+    closeTutorPage();
     hushTalk();
     engine.new(gameConfig(prefs, { seed }));
     startAids(gameConfig(prefs));
@@ -334,25 +353,45 @@ async function main() {
   }
 
   // The sitting kept from last time, replayed command by command.
+  // A sitting that cannot be replayed to the same game is dropped, and a new
+  // one begins; the preferences are touched only once it has been replayed.
   function restore() {
     const saved = store.get(SITTING);
     if (!saved || url.seed !== null || url.fresh) return false;
-    seed = saved.seed;
-    prefs.level = saved.level;
-    prefs.persona = saved.persona ?? 0;
-    prefs.erratic = saved.erratic ?? 0;
-    let s = engine.new(gameConfig(prefs, { seed }));
-    if (s.record_version !== saved.v) return false;
-    startAids({ hints: saved.hints, tracker: saved.tracker, playForced: saved.playForced });
-    prefs.playForced = saved.playForced === true;
-    for (const command of saved.record) {
-      if (command.startsWith("*")) continue;
-      const r = engine.send(command);
-      if (!r.ok) return false;
+    const ok = (() => {
+      try {
+        if (typeof saved !== "object" || !Array.isArray(saved.record) || !saved.record.every((c) => typeof c === "string")) return null;
+        if (!Number.isInteger(saved.seed) || !Number.isInteger(saved.level)) return null;
+        const mine = { ...prefs, level: saved.level, persona: saved.persona ?? 0, erratic: saved.erratic ?? 0 };
+        let s = engine.new(gameConfig(mine, { seed: saved.seed }));
+        if (s.record_version !== saved.v) return null;
+        startAids({ hints: saved.hints, tracker: saved.tracker, playForced: saved.playForced });
+        for (const command of saved.record) {
+          if (command.startsWith("*")) continue;
+          if (!engine.send(command).ok) return null;
+        }
+        s = engine.state();
+        // The core's own guard, which the module does not export: the table's
+        // moves must come out as they were. The aids' `set` entries are left
+        // out, as start-up sets them again before the replay.
+        const plays = (r) => (Array.isArray(r) ? r.filter((e) => !String(e).startsWith("set ")) : null);
+        const got = plays(s.record);
+        const was = plays(saved.record);
+        if (!got || got.length !== was.length || got.some((e, i) => e !== was[i])) return null;
+        if (s.prompt.kind === "over") return null;
+        return { s, mine };
+      } catch (e) {
+        console.error(e);
+        return null;
+      }
+    })();
+    if (!ok) {
+      store.set(SITTING, null);
+      return false;
     }
-    s = engine.state();
-    if (s.prompt.kind === "over") return false;
-    present(s, "direct");
+    seed = saved.seed;
+    Object.assign(prefs, { level: ok.mine.level, persona: ok.mine.persona, erratic: ok.mine.erratic, playForced: saved.playForced === true });
+    present(ok.s, "direct");
     return true;
   }
 
@@ -378,23 +417,20 @@ async function main() {
       if (!tutorView.isOpen()) openHelp();
     }
     else if (name === "undo") {
-      if (waiting) return;
+      if (waiting || !raw) return;
       const r = engine.send("undo");
       if (r.ok) {
         director.cancelTimed();
+        closeTutorPage();
         hushTalk();
         present(r.state, "direct");
         talk.onEvent({ kind: "undo" });
         persist();
       }
     } else if (name === "tracker") {
-      prefs.tracker = !raw.aids.tracker;
-      savePrefs();
-      const r = engine.send(`set tracker ${prefs.tracker ? "on" : "off"}`);
-      raw = r.state;
-      persist();
-      rested();
+      if (raw) setAid("tracker", !raw.aids.tracker);
     } else if (name === "hints") {
+      if (!raw) return;
       const on = !raw.aids.hints;
       settings.set("hints", on);
       changed("hints", on);
@@ -414,6 +450,12 @@ async function main() {
       director.redecorate();
       canvas.style.cursor = id !== null && legal().includes(id) ? "pointer" : "default";
     }
+  });
+  canvas.addEventListener("pointerleave", () => {
+    if (hover === null) return;
+    hover = null;
+    canvas.style.cursor = "default";
+    director.redecorate();
   });
   canvas.addEventListener("click", (e) => {
     if (waiting || raw?.prompt?.kind !== "play") return;

@@ -74,3 +74,10 @@ test("the persona choices are the engine's list, in order", () => {
     list.map((p) => [p.name, p.description]),
   );
 });
+
+test("savePrefs without prefs writes nothing (it once wrote {v:1} over every kept choice)", () => {
+  const s = mem(JSON.stringify({ level: 4 }));
+  assert.equal(savePrefs(undefined, s), false);
+  assert.equal(savePrefs(null, s), false);
+  assert.equal(loadPrefs(s).level, 4);
+});
