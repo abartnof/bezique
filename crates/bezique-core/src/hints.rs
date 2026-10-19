@@ -106,18 +106,27 @@ fn meld_word(meld: Meld, trump: Suit) -> (String, Option<Suit>) {
 }
 
 /// What a card is being kept for, if anything: the combination it can still
-/// serve in, reckoned from the player's own hand and the cards played.
-fn work(view: &View, card: Card) -> Option<Reason> {
-    let gone = view.played();
-    let available = |t: CardType| 2 - gone.count_of(t).min(2) as i32;
+/// serve in, reckoned from the player's own hand and the cards that can still
+/// come to it. `played` is the card being played in its place, if any: it is
+/// not in the hand for the count, so a combination it is a piece of is not
+/// one to keep another piece of.
+///
+/// A card can still be had only if it is in the player's own hand or not yet
+/// seen (the stock or the opponent's concealed hand): a copy on the
+/// opponent's table or in a trick is gone.
+fn work(view: &View, card: Card, played: Option<Card>) -> Option<Reason> {
+    let unseen = view.unseen();
     let mine = &view.mine;
-    let held = mine.cards();
+    let held = played.map_or(mine.cards(), |p| mine.cards().without(p));
+    let available = |t: CardType| (held.count_of(t) + unseen.count_of(t)) as i32;
     let holds = |rank: Rank, suit: Suit| held.count_of(CardType::new(rank, suit)) > 0;
     let trump = view.trump;
     let t = card.card_type();
     let qs = CardType::new(Rank::QUEEN, Suit::SPADES);
     let jd = CardType::new(Rank::JACK, Suit::DIAMONDS);
+    let plays_half = played.is_some_and(|p| p.card_type() == qs || p.card_type() == jd);
     if (t == qs || t == jd)
+        && !plays_half
         && mine.level(card, Class::Bezique) < 2
         && available(qs) >= 1
         && available(jd) >= 1
@@ -256,8 +265,8 @@ fn solved_endgame(view: &View, card: Card) -> Reason {
 
 /// A card worth holding on to: a trump, an ace or a ten, or one a
 /// combination in hand or in prospect still needs.
-fn valuable(view: &View, c: Card) -> bool {
-    c.suit() == view.trump || c.is_brisque() || work(view, c).is_some()
+fn valuable(view: &View, c: Card, played: Option<Card>) -> bool {
+    c.suit() == view.trump || c.is_brisque() || work(view, c, played).is_some()
 }
 
 /// The card to name when nothing separates the plays: the dearest of the
@@ -265,7 +274,7 @@ fn valuable(view: &View, c: Card) -> bool {
 fn dearest_kept(view: &View, all: &[Card], card: Card) -> Option<Card> {
     all.iter()
         .copied()
-        .filter(|c| c.card_type() != card.card_type() && valuable(view, *c))
+        .filter(|c| c.card_type() != card.card_type() && valuable(view, *c, Some(card)))
         .max_by_key(|&c| (cost(view.trump, c), c.0))
 }
 
@@ -295,16 +304,29 @@ fn classify_play(view: &View, legal: &[Action], card: Card) -> Reason {
             return Reason::new("last_eight_lead_ace").card("card", card);
         }
         let trumps = all.iter().filter(|c| c.suit() == trump).count();
-        if card.suit() == trump && trumps >= 3 {
+        // The rule is to lead the highest trump held.
+        let highest = all
+            .iter()
+            .filter(|c| c.suit() == trump)
+            .map(|c| c.rank())
+            .max();
+        if card.suit() == trump && trumps >= 3 && Some(card.rank()) == highest {
             return Reason::new("draw_out_trump")
                 .card("card", card)
                 .int("trumps", trumps as i64);
         }
         // A lead nothing still out can beat in its suit.
         let out = view.unseen().union(view.theirs.cards());
-        if !out
-            .cards()
-            .any(|c| c.suit() == card.suit() && c.rank() > card.rank())
+        // In the last eight `out` is exactly the opponent's hand. A plain
+        // card is also beaten by a trump when the opponent has no card of
+        // the suit to follow with.
+        let trumped = card.suit() != trump
+            && out.cards().any(|c| c.suit() == trump)
+            && !out.cards().any(|c| c.suit() == card.suit());
+        if !trumped
+            && !out
+                .cards()
+                .any(|c| c.suit() == card.suit() && c.rank() > card.rank())
         {
             let kind = if card.suit() == trump {
                 "trump"
@@ -363,13 +385,14 @@ fn classify_play(view: &View, legal: &[Action], card: Card) -> Reason {
                 .copied()
                 .filter(|&w| cost(w) < cost(card))
                 .collect();
+            let piece = |w: Card| work(view, w, Some(card)).is_some();
             if let Some(kept) = cheaper
                 .iter()
                 .copied()
-                .filter(|&w| work(view, w).is_some())
+                .filter(|&w| piece(w))
                 .max_by_key(|&w| (cost(w), w.0))
             {
-                if cheaper.iter().all(|&w| work(view, w).is_some()) {
+                if cheaper.iter().all(|&w| piece(w)) {
                     return Reason::new("take_sparing_pieces")
                         .card("card", card)
                         .card("led", led)
@@ -378,22 +401,29 @@ fn classify_play(view: &View, legal: &[Action], card: Card) -> Reason {
             }
             return Reason::new("generic");
         }
-        if led.is_brisque() && !winners.is_empty() {
+        // The card named is the cheapest winner (a plain suit before a
+        // trump): the least the brisque would cost. Whatever wins a brisque
+        // is an ace, a ten or a trump, so it is always a card worth keeping.
+        let cheapest = winners
+            .iter()
+            .copied()
+            .min_by_key(|&w| (w.suit() == trump, w.rank(), w.0));
+        if let (true, Some(winner)) = (led.is_brisque(), cheapest) {
             return Reason::new("let_brisque_go")
                 .card("card", card)
                 .card("led", led)
-                .card("winner", winners[0]);
+                .card("winner", winner);
         }
     }
     // A card given up or led: what was spared, if the choice shows it.
     if let Some(r) = all
         .iter()
         .filter(|c| c.card_type() != card.card_type() && c.rank() <= card.rank())
-        .find_map(|&c| work(view, c))
+        .find_map(|&c| work(view, c, Some(card)))
     {
         return r.card("card", card);
     }
-    if view.mine.shown.contains(card) && work(view, card).is_none() {
+    if view.mine.shown.contains(card) && work(view, card, None).is_none() {
         return Reason::new("play_declared_card").card("card", card);
     }
     let spared: Option<Card> = all
@@ -403,7 +433,10 @@ fn classify_play(view: &View, legal: &[Action], card: Card) -> Reason {
         .max_by_key(|c| (c.rank(), c.0));
     if !card.is_brisque() {
         // Cheap by the order of play: no legal card costs less.
-        if all.iter().all(|&c| cost(trump, c) >= cost(trump, card)) {
+        // And the card is not itself a piece of a combination.
+        if all.iter().all(|&c| cost(trump, c) >= cost(trump, card))
+            && work(view, card, None).is_none()
+        {
             let key = if led.is_some() {
                 "throw_lowest"
             } else {
@@ -416,7 +449,7 @@ fn classify_play(view: &View, legal: &[Action], card: Card) -> Reason {
             };
         }
         // No clear case: a cheap card, and the dear one to hold on to.
-        if !valuable(view, card) {
+        if !valuable(view, card, None) {
             if let Some(kept) = dearest_kept(view, &all, card) {
                 return Reason::new("nothing_decisive")
                     .card("card", card)
@@ -447,3 +480,7 @@ fn classify_play(view: &View, legal: &[Action], card: Card) -> Reason {
     }
     Reason::new("generic")
 }
+
+#[cfg(test)]
+#[path = "hints_tests.rs"]
+mod tests;

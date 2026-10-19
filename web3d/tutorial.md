@@ -22,7 +22,7 @@ The player who is not dealing leads. Tap a card to play it; the other player ans
 
 The higher card of the suit led wins, and so does a trump played to a plain-suit lead. If the two cards are identical, the leader wins.
 
-Under **Menu**, top right, are Undo, Hint, Help (these pages again), New game and Settings. **Hint** names a good card and the rule behind it. **Cards out**, under the score at the top left, lists what has been played.
+Under **Menu**, top right, are Undo, Hint, Help (these pages again), New game and Settings. **Hint** names a good card and the rule behind it. **Cards out**, under the score at the top left, counts the cards you have not yet seen.
 
 # Brisques
 
@@ -86,7 +86,7 @@ Brisques still score, and whoever wins the very last trick scores **10**.
 
 # The double game
 
-A player has now reached **500**. A game won while the loser is still short of 500 is a **double game**, which counts for two. So the lead is worth keeping.
+A player has now reached **500**. A game won while the loser is still short of 500 is a **double game**.
 
 # The game is over
 
