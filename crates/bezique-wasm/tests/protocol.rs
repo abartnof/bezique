@@ -115,9 +115,15 @@ fn hidden(session: &bezique_core::session::Session) -> CardSet {
 /// string, the narration and the error included.
 #[test]
 fn no_state_shows_a_hidden_card() {
-    for seed in 10..16 {
+    // Once without the hints, once with them on: a hint's reason names cards
+    // (`card`, `led`, `kept`, `spared`), and they too come from the person's
+    // own view.
+    for (seed, hints) in (10..16).flat_map(|seed| [(seed, false), (seed, true)]) {
         let mut session = sit_down(3, seed, 0, 0);
         assert!(session.send("set tracker on"));
+        if hints {
+            assert!(session.send("set hints on"));
+        }
         loop {
             let json = state(&session);
             let s: Value = serde_json::from_str(&json).unwrap();
@@ -247,4 +253,99 @@ fn the_state_names_the_persona_from_the_list() {
         let s: Value = serde_json::from_str(&state(&session)).unwrap();
         assert_eq!(s["persona"], p["key"]);
     }
+}
+
+/// Plays `n` of the person's decisions by `first`.
+fn play_on(session: &mut bezique_core::session::Session, n: usize) {
+    for _ in 0..n {
+        let s: Value = serde_json::from_str(&state(session)).unwrap();
+        if let Some(c) = first(&s) {
+            assert!(session.send(&c), "{c}");
+        }
+    }
+}
+
+/// `undo` takes back the person's last decision and the opponent's replies:
+/// the state is what it was before, and the record is as it was. With nothing
+/// to undo it is refused and says so.
+#[test]
+fn undo_through_the_protocol() {
+    let mut session = sit_down(2, 8, 0, 0);
+    assert!(!session.send("undo"));
+    let s: Value = serde_json::from_str(&state(&session)).unwrap();
+    assert!(s["error"].is_string());
+    play_on(&mut session, 6);
+    let before = state(&session);
+    let record_before = session.record().to_vec();
+    let was: Value = serde_json::from_str(&before).unwrap();
+    let command = first(&was).expect("a decision to make");
+    assert!(session.send(&command));
+    assert_ne!(state(&session), before);
+    assert!(session.send("undo"), "{}", state(&session));
+    assert_eq!(session.record(), &record_before[..]);
+    let mut now: Value = serde_json::from_str(&state(&session)).unwrap();
+    // Only the error field may differ.
+    now["error"] = was["error"].clone();
+    assert_eq!(was, now);
+    // And what was undone can be played again.
+    assert!(session.send(&command));
+}
+
+/// A refused command leaves the table as it was, apart from the error, and a
+/// later good command clears the error.
+#[test]
+fn a_refused_command_changes_nothing_else() {
+    let mut session = sit_down(2, 4, 0, 0);
+    play_on(&mut session, 4);
+    let before: Value = serde_json::from_str(&state(&session)).unwrap();
+    for bad in ["play 999", "play", "declare 99", "dealer you", "set nothing on", "garbage"] {
+        assert!(!session.send(bad), "{bad}");
+        let mut after: Value = serde_json::from_str(&state(&session)).unwrap();
+        assert!(after["error"].is_string(), "{bad}");
+        after["error"] = before["error"].clone();
+        assert_eq!(after, before, "{bad}");
+    }
+    let command = first(&before).unwrap();
+    assert!(session.send(&command));
+    let s: Value = serde_json::from_str(&state(&session)).unwrap();
+    assert!(s["error"].is_null(), "{}", s["error"]);
+}
+
+/// The exported functions as a host calls them: a command before any table
+/// is refused and the state is `null`; then a table, a command through the
+/// buffer, an oversized length (clamped), and a new table replaces the old.
+#[test]
+fn the_exports_before_and_after_sitting_down() {
+    use bezique_wasm::ffi::*;
+    fn send(command: &[u8], len: usize) -> u32 {
+        let buffer = bezique_alloc(command.len());
+        // SAFETY: the buffer was just allocated with this length.
+        unsafe { std::ptr::copy_nonoverlapping(command.as_ptr(), buffer, command.len()) };
+        bezique_send(len)
+    }
+    fn current() -> String {
+        let (ptr, len) = (bezique_state(), bezique_state_len());
+        // SAFETY: the pointer and length describe the state just rendered.
+        String::from_utf8(unsafe { std::slice::from_raw_parts(ptr, len) }.to_vec()).unwrap()
+    }
+    assert_eq!(send(b"dealer you", 10), 0, "no table yet");
+    assert_eq!(current(), "null");
+    bezique_new(2, 5, 0, 0);
+    let s: Value = serde_json::from_str(&current()).unwrap();
+    let command = first(&s).expect("a decision to make");
+    assert_eq!(
+        send(command.as_bytes(), command.len() + 1000),
+        1,
+        "a length past the buffer is clamped"
+    );
+    let s: Value = serde_json::from_str(&current()).unwrap();
+    assert_eq!(s["record"].as_array().unwrap().len(), 1);
+    assert_eq!(send(b"play 999", 8), 0);
+    let s: Value = serde_json::from_str(&current()).unwrap();
+    assert!(s["error"].is_string());
+    assert_eq!(send(&[0xff, 0xfe], 2), 0, "invalid UTF-8 is not a command");
+    bezique_new(2, 6, 0, 0);
+    let s: Value = serde_json::from_str(&current()).unwrap();
+    assert!(s["record"].as_array().unwrap().is_empty(), "a new table replaces the old");
+    assert!(s["error"].is_null());
 }
