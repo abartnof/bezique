@@ -47,6 +47,28 @@ Scope: `kit/js/*` (listed files), `kit/build.py`, `kit/test/`, `bin/gate`, `web3
 - `hud.js`: every deferred action goes through `later` and checks `epoch`; reset cancels the queue; no timers outside `later` by default except the `setTimeout` default, which the game overrides with `director.at`.
 - `build.py`: placeholders replaced in one pass, `</script`/`</style` guarded, JSON `</` escaped, missing esbuild and cargo give one-line errors.
 
+## Resolution
+
+Fixed with a test first where one was feasible (kit tests: 200 pass; browser checks were not run).
+
+- 1 Fixed. `deck.js` keeps its own face map and never writes to the caller's; `main.js` also copies `classic`. Test: `kit/test/deck.test.js`.
+- 2 Fixed. `screenPointOfId` and `meshOfId` added; the code forms are documented as first copy; the `main.js` test hook goes by placement id.
+- 3 Fixed. `setInset` renders when it changes the framing. Not testable without WebGL.
+- 4 Fixed. `due()` returns whether the clock is still held, so a gate released at once lets the frame go on. Test: `kit/test/director-clock.test.js`.
+- 5 Fixed. `decorate` leaves `dim` alone unless given; the in-motion `dress()` passes `dim: false` explicitly.
+- 6 Fixed. `settle` bumps the animation token.
+- 7 Fixed. Each gate's `release` is bound to that gate; a stale or repeated call does nothing. `restart` and `cancelTimed` still force a release.
+- 8 Fixed. A direct `restart` returns the same shape as `animate`.
+- 9 Documented (`screenPoint` reads where the card is now; `handEdge` where it will rest).
+- 10 Fixed. `resize()` uses the guarded aspect. Not testable without a canvas.
+- 11 Fixed, a little differently: strips that meet or overlap (a band of zero or less) leave the width term to set the field. A floor of 0.05 would have overridden the existing rescue for negative bands. Test in `framing.test.js`.
+- 12 Documented in a comment at the table plane; no code change.
+- 13 Not a bug (clamped); left.
+- 14 Fixed. `tick` iterates a snapshot; a motion added by a callback joins from the next tick, and `skip` leaves such a motion to run. Test in `timeline.test.js`.
+- Nits: `units.js` and `scene.js` comments corrected. `deck.js` material sets, `art.js` and the resize listener: left as noted (bounded, or guarded at build).
+- Gate: fails on unstaged changes under `web3d kit crates` (stage first; untracked files are not covered), shows `cargo fmt` output, and runs and counts the kit and game Node tests separately. `__pycache__/` is gitignored and no cache file is tracked. The toolchain-pinning gap (a) is not addressed.
+- Not run: the full gate (the wasm engine is not built in this worktree, so 20 game tests that need it fail with and without these changes), and anything in a browser.
+
 ## Not checked
 
 `kinematics.js` paths, `surfaces.js`, `faces.js` drawing, `dialogue.js`, `scoring.js` internals beyond the HUD contract, `kit/test/` contents (their coverage of items 1-4 was not read; none of 1-4 is likely covered), and anything in a real browser.

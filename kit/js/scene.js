@@ -145,6 +145,7 @@ export function createScene(
   table.rotation.x = -Math.PI / 2;
   // A hair below the plane the cards' undersides rest in: the ink line's hull
   // lies in that plane, and at the same depth it flickered against the table.
+  // (Depth: these gaps, 0.005 and 0.012 cm, assume the 24-bit depth buffer three requests; a 16-bit one would flicker.)
   table.position.set(0, -0.012, MIDDLE);
   scene.add(table);
   const shade = new Mesh(new PlaneGeometry(WIDE, DEEP), new ShadowMaterial({ color: "#14161a", opacity: 0.3 }));
