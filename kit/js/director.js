@@ -75,21 +75,32 @@ export function createDirector({ stage, deck, view, decorate, rested, choreograp
     queue.sort((a, b) => a.at - b.at || b.gate - a.gate);
     wake();
   }
+  // `holder` is the gate entry now holding the clock. The release handed to
+  // a gate belongs to that gate only: once its hold is over (released, or
+  // dropped by a restart), calling it again does nothing to a later hold.
+  let holder = null;
   function release() {
     if (heldAt === null) return;
     offset = wall() - heldAt;
     heldAt = null;
+    holder = null;
     wake();
   }
+  const releaseFor = (entry) => () => {
+    if (holder === entry) release();
+  };
   function due(until) {
     while (queue.length && queue[0].at <= until && heldAt === null) {
       const entry = queue.shift();
       if (entry.gate) {
         heldAt = entry.at;
+        holder = entry;
         timeline.tick(entry.at);
         stage.render();
-        entry.fn(release);
-        return true;
+        entry.fn(releaseFor(entry));
+        // A gate that released at once leaves the clock running: the frame
+        // goes on to move the cards and ask for the next one.
+        return heldAt !== null;
       }
       entry.fn();
     }
@@ -122,6 +133,7 @@ export function createDirector({ stage, deck, view, decorate, rested, choreograp
 
   function settle(s, from = s) {
     timeline.skip();
+    animations++; // the skip resolved the idle of any animation: its rest is stale
     placement = initialPlacement(from, view());
     for (const m of placement) {
       deck.reveal(meshes[m.id], m.code);
@@ -217,8 +229,19 @@ export function createDirector({ stage, deck, view, decorate, rested, choreograp
   // Where on the screen to point at a card so that it is the one hit: near
   // the index corner for a card in a fanned hand; on the table, the middle of
   // its far half, clear of a hand card standing up in front of it.
+  // From where the card is drawn now (mid-animation, where it is, not where
+  // it will rest; handEdge reads the final pose).
+  // `screenPoint(code)` is for the FIRST copy of a code in the placement: a
+  // pack with twins has two, and this cannot say which. Use screenPointOfId
+  // for a particular card.
   function screenPoint(code) {
-    const m = placement.find((x) => x.code === code);
+    return pointAt(placement.find((x) => x.code === code));
+  }
+  // The same for the card on mesh `id` (a placement's `id`).
+  function screenPointOfId(id) {
+    return pointAt(placement.find((x) => x.id === id));
+  }
+  function pointAt(m) {
     if (!m) return null;
     const mesh = meshes[m.id];
     const local = m.zone === "your-hand" ? new Vector3(-CARD.width / 2 + 0.8, CARD.height / 2 - 1.4, CARD.thickness / 2) : new Vector3(0, CARD.height / 4, CARD.thickness / 2);
@@ -252,10 +275,12 @@ export function createDirector({ stage, deck, view, decorate, rested, choreograp
     screenOf: (point) => toScreen(new Vector3(...point)),
     state: () => state,
     placement: () => placement,
+    // The mesh of the FIRST copy of a code (twins: use meshOfId).
     meshOf: (code) => {
       const m = placement.find((x) => x.code === code);
       return m ? meshes[m.id] : null;
     },
+    meshOfId: (id) => (placement.some((x) => x.id === id) ? meshes[id] : null),
     busy: () => timeline.busy(),
     // The animation's speed, for what moves from now on.
     setSpeed(v) {
@@ -271,7 +296,7 @@ export function createDirector({ stage, deck, view, decorate, rested, choreograp
       release();
       if (!dealt) {
         settle(s);
-        return { beats: {}, count: null };
+        return { beats: {}, landed: {}, count: null, duration: 0 };
       }
       const start = opening(s);
       settle(start);
@@ -351,8 +376,9 @@ export function createDirector({ stage, deck, view, decorate, rested, choreograp
         const [entry] = queue.splice(k, 1);
         if (entry.gate) {
           heldAt = now();
+          holder = entry;
           stage.render();
-          entry.fn(release);
+          entry.fn(releaseFor(entry));
           break;
         }
         entry.fn();
@@ -368,6 +394,7 @@ export function createDirector({ stage, deck, view, decorate, rested, choreograp
     },
     pick,
     screenPoint,
+    screenPointOfId,
     toScreen,
     meshes,
     timeline,

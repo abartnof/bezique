@@ -438,10 +438,7 @@ async function main() {
   });
 
   // The test hook: what the browser checks read and drive.
-  window.bezique3d = { talk, setTalk, speaker, board, setFaces: (c) => { const r = setFaces(c); savePrefs(prefs); return r; }, facesShown: () => facesShown, state: () => raw, act, onAct, director, stage, ui, engine, waiting: () => waiting, screenPoint: (id) => director.screenPoint(S.model && placementCode(id)) };
-  function placementCode(id) {
-    return director.placement().find((m) => m.cardId === id)?.code;
-  }
+  window.bezique3d = { talk, setTalk, speaker, board, setFaces: (c) => { const r = setFaces(c); savePrefs(prefs); return r; }, facesShown: () => facesShown, state: () => raw, act, onAct, director, stage, ui, engine, waiting: () => waiting, screenPoint: (id) => { const m = S?.model && director.placement().find((x) => x.cardId === id); return m ? director.screenPointOfId(m.id) : null; } };
 
   // No sitting to resume: a new player (or one starting afresh) chooses the game first.
   if (!restore()) {
