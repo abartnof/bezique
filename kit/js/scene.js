@@ -145,11 +145,12 @@ export function createScene(
   table.rotation.x = -Math.PI / 2;
   // A hair below the plane the cards' undersides rest in: the ink line's hull
   // lies in that plane, and at the same depth it flickered against the table.
+  // (Depth: these gaps, 0.005 and 0.012 cm, assume the 24-bit depth buffer three requests; a 16-bit one would flicker.)
   table.position.set(0, -0.012, MIDDLE);
   scene.add(table);
   const shade = new Mesh(new PlaneGeometry(WIDE, DEEP), new ShadowMaterial({ color: "#14161a", opacity: 0.3 }));
   shade.rotation.x = -Math.PI / 2;
-  shade.position.set(0, 0.005, MIDDLE); // above the table, below the lowest card
+  shade.position.set(0, 0.005, MIDDLE); // above the table; a lying card's underside is in the plane y = 0, below it, and the card is opaque above
   shade.receiveShadow = true;
   scene.add(shade);
   const wood = new Mesh(new BoxGeometry(WIDE, TABLE_EDGES.thickness, DEEP), new MeshToonMaterial({ color: "#9a6b43" }));
@@ -181,7 +182,7 @@ export function createScene(
     const height = canvas.clientHeight;
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, CAMERA.maxPixelRatio));
     renderer.setSize(width, height, false);
-    frame(width / height);
+    frame(aspectNow()); // a hidden or collapsed canvas has no size: not NaN
     for (const ink of inks) fitInk(ink);
   }
 
@@ -262,6 +263,7 @@ export function createScene(
     if (Math.abs(next - inset) < 1e-3) return false;
     inset = next;
     frame(width / (canvas.clientHeight || 1));
+    render(); // the picture moved: draw it (the caller need not)
     return true;
   }
 

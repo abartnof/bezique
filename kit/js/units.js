@@ -4,7 +4,8 @@
 // its own `eye` to framing.js (aim, framing, cameraFor).
 // Space: units, the table, the camera, the zones -- one source of truth.
 //
-// Centimetres throughout. y is up and the table top is y = 0; the human sits
+// Centimetres throughout. y is up and a card lies with its underside at
+// y = 0; the table's top is a hair below, at y = -0.012 (scene.js). The human sits
 // at +z, the opponent at -z, and x runs to the human's right
 // (docs/TABLE3D.md section 6).
 

@@ -150,3 +150,22 @@ test("a tick says whether it moved anything", () => {
   t.tick(300);
   assert.equal(t.moved, false);
 });
+
+test("a callback may add a motion mid-tick: the ones running are each touched once, the new one from the next tick", () => {
+  const applied = [];
+  const t = new Timeline({ apply: (id) => applied.push(id) });
+  let added = false;
+  const done = () => {
+    if (added) return;
+    added = true;
+    t.add({ target: "late", path: () => 0, delay: 0, duration: 10 }, 0); // starts before the others, so the sort moves it first
+  };
+  t.add({ target: "a", path: () => 0, duration: 10, onDone: done }, 5);
+  t.add({ target: "b", path: () => 0, duration: 10 }, 5);
+  t.tick(20);
+  assert.deepEqual(applied, ["a", "b"], "no motion skipped or touched twice");
+  assert.equal(t.busy(), true, "the new motion waits");
+  t.tick(30);
+  assert.deepEqual(applied, ["a", "b", "late"]);
+  assert.equal(t.busy(), false);
+});

@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 # The gate before every commit: formatting, lints, tests. Prints one summary
 # line and exits non-zero on any failure. Run it bare (`bin/gate || exit 1`);
-# a pipe would hide its status.
+# a pipe would hide its status. Stage your changes first: the gate refuses
+# unstaged edits to the sources the page is built from (web3d, kit, crates),
+# so that `kit/build.py --check` judges what will be committed.
 # Adapted from strohmandeln's bin/gate.
 set -u
 cd "$(dirname "$0")/.."
@@ -16,7 +18,10 @@ fail() {
 # shellcheck disable=SC1091
 [ -f "$HOME/.cargo/env" ] && . "$HOME/.cargo/env"
 command -v cargo >/dev/null || fail "cargo is not installed"
-cargo fmt --check >/dev/null 2>&1 || fail "cargo fmt (run cargo fmt)"
+if ! out=$(cargo fmt --check 2>&1); then
+  echo "$out" | head -40 >&2
+  fail "cargo fmt (run cargo fmt)"
+fi
 if ! out=$(cargo clippy --all-targets --quiet -- -D warnings 2>&1); then
   echo "$out" | head -40 >&2
   fail "clippy"
@@ -33,13 +38,18 @@ parts+=("$rust_passed in Rust")
 [ -d web3d/node_modules/three ] || fail "web3d/node_modules is missing: run npm ci in web3d/"
 [ -e kit/node_modules ] || [ -L kit/node_modules ] || ln -s ../web3d/node_modules kit/node_modules
 [ -e kit/node_modules/three ] || fail "kit/node_modules does not lead to web3d/node_modules"
-if ! node_out=$(cd web3d && node --test ../kit/test/ test/ 2>&1); then
-  echo "$node_out" | grep -E "^not ok|^\s+not ok|Error|expected|actual" | head -40 >&2
-  fail "node tests"
-fi
-node_passed=$(echo "$node_out" | grep -oE "^# pass [0-9]+" | awk '{print $3}')
-[ "${node_passed:-0}" -gt 0 ] || fail "node ran no tests"
-parts+=("$node_passed in Node")
+# Run separately, so that one half running no tests cannot hide behind the other.
+for half in "kit:../kit/test/" "game:test/"; do
+  name=${half%%:*}
+  dir=${half#*:}
+  if ! node_out=$(cd web3d && node --test "$dir" 2>&1); then
+    echo "$node_out" | grep -E "^not ok|^\s+not ok|Error|expected|actual" | head -40 >&2
+    fail "node tests ($name)"
+  fi
+  passed=$(echo "$node_out" | grep -oE "^# pass [0-9]+" | awk '{print $3}')
+  [ "${passed:-0}" -gt 0 ] || fail "node ran no $name tests"
+  parts+=("$passed in Node ($name)")
+done
 
 # ---- Python: the kit's build.py ----------------------------------------
 if ! py_out=$(python3 -m unittest discover -s kit/test -p 'test_*.py' 2>&1); then
@@ -49,6 +59,9 @@ fi
 parts+=("$(echo "$py_out" | grep -oE "^Ran [0-9]+" | awk '{print $2}') in Python")
 
 # ---- The page is current -----------------------------------------------
+# The page is built from the working tree; unstaged edits to its sources would
+# make the check pass on something that is not what gets committed.
+git diff --quiet -- web3d kit crates || fail "unstaged changes in web3d, kit or crates (git add them, so the page check judges what is committed)"
 if ! build_out=$(python3 kit/build.py --check 2>&1); then
   echo "$build_out" | tail -20 >&2
   fail "kit/build.py --check (the committed page is stale: run python3 kit/build.py)"

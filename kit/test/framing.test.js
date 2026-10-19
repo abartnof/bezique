@@ -25,3 +25,10 @@ test("aim and cameraFor pass the portrait eye on", () => {
   assert.ok(Math.abs(camera.position.y - 70) < 1e-9);
   assert.equal(typeof aim, "function");
 });
+
+test("upright, strips that meet or overlap leave the width to set the field", () => {
+  for (const [top, foot] of [[400, 400], [500, 500], [300, 300]]) {
+    const f = framing(0.5, 0, 800, { top, foot, raised: 0 });
+    assert.ok(Number.isFinite(f.fov) && f.fov < 120, `fov ${f.fov} for strips ${top}/${foot}`);
+  }
+});

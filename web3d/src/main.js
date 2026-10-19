@@ -82,7 +82,7 @@ async function main() {
   // The card faces: high-visibility Jumbo Index by default (every rank and
   // suit in the corner, the ten as 10), the classic art on request; drawn in
   // the browser, changeable at run time (`bezique3d.setFaces`).
-  const faceSets = { classic: textures.faces };
+  const faceSets = { classic: { ...textures.faces } }; // a copy: the deck keeps its own map too
   let facesShown = "classic";
   function setFaces(choice) {
     const want = choice === "classic" ? "classic" : "jumbo";
@@ -438,10 +438,7 @@ async function main() {
   });
 
   // The test hook: what the browser checks read and drive.
-  window.bezique3d = { talk, setTalk, speaker, board, setFaces: (c) => { const r = setFaces(c); savePrefs(prefs); return r; }, facesShown: () => facesShown, state: () => raw, act, onAct, director, stage, ui, engine, waiting: () => waiting, screenPoint: (id) => director.screenPoint(S.model && placementCode(id)) };
-  function placementCode(id) {
-    return director.placement().find((m) => m.cardId === id)?.code;
-  }
+  window.bezique3d = { talk, setTalk, speaker, board, setFaces: (c) => { const r = setFaces(c); savePrefs(prefs); return r; }, facesShown: () => facesShown, state: () => raw, act, onAct, director, stage, ui, engine, waiting: () => waiting, screenPoint: (id) => { const m = S?.model && director.placement().find((x) => x.cardId === id); return m ? director.screenPointOfId(m.id) : null; } };
 
   // No sitting to resume: a new player (or one starting afresh) chooses the game first.
   if (!restore()) {
