@@ -90,7 +90,9 @@ export function framing(aspect, inset = 0, height = PHONE_HEIGHT, strips = STRIP
   const raised = strips.raised === undefined ? 1 : Number(strips.raised);
   const held = hand.still + (hand.across - hand.still) * raised;
   const room = UPRIGHT_MARGIN * aspect * share; // across, per unit of the field's tangent
-  const tan = Math.max((up - down) / (top - foot), Math.max(across, held) / room);
+  // Strips that meet or overlap leave no band: the width alone sets the field.
+  const band = top - foot;
+  const tan = Math.max(band > 0 ? (up - down) / band : 0, Math.max(across, held) / room);
   const lift = (top + foot) / 2 - (up + down) / (2 * tan);
   const fov = (360 / Math.PI) * Math.atan(tan);
   // Where the field is set by the height, there is width to spare: your

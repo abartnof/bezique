@@ -36,7 +36,8 @@ export class Timeline {
     this.now = now;
     this.moved = false;
     const landed = [];
-    for (const m of this.motions) {
+    // A snapshot: a callback may add a motion (it joins from the next tick).
+    for (const m of [...this.motions]) {
       if (now < m.start) continue;
       this.moved = true;
       const t = m.length > 0 ? Math.min(1, (now - m.start) / m.length) : 1;
@@ -51,7 +52,8 @@ export class Timeline {
     return this.busy();
   }
 
-  // Land everything on its end, now, in the same order.
+  // Land everything on its end, now, in the same order. A motion a callback
+  // adds meanwhile is not landed; it stays to run.
   skip() {
     const all = [...this.motions];
     for (const m of all) {

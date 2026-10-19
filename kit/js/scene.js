@@ -149,7 +149,7 @@ export function createScene(
   scene.add(table);
   const shade = new Mesh(new PlaneGeometry(WIDE, DEEP), new ShadowMaterial({ color: "#14161a", opacity: 0.3 }));
   shade.rotation.x = -Math.PI / 2;
-  shade.position.set(0, 0.005, MIDDLE); // above the table, below the lowest card
+  shade.position.set(0, 0.005, MIDDLE); // above the table; a lying card's underside is in the plane y = 0, below it, and the card is opaque above
   shade.receiveShadow = true;
   scene.add(shade);
   const wood = new Mesh(new BoxGeometry(WIDE, TABLE_EDGES.thickness, DEEP), new MeshToonMaterial({ color: "#9a6b43" }));
@@ -181,7 +181,7 @@ export function createScene(
     const height = canvas.clientHeight;
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, CAMERA.maxPixelRatio));
     renderer.setSize(width, height, false);
-    frame(width / height);
+    frame(aspectNow()); // a hidden or collapsed canvas has no size: not NaN
     for (const ink of inks) fitInk(ink);
   }
 
@@ -262,6 +262,7 @@ export function createScene(
     if (Math.abs(next - inset) < 1e-3) return false;
     inset = next;
     frame(width / (canvas.clientHeight || 1));
+    render(); // the picture moved: draw it (the caller need not)
     return true;
   }
 
