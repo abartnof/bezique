@@ -427,6 +427,7 @@ pub fn play(game: &mut Game, agents: &mut [Box<dyn Agent>; 2], stop: impl Fn(&Ga
 mod tests {
     use super::*;
     use crate::agents::{Legal, Maxims};
+    use crate::deal::Seat;
 
     fn maxims(_: u64) -> Box<dyn Agent> {
         Box::new(Maxims::default())
@@ -480,29 +481,62 @@ mod tests {
         assert_eq!(reversed.points_a_game(), -g.points_a_game());
     }
 
-    /// The hand margin, recounted from each game's own totals.
+    /// The hand margin, recounted from each game's own totals: what each side
+    /// had banked when hand 2 was dealt. `Game::total` adds the new hand's
+    /// score, which is not hand 1's: when hand 2's turn-up is the seven of
+    /// trumps its dealer scores 10 at once, so that is taken off again.
+    fn banked_margin(seed: u64, swap: bool) -> (i64, bool) {
+        let mut agents: [Box<dyn Agent>; 2] = if swap {
+            [legal(0), maxims(0)]
+        } else {
+            [maxims(0), legal(0)]
+        };
+        let mut game = Game::new(seed, Side::A);
+        play(&mut game, &mut agents, |g| g.hand_number() > 1);
+        let banked = |side: Side| {
+            let new_hand = if game.hand_number() > 1 {
+                game.hand().score(game.seat_of(side))
+            } else {
+                0
+            };
+            i64::from(game.total(side)) - i64::from(new_hand)
+        };
+        let seven = game.hand_number() > 1
+            && (game.hand().score(Seat::Dealer) > 0 || game.hand().score(Seat::Pone) > 0);
+        // The maxims played side A unless swapped.
+        let (a, b) = (banked(Side::A), banked(Side::B));
+        (if swap { b - a } else { a - b }, seven)
+    }
+
     #[test]
     fn hand_margins_match_an_independent_count() {
         let h = hands(40, 30, &maxims, &legal);
         for (i, &margin) in h.margins.iter().enumerate() {
             let seed = 40 + i as u64;
-            let mut expected = 0i64;
-            for swap in [false, true] {
-                let mut agents: [Box<dyn Agent>; 2] = if swap {
-                    [legal(0), maxims(0)]
-                } else {
-                    [maxims(0), legal(0)]
-                };
-                let mut game = Game::new(seed, Side::A);
-                play(&mut game, &mut agents, |g| g.hand_number() > 1);
-                let (a, b) = (
-                    i64::from(game.total(Side::A)),
-                    i64::from(game.total(Side::B)),
-                );
-                // The maxims played side A unless swapped.
-                expected += if swap { b - a } else { a - b };
-            }
+            let expected: i64 = [false, true].iter().map(|&s| banked_margin(seed, s).0).sum();
             assert_eq!(margin, expected, "seed {seed}");
+        }
+    }
+
+    /// Seeds whose second hand turns up the seven of trumps (10 to its dealer
+    /// before a card is played) are counted by hand 1 alone.
+    #[test]
+    fn a_turned_up_seven_is_not_part_of_the_first_hand() {
+        let hit: Vec<u64> = (0..400)
+            .filter(|&seed| banked_margin(seed, false).1)
+            .take(3)
+            .collect();
+        assert!(!hit.is_empty(), "no seed in 0..400 turns up the seven of trumps");
+        for seed in hit {
+            let h = hands(seed, 1, &maxims, &legal);
+            let expected: i64 = [false, true].iter().map(|&s| banked_margin(seed, s).0).sum();
+            assert_eq!(h.margins[0], expected, "seed {seed}");
+            // The naive total would have counted the 10.
+            let mut agents: [Box<dyn Agent>; 2] = [maxims(0), legal(0)];
+            let mut game = Game::new(seed, Side::A);
+            play(&mut game, &mut agents, |g| g.hand_number() > 1);
+            let naive = i64::from(game.total(Side::A)) - i64::from(game.total(Side::B));
+            assert_ne!(naive, banked_margin(seed, false).0, "seed {seed}");
         }
     }
 
