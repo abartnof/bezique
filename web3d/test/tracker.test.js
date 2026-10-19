@@ -21,6 +21,7 @@ test("the unseen cards are exactly the stock and the opponent's hidden hand, at 
       if (!s.hand || s.prompt.kind === "over") continue;
       const m = trackerModel(s);
       assert.ok(m, "model with the tracker on");
+      assert.equal(m.conflict, false, `seed ${seed} step ${n}: a card seen more than twice`);
       assert.equal(m.unseen, s.stock + s.their_hidden, `seed ${seed} step ${n}: ${m.unseen} unseen, stock ${s.stock} hidden ${s.their_hidden}`);
       for (const k of Object.values(m.out)) assert.ok(k >= 0 && k <= 2);
       states++;
@@ -57,4 +58,12 @@ test("brisques, trumps and the bezique cards are told", () => {
   assert.match(m.lines.find((l) => l.id === "brisques").text, /13 of 16 \(6 aces, 7 tens\)/);
   assert.match(m.lines.find((l) => l.id === "trumps").text, /Trumps out: 14 of 16/);
   assert.ok(m.rows.find((r) => r.suit === "H").trump);
+});
+
+test("a card counted more than twice is flagged, not hidden", () => {
+  const view = { hand: [{ card: "AS" }, { card: "AS" }], table: [{ card: "AS" }], their_table: [], their_known: [], turn_up: null, trump: "hearts", stock: 10, their_hidden: 8, trick: null, tricks_played: [] };
+  const m = trackerModel(view);
+  assert.equal(m.conflict, true);
+  assert.equal(m.out.AS, 0);
+  assert.equal(trackerModel({ ...view, table: [] }).conflict, false);
 });

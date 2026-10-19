@@ -32,11 +32,13 @@ export function createUi(root, { onAct }) {
   const phaseBox = el("div", "ui-phase", null, hud);
   phaseBox.hidden = true;
   const ticker = el("div", "ui-ticker", "", hud);
+  ticker.setAttribute("role", "status"); // errors and moves are read out, politely
 
   // ---- bottom bar
   const bottom = el("div", "ui-bottom", null, root);
   const hintLine = el("div", "ui-hintline", "", bottom);
   hintLine.hidden = true;
+  hintLine.setAttribute("aria-live", "polite");
   const bar = el("div", "ui-bar", null, bottom);
   const main = el("div", "ui-main", null, bar);
 
@@ -53,8 +55,21 @@ export function createUi(root, { onAct }) {
     menuBtn.setAttribute("aria-expanded", String(open));
   };
   menuBtn.onclick = () => setMenu(tools.hidden);
-  document.addEventListener("pointerdown", (e) => { if (!menu.contains(e.target)) setMenu(false); });
-  document.addEventListener("keydown", (e) => { if (e.key === "Escape") setMenu(false); });
+  // Document-level listeners: createUi is called once per page (main.js); a
+  // second call removes the first one's, so a reload or a test does not stack them.
+  const onPointer = (e) => { if (!menu.contains(e.target)) setMenu(false); };
+  const onEscape = (e) => {
+    if (e.key !== "Escape" || tools.hidden) return;
+    setMenu(false);
+    if (menu.contains(document.activeElement) || document.activeElement === document.body) menuBtn.focus();
+  };
+  window.__beziqueUiOff?.();
+  document.addEventListener("pointerdown", onPointer);
+  document.addEventListener("keydown", onEscape);
+  window.__beziqueUiOff = () => {
+    document.removeEventListener("pointerdown", onPointer);
+    document.removeEventListener("keydown", onEscape);
+  };
 
   const undoBtn = el("button", "ui-btn ui-small", "Undo", tools);
   const hintBtn = el("button", "ui-btn ui-small", "Hint: off", tools);
@@ -68,6 +83,11 @@ export function createUi(root, { onAct }) {
   for (const b of [undoBtn, hintBtn, trackerBtn, newBtn, gearBtn]) b.type = "button";
   trackerBtn.setAttribute("aria-pressed", "false");
   hintBtn.setAttribute("aria-pressed", "false");
+
+  // While the dialog is up the page behind it takes no focus and is hidden from assistive technology.
+  const setBackground = (on) => {
+    for (const n of [hud, bottom, menu]) n.toggleAttribute("inert", on);
+  };
 
   let isOver = false;
   let hintOn = false;
@@ -98,7 +118,7 @@ export function createUi(root, { onAct }) {
 
   const PHASES = [
     ["Phase 1 of 2: the stock", "Any card may be played. The trick's winner declares, then draws."],
-    ["Phase 2 of 2: the last eight tricks", "No drawing or declaring. Follow suit and win if able, else trump if able."],
+    ["Phase 2 of 2: the last eight tricks", "No drawing or declaring. Follow suit and win if able. Holding the suit but unable to win, play any card of it; with none of it, trump if able, else any card."],
   ];
   function setPhase(raw, on) {
     const dealt = raw && raw.hand_number != null && raw.stock != null && !["choose_dealer", "over"].includes(raw.prompt?.kind);
@@ -145,7 +165,14 @@ export function createUi(root, { onAct }) {
     const kind = prompt.kind;
     isOver = kind === "over";
     main.textContent = "";
-    root.querySelectorAll(".ui-modal").forEach((m) => m.remove());
+    // The game-over dialog is built once per outcome and left alone by later
+    // setPrompt calls (a rebuild would drop the focus on its button).
+    const overKey = kind === "over" ? JSON.stringify([raw.outcome, raw.totals]) : null;
+    root.querySelectorAll(".ui-modal").forEach((m) => {
+      if (overKey !== null && m.dataset.over === overKey) return;
+      m.remove();
+      setBackground(false);
+    });
 
     hintOn = !!hint;
     setPhase(raw, hintOn);
@@ -181,15 +208,26 @@ export function createUi(root, { onAct }) {
       });
     } else if (kind === "over") {
       const o = raw.outcome || {};
-      const modal = el("div", "ui-modal", null, root);
-      const card = el("div", "ui-modal-card", null, modal);
-      el("h2", "ui-modal-title", o.winner === "you" ? "You win!" : "Your opponent wins", card);
-      if (o.double) el("div", "ui-modal-sub", "(double game)", card);
-      const t = raw.totals || {};
-      el("div", "ui-modal-sub", "You " + (t.you | 0) + " – Opponent " + (t.them | 0), card);
-      const b = el("button", "ui-btn ui-primary", "Play again", card);
-      b.type = "button";
-      b.onclick = () => act("new");
+      const shown = [...root.querySelectorAll(".ui-modal")].find((m) => m.dataset.over === overKey);
+      let b = shown?.querySelector("button");
+      if (!shown) {
+        const modal = el("div", "ui-modal", null, root);
+        modal.dataset.over = overKey;
+        const card = el("div", "ui-modal-card", null, modal);
+        card.setAttribute("role", "dialog");
+        card.setAttribute("aria-modal", "true");
+        const title = el("h2", "ui-modal-title", o.winner === "you" ? "You win!" : "Your opponent wins", card);
+        title.id = "ui-over-title";
+        card.setAttribute("aria-labelledby", title.id);
+        if (o.double) el("div", "ui-modal-sub", "(double game)", card);
+        const t = raw.totals || {};
+        el("div", "ui-modal-sub", "You " + (t.you | 0) + " – Opponent " + (t.them | 0), card);
+        b = el("button", "ui-btn ui-primary", "Play again", card);
+        b.type = "button";
+        b.onclick = () => act("new");
+        setBackground(true);
+        b.focus(); // disabled while busy: the focus lands when it is enabled below
+      }
       btns.push(b);
       el("div", "ui-text", "Game over", main);
     }
@@ -197,7 +235,11 @@ export function createUi(root, { onAct }) {
     undoBtn.disabled = !!busy || !raw.can_undo;
     hintBtn.disabled = !!busy;
     trackerBtn.disabled = !!busy;
-    for (const b of btns) b.disabled = !!busy;
+    for (const b of btns) {
+      const was = b.disabled;
+      b.disabled = !!busy;
+      if (was && !busy && b.closest?.(".ui-modal")) b.focus();
+    }
     hintBtn.textContent = "Hint: " + (hintOn ? "on" : "off");
     hintBtn.setAttribute("aria-pressed", String(hintOn));
   }

@@ -44,8 +44,7 @@ export function createScoreboard({ ui, director, zones, overlay, reduced = () =>
     run = empty ? initial() : fold(events);
     upto = empty ? 0 : events.length;
     const all = ledgerOf(run);
-    const numbers = Object.keys(run.hands).map(Number).sort((a, b) => a - b);
-    const live = !run.done && numbers.length > 0 && all.length > 0;
+    const live = all.length > (run.done ? all.length : events.filter((e) => e.kind === "hand_ends").length);
     hud.reset({ hands: live ? all.slice(0, -1) : all, live: live ? all.at(-1) : null });
     badges.clear();
   }
@@ -76,6 +75,9 @@ export function createScoreboard({ ui, director, zones, overlay, reduced = () =>
   function count(events, first, timing) {
     if (!timing || instant()) return;
     const steps = plansSince(events, first).flatMap((p) => p.steps);
+    // The choreography held the table for these same plans (handcount.test.js
+    // holds the two together over played games); a mismatch would shift every badge.
+    if (steps.length !== timing.lines.length) console.warn(`count: ${steps.length} steps for ${timing.lines.length} timed lines`);
     steps.forEach((step, k) => {
       const ms = timing.lines[k];
       if (ms === undefined) return;
@@ -88,13 +90,26 @@ export function createScoreboard({ ui, director, zones, overlay, reduced = () =>
     });
   }
 
+  // The ledger's hands and how many are counted (a hand_ends each; the game's
+  // end counts the hand it ends in).
+  function shapeOf(events) {
+    const r = fold(events);
+    const all = ledgerOf(r);
+    const ended = r.done ? all.length : Math.min(all.length, events.filter((e) => e.kind === "hand_ends").length);
+    return { r, all, ended };
+  }
+
   // The table at rest: the HUD matches the engine's figures (a popup still
   // playing is left to finish), the notes and the cards-out panel are redrawn.
   function rest(raw) {
     const totals = raw.totals;
     if (totals) {
       const t = hud.totals();
-      if (hud.idle() && (t.you !== totals.you || t.opp !== totals.them)) reset(raw.events);
+      // Instant play skips hud.dealt and hud.endHand, so the hand count is
+      // compared as well as the totals (a deal scoring nothing changes only that).
+      const shape = shapeOf(raw.events);
+      const stale = hud.ledger().hands.length !== shape.all.length || hud.hands() !== shape.ended;
+      if (hud.idle() && (t.you !== totals.you || t.opp !== totals.them || stale)) reset(raw.events);
       ui.setNotes({ double: doubleNote(totals), carried: carriedNote(raw) });
     }
     ui.setTracker(Boolean(raw.aids?.tracker));
